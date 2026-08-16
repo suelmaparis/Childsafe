@@ -159,6 +159,11 @@ def review_report(
         }
 
     previous_status = report.review_status
+    if previous_status == review.new_status:
+     return {
+        "error": "Report is already in this review status.",
+        "review_status": previous_status,
+    }
 
     review_record = ReportReview(
         report_id=report.id,
