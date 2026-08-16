@@ -8,7 +8,6 @@ from app.models.report_review import ReportReview
 from app.services.risk_assessment import assess_risk
 from app.services.review_triage import determine_review_priority
 
-
 router = APIRouter(
     prefix="/reports",
     tags=["Reports"],
@@ -142,6 +141,8 @@ def review_report(
     allowed_statuses = {
         "under_review",
         "reviewed",
+        "confirmed",
+        "dismissed",
         "escalated",
     }
 
