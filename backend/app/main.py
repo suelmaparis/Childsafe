@@ -1,5 +1,10 @@
 from fastapi import FastAPI
+
 from app.api.reports import router as reports_router
+from app.core.init_db import init_db
+
+
+init_db()
 
 
 app = FastAPI(
