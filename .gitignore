@@ -243,3 +243,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ChildSafe local database
+*.db
+*.sqlite
+*.sqlite3
