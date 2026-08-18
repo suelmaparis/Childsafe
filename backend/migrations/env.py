@@ -7,6 +7,7 @@ from alembic import context
 from app.core.database import Base
 from app.models.report import Report
 from app.models.report_review import ReportReview
+from app.models.report_ai_analysis import ReportAIAnalysis
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
