@@ -7,7 +7,6 @@ class ReviewTransitionResult:
     reason: str
 
 
-# Statuses that represent a final human decision.
 FINAL_STATUSES = {
     "confirmed",
     "dismissed",
@@ -15,7 +14,6 @@ FINAL_STATUSES = {
 }
 
 
-# Explicitly allowed transitions.
 ALLOWED_TRANSITIONS = {
     "pending": {
         "under_review",
@@ -34,6 +32,11 @@ ALLOWED_TRANSITIONS = {
 }
 
 
+VALID_STATUSES = set(
+    ALLOWED_TRANSITIONS.keys()
+)
+
+
 def validate_review_transition(
     previous_status: str,
     new_status: str,
@@ -49,21 +52,44 @@ def validate_review_transition(
     is permitted.
     """
 
+    if previous_status not in VALID_STATUSES:
+        return ReviewTransitionResult(
+            allowed=False,
+            reason=(
+                f"Invalid current review status: "
+                f"{previous_status}."
+            ),
+        )
+
+    if new_status not in VALID_STATUSES:
+        return ReviewTransitionResult(
+            allowed=False,
+            reason=(
+                f"Invalid target review status: "
+                f"{new_status}."
+            ),
+        )
+
     if previous_status in FINAL_STATUSES:
         return ReviewTransitionResult(
             allowed=False,
-            reason="Report has already reached a final decision.",
+            reason=(
+                "Report has already reached "
+                "a final decision."
+            ),
         )
 
     if previous_status == new_status:
         return ReviewTransitionResult(
             allowed=False,
-            reason="Report is already in this review status.",
+            reason=(
+                "Report is already in this "
+                "review status."
+            ),
         )
 
-    allowed_next_statuses = ALLOWED_TRANSITIONS.get(
-        previous_status,
-        set(),
+    allowed_next_statuses = (
+        ALLOWED_TRANSITIONS[previous_status]
     )
 
     if new_status not in allowed_next_statuses:

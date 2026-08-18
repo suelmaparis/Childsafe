@@ -24,15 +24,38 @@ def compare_risk_assessments(
     ai_score: int,
 ) -> RiskComparison:
     """
-    Compare the deterministic risk assessment with the AI assessment.
+    Compare the deterministic risk assessment
+    with the AI assessment.
 
-    This function does not make enforcement or final review decisions.
-    It only identifies agreement or disagreement between the two
-    assessment layers.
+    Positive differences mean the AI assessment
+    is higher than the deterministic assessment.
+
+    This function does not make enforcement
+    or final review decisions.
     """
 
-    rule_rank = LEVEL_ORDER.get(rule_level, 0)
-    ai_rank = LEVEL_ORDER.get(ai_level, 0)
+    if rule_level not in LEVEL_ORDER:
+        raise ValueError(
+            f"Invalid deterministic risk level: {rule_level}"
+        )
+
+    if ai_level not in LEVEL_ORDER:
+        raise ValueError(
+            f"Invalid AI risk level: {ai_level}"
+        )
+
+    if not 0 <= rule_score <= 100:
+        raise ValueError(
+            "Deterministic risk score must be between 0 and 100."
+        )
+
+    if not 0 <= ai_score <= 100:
+        raise ValueError(
+            "AI risk score must be between 0 and 100."
+        )
+
+    rule_rank = LEVEL_ORDER[rule_level]
+    ai_rank = LEVEL_ORDER[ai_level]
 
     level_difference = ai_rank - rule_rank
     score_difference = ai_score - rule_score

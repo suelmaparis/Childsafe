@@ -1,19 +1,35 @@
 from dataclasses import dataclass
 
 
+VALID_RISK_LEVELS = {
+    "low",
+    "medium",
+    "high",
+    "critical",
+}
+
+
 @dataclass
 class ReviewTriage:
     priority: str
     recommended_queue: str
 
 
-def determine_review_priority(risk_level: str) -> ReviewTriage:
+def determine_review_priority(
+    risk_level: str,
+) -> ReviewTriage:
     """
-    Determine the review priority based on the automated risk level.
+    Determine the initial review triage based only
+    on the deterministic risk level.
 
     This function does not make enforcement decisions.
-    It only determines how urgently a report should be reviewed.
+    It only determines the initial review routing.
     """
+
+    if risk_level not in VALID_RISK_LEVELS:
+        raise ValueError(
+            f"Invalid risk level: {risk_level}"
+        )
 
     if risk_level == "critical":
         return ReviewTriage(
@@ -25,12 +41,6 @@ def determine_review_priority(risk_level: str) -> ReviewTriage:
         return ReviewTriage(
             priority="priority",
             recommended_queue="priority_review",
-        )
-
-    if risk_level == "medium":
-        return ReviewTriage(
-            priority="normal",
-            recommended_queue="standard_review",
         )
 
     return ReviewTriage(

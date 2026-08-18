@@ -9,6 +9,9 @@ from openai import OpenAI
 load_dotenv()
 
 
+AI_MODEL = "gpt-5-mini"
+
+
 @dataclass
 class AIRiskAssessment:
     level: str
@@ -16,8 +19,16 @@ class AIRiskAssessment:
     reasons: list[str]
 
 
+api_key = os.getenv("OPENAI_API_KEY")
+
+if not api_key:
+    raise RuntimeError(
+        "OPENAI_API_KEY is not configured."
+    )
+
+
 client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
+    api_key=api_key,
 )
 
 
@@ -71,24 +82,60 @@ Rules:
 """
 
     response = client.responses.create(
-        model="gpt-5-mini",
+        model=AI_MODEL,
         input=prompt,
     )
 
-    data = json.loads(response.output_text)
+    try:
+        data = json.loads(
+            response.output_text
+        )
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            "AI returned invalid JSON."
+        ) from exc
 
-    level = data["level"]
-    score = int(data["score"])
-    reasons = data["reasons"]
+    if not isinstance(data, dict):
+        raise ValueError(
+            "AI returned an invalid response structure."
+        )
 
-    if level not in {"low", "medium", "high", "critical"}:
-        raise ValueError("AI returned an invalid risk level.")
+    try:
+        level = data["level"]
+        score = int(data["score"])
+        reasons = data["reasons"]
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(
+            "AI response is missing required fields."
+        ) from exc
+
+    if level not in {
+        "low",
+        "medium",
+        "high",
+        "critical",
+    }:
+        raise ValueError(
+            "AI returned an invalid risk level."
+        )
 
     if not 0 <= score <= 100:
-        raise ValueError("AI returned an invalid risk score.")
+        raise ValueError(
+            "AI returned an invalid risk score."
+        )
 
     if not isinstance(reasons, list):
-        raise ValueError("AI returned invalid risk reasons.")
+        raise ValueError(
+            "AI returned invalid risk reasons."
+        )
+
+    if not all(
+        isinstance(reason_item, str)
+        for reason_item in reasons
+    ):
+        raise ValueError(
+            "AI risk reasons must contain only strings."
+        )
 
     return AIRiskAssessment(
         level=level,

@@ -1,26 +1,41 @@
 import json
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
 from app.models.report import Report
+from app.models.report_ai_analysis import ReportAIAnalysis
 from app.models.report_review import ReportReview
-from app.models.report_ai_analysis import ReportAIAnalysis
+from app.services.ai_risk_assessment import (
+    AI_MODEL,
+    assess_risk_with_ai,
+)
+from app.services.review_queue_priority import (
+    determine_queue_priority,
+)
+from app.services.review_state_machine import (
+    validate_review_transition,
+)
+from app.services.review_triage import (
+    determine_review_priority,
+)
 from app.services.risk_assessment import assess_risk
-from app.services.review_triage import determine_review_priority
-from app.services.ai_risk_assessment import assess_risk_with_ai
-from app.services.risk_comparison import compare_risk_assessments
-from app.models.report_ai_analysis import ReportAIAnalysis
-from app.services.review_queue_priority import determine_queue_priority
-from app.services.review_state_machine import validate_review_transition
+from app.services.risk_comparison import (
+    compare_risk_assessments,
+)
 
 
 router = APIRouter(
     prefix="/reports",
     tags=["Reports"],
 )
+
+
+# ============================================================
+# REQUEST MODELS
+# ============================================================
 
 
 class ReportCreate(BaseModel):
@@ -37,12 +52,95 @@ class ReportReviewCreate(BaseModel):
     reviewer: str
 
 
+# ============================================================
+# DATABASE DEPENDENCY
+# ============================================================
+
+
 def get_db():
     db = SessionLocal()
+
     try:
         yield db
     finally:
         db.close()
+
+
+# ============================================================
+# HELPERS
+# ============================================================
+
+
+def normalize_score(
+    score: int,
+) -> int:
+    """
+    Normalize a score to the current 0-100 scale.
+
+    Historical records may contain scores greater than 100
+    because an older version of the deterministic rule engine
+    allowed cumulative scores above 100.
+
+    The stored historical value is not modified.
+    """
+
+    return max(
+        0,
+        min(int(score), 100),
+    )
+
+
+def parse_ai_reasons(
+    value: str,
+) -> list[str]:
+    """
+    Safely deserialize AI reasons stored as JSON text.
+
+    Invalid historical JSON must not break an entire endpoint.
+    """
+
+    try:
+        parsed = json.loads(value)
+
+    except (
+        json.JSONDecodeError,
+        TypeError,
+    ):
+        return [str(value)]
+
+    if isinstance(parsed, list):
+        return [
+            str(item)
+            for item in parsed
+        ]
+
+    return [str(parsed)]
+
+
+def get_latest_ai_analysis(
+    db: Session,
+    report_id: int,
+) -> ReportAIAnalysis | None:
+    """
+    Return the newest AI analysis for a report.
+    """
+
+    return (
+        db.query(ReportAIAnalysis)
+        .filter(
+            ReportAIAnalysis.report_id
+            == report_id
+        )
+        .order_by(
+            ReportAIAnalysis.created_at.desc()
+        )
+        .first()
+    )
+
+
+# ============================================================
+# CREATE REPORT
+# ============================================================
 
 
 @router.post("/")
@@ -53,23 +151,26 @@ def create_report(
     """
     Create a child-safety report.
 
-    The deterministic risk assessment is the primary layer.
-    AI is a secondary analysis layer and does not make
+    The deterministic assessment is the primary layer.
+
+    AI is a secondary assessment layer and does not make
     enforcement or final review decisions.
+
+    AI failure must not prevent a report from being received.
     """
 
-    # ---------------------------------------------------------
-    # 1. Primary deterministic risk assessment
-    # ---------------------------------------------------------
+    # --------------------------------------------------------
+    # 1. Deterministic assessment
+    # --------------------------------------------------------
 
     assessment = assess_risk(
         report.reason,
         report.description,
     )
 
-    # ---------------------------------------------------------
-    # 2. Secondary AI risk assessment
-    # ---------------------------------------------------------
+    # --------------------------------------------------------
+    # 2. Secondary AI assessment
+    # --------------------------------------------------------
 
     ai_assessment = None
 
@@ -80,17 +181,24 @@ def create_report(
         )
 
     except Exception as exc:
-        # AI must never prevent a report from being received.
-        print(f"AI risk assessment unavailable: {exc}")
+        # AI is an optional secondary layer.
+        # A failure here must not prevent report creation.
+        print(
+            f"AI risk assessment unavailable: {exc}"
+        )
 
-    # ---------------------------------------------------------
-    # 3. Review triage
-    # ---------------------------------------------------------
+    # --------------------------------------------------------
+    # 3. Initial deterministic triage
+    # --------------------------------------------------------
 
     triage = determine_review_priority(
         assessment.level
     )
-    
+
+    # --------------------------------------------------------
+    # 4. Compare deterministic and AI assessments
+    # --------------------------------------------------------
+
     risk_comparison = None
 
     if ai_assessment is not None:
@@ -100,9 +208,10 @@ def create_report(
             ai_level=ai_assessment.level,
             ai_score=ai_assessment.score,
         )
-    # ---------------------------------------------------------
-    # 4. Create report
-    # ---------------------------------------------------------
+
+    # --------------------------------------------------------
+    # 5. Create report
+    # --------------------------------------------------------
 
     new_report = Report(
         platform=report.platform,
@@ -116,30 +225,32 @@ def create_report(
 
     db.add(new_report)
 
+    ai_analysis = None
+
     try:
-        # Flush gives us the report ID without committing yet.
+        # Obtain report ID without committing yet.
         db.flush()
 
-        # -----------------------------------------------------
-        # 5. Save AI analysis when available
-        # -----------------------------------------------------
-
-        ai_analysis = None
+        # ----------------------------------------------------
+        # 6. Save AI analysis when available
+        # ----------------------------------------------------
 
         if ai_assessment is not None:
             ai_analysis = ReportAIAnalysis(
                 report_id=new_report.id,
-                model="gpt-5-mini",
+                model=AI_MODEL,
                 level=ai_assessment.level,
                 score=ai_assessment.score,
-                reasons=json.dumps(ai_assessment.reasons),
+                reasons=json.dumps(
+                    ai_assessment.reasons
+                ),
             )
 
             db.add(ai_analysis)
 
-        # -----------------------------------------------------
-        # 6. Commit report + AI analysis together
-        # -----------------------------------------------------
+        # ----------------------------------------------------
+        # 7. Commit report + AI analysis atomically
+        # ----------------------------------------------------
 
         db.commit()
 
@@ -148,64 +259,109 @@ def create_report(
         if ai_analysis is not None:
             db.refresh(ai_analysis)
 
-    except Exception:
+    except Exception as exc:
         db.rollback()
-        raise
 
-    # ---------------------------------------------------------
-    # 7. Build response
-    # ---------------------------------------------------------
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to save report.",
+        ) from exc
+
+    # --------------------------------------------------------
+    # 8. Build response
+    # --------------------------------------------------------
 
     response = {
-        "report_id": f"CV-{new_report.id:06d}",
+        "report_id": (
+            f"CV-{new_report.id:06d}"
+        ),
         "status": new_report.status,
-        "message": "Report received successfully.",
+        "message": (
+            "Report received successfully."
+        ),
         "report": {
-            "report_id": f"CV-{new_report.id:06d}",
+            "report_id": (
+                f"CV-{new_report.id:06d}"
+            ),
             "platform": new_report.platform,
             "url": new_report.url,
             "reason": new_report.reason,
-            "description": new_report.description,
+            "description": (
+                new_report.description
+            ),
             "status": new_report.status,
-             
-            # Primary deterministic assessment
-            "risk_level": new_report.risk_level,
-            "risk_score": new_report.risk_score,
-            "risk_reasons": assessment.reasons,
 
-            # Review triage
-            "review_status": new_report.review_status,
-            "review_priority": triage.priority,
-            "recommended_queue": triage.recommended_queue,
-             
-            "created_at": new_report.created_at,
+            # Deterministic assessment
+            "risk_level": (
+                new_report.risk_level
+            ),
+            "risk_score": (
+                new_report.risk_score
+            ),
+            "risk_reasons": (
+                assessment.reasons
+            ),
 
-            "risk_comparison": (
-                {
-                    "relationship": risk_comparison.relationship,
-                    "level_difference": risk_comparison.level_difference,
-                    "score_difference": risk_comparison.score_difference,
-                    "needs_attention": risk_comparison.needs_attention,
-                }
-                if risk_comparison is not None
-                else {
-                    "status": "unavailable",
-                }
+            # Initial deterministic triage
+            "review_status": (
+                new_report.review_status
+            ),
+            "review_priority": (
+                triage.priority
+            ),
+            "recommended_queue": (
+                triage.recommended_queue
+            ),
+
+            "created_at": (
+                new_report.created_at
             ),
         },
     }
 
-    # ---------------------------------------------------------
-    # 8. Add AI assessment to response
-    # ---------------------------------------------------------
+    # --------------------------------------------------------
+    # 9. Risk comparison response
+    # --------------------------------------------------------
 
-    if ai_assessment is not None and ai_analysis is not None:
+    if risk_comparison is not None:
+        response["report"]["risk_comparison"] = {
+            "relationship": (
+                risk_comparison.relationship
+            ),
+            "level_difference": (
+                risk_comparison.level_difference
+            ),
+            "score_difference": (
+                risk_comparison.score_difference
+            ),
+            "needs_attention": (
+                risk_comparison.needs_attention
+            ),
+        }
+
+    else:
+        response["report"]["risk_comparison"] = {
+            "status": "unavailable",
+        }
+
+    # --------------------------------------------------------
+    # 10. AI assessment response
+    # --------------------------------------------------------
+
+    if (
+        ai_assessment is not None
+        and ai_analysis is not None
+    ):
         response["report"]["ai_assessment"] = {
             "level": ai_analysis.level,
             "score": ai_analysis.score,
-            "reasons": ai_assessment.reasons,
+            "reasons": (
+                ai_assessment.reasons
+            ),
             "model": ai_analysis.model,
-            "created_at": ai_analysis.created_at,
+            "created_at": (
+                ai_analysis.created_at
+            ),
         }
 
     else:
@@ -216,38 +372,66 @@ def create_report(
     return response
 
 
+# ============================================================
+# LIST REPORTS
+# ============================================================
+
+
 @router.get("/")
 def list_reports(
     db: Session = Depends(get_db),
 ):
     reports = (
         db.query(Report)
-        .order_by(Report.created_at.desc())
+        .order_by(
+            Report.created_at.desc()
+        )
         .all()
     )
 
     return [
         {
-            "report_id": f"CV-{report.id:06d}",
+            "report_id": (
+                f"CV-{report.id:06d}"
+            ),
             "platform": report.platform,
             "url": report.url,
             "reason": report.reason,
-            "description": report.description,
+            "description": (
+                report.description
+            ),
             "status": report.status,
-            "risk_level": report.risk_level,
-            "risk_score": report.risk_score,
-            "review_status": report.review_status,
-            "created_at": report.created_at,
+            "risk_level": (
+                report.risk_level
+            ),
+            "risk_score": (
+                report.risk_score
+            ),
+            "review_status": (
+                report.review_status
+            ),
+            "created_at": (
+                report.created_at
+            ),
         }
         for report in reports
     ]
 
 
+# ============================================================
+# REVIEW QUEUE
+# ============================================================
+
+
 @router.get("/review-queue")
-def review_queue(db: Session = Depends(get_db)):
+def review_queue(
+    db: Session = Depends(get_db),
+):
     reports = (
         db.query(Report)
-        .filter(Report.review_status == "pending")
+        .filter(
+            Report.review_status == "pending"
+        )
         .order_by(
             Report.risk_score.desc(),
             Report.created_at.asc(),
@@ -258,67 +442,132 @@ def review_queue(db: Session = Depends(get_db)):
     queue_items = []
 
     for report in reports:
-        ai_analysis = (
-            db.query(ReportAIAnalysis)
-            .filter(ReportAIAnalysis.report_id == report.id)
-            .order_by(ReportAIAnalysis.created_at.desc())
-            .first()
+
+        ai_analysis = get_latest_ai_analysis(
+            db=db,
+            report_id=report.id,
+        )
+
+        # Historical rule scores may exceed 100.
+        # Preserve the database value in the response,
+        # but normalize it for current comparison logic.
+        comparison_rule_score = normalize_score(
+            report.risk_score
         )
 
         if ai_analysis is not None:
             ai_level = ai_analysis.level
-            ai_score = ai_analysis.score
+            comparison_ai_score = normalize_score(
+                ai_analysis.score
+            )
+
         else:
             ai_level = None
-            ai_score = None
+            comparison_ai_score = None
 
-        queue_priority = determine_queue_priority(
-            risk_level=report.risk_level,
-            risk_score=report.risk_score,
-            ai_level=ai_level,
-            ai_score=ai_score,
-        )
+        try:
+            queue_priority = (
+                determine_queue_priority(
+                    risk_level=report.risk_level,
+                    risk_score=(
+                        comparison_rule_score
+                    ),
+                    ai_level=ai_level,
+                    ai_score=(
+                        comparison_ai_score
+                    ),
+                )
+            )
 
-        queue_items.append(
-            {
-                "report_id": f"CV-{report.id:06d}",
-                "platform": report.platform,
-                "url": report.url,
-                "reason": report.reason,
-                "description": report.description,
-                "status": report.status,
-                "risk_level": report.risk_level,
-                "risk_score": report.risk_score,
-                "review_status": report.review_status,
-                "queue_priority": queue_priority.priority,
-                "queue_priority_score": queue_priority.priority_score,
-                "queue_priority_reason": queue_priority.reason,
-                "ai_assessment": (
-                    {
-                        "level": ai_analysis.level,
-                        "score": ai_analysis.score,
-                        "reasons": json.loads(ai_analysis.reasons),
-                        "model": ai_analysis.model,
-                        "created_at": ai_analysis.created_at,
-                    }
-                    if ai_analysis is not None
-                    else {
-                        "status": "unavailable",
-                    }
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "Invalid risk data found "
+                    f"for report {report.id}: "
+                    f"{exc}"
                 ),
-                "created_at": report.created_at,
-            }
-        )
+            ) from exc
 
+        item = {
+            "report_id": (
+                f"CV-{report.id:06d}"
+            ),
+            "platform": report.platform,
+            "url": report.url,
+            "reason": report.reason,
+            "description": (
+                report.description
+            ),
+            "status": report.status,
+
+            # Preserve original stored values.
+            "risk_level": (
+                report.risk_level
+            ),
+            "risk_score": (
+                report.risk_score
+            ),
+
+            "review_status": (
+                report.review_status
+            ),
+
+            "queue_priority": (
+                queue_priority.priority
+            ),
+            "queue_priority_score": (
+                queue_priority.priority_score
+            ),
+            "queue_priority_reason": (
+                queue_priority.reason
+            ),
+
+            "created_at": (
+                report.created_at
+            ),
+        }
+
+        if ai_analysis is not None:
+            item["ai_assessment"] = {
+                "level": ai_analysis.level,
+                "score": ai_analysis.score,
+                "reasons": parse_ai_reasons(
+                    ai_analysis.reasons
+                ),
+                "model": ai_analysis.model,
+                "created_at": (
+                    ai_analysis.created_at
+                ),
+            }
+
+        else:
+            item["ai_assessment"] = {
+                "status": "unavailable",
+            }
+
+        queue_items.append(item)
+
+    # Highest-priority reports first.
     queue_items.sort(
         key=lambda item: (
-            -item["queue_priority_score"],
-            -item["risk_score"],
+            -item[
+                "queue_priority_score"
+            ],
+            -normalize_score(
+                item["risk_score"]
+            ),
             item["created_at"],
         )
     )
 
     return queue_items
+
+
+# ============================================================
+# REVIEW REPORT
+# ============================================================
+
 
 @router.patch("/{report_id}/review")
 def review_report(
@@ -334,27 +583,26 @@ def review_report(
         "escalated",
     }
 
-    final_statuses = {
-        "confirmed",
-        "dismissed",
-        "escalated",
-    }
-
-    # ---------------------------------------------------------
-    # Validate requested status
-    # ---------------------------------------------------------
+    # --------------------------------------------------------
+    # Validate target status
+    # --------------------------------------------------------
 
     if review.new_status not in allowed_statuses:
-        return {
-            "error": "Invalid review status.",
-            "allowed_statuses": sorted(
-                allowed_statuses
-            ),
-        }
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": (
+                    "Invalid review status."
+                ),
+                "allowed_statuses": sorted(
+                    allowed_statuses
+                ),
+            },
+        )
 
-    # ---------------------------------------------------------
+    # --------------------------------------------------------
     # Find report
-    # ---------------------------------------------------------
+    # --------------------------------------------------------
 
     report = db.get(
         Report,
@@ -362,29 +610,40 @@ def review_report(
     )
 
     if report is None:
-        return {
-            "error": "Report not found."
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found.",
+        )
 
-    previous_status = report.review_status
+    previous_status = (
+        report.review_status
+    )
 
-    # ---------------------------------------------------------
-    # Protect final decisions
-    # ---------------------------------------------------------
+    # --------------------------------------------------------
+    # Validate workflow transition
+    # --------------------------------------------------------
 
-    transition = validate_review_transition(
-        previous_status=previous_status,
-        new_status=review.new_status,
+    transition = (
+        validate_review_transition(
+            previous_status=previous_status,
+            new_status=review.new_status,
+        )
     )
 
     if not transition.allowed:
-        return {
-            "error": transition.reason,
-            "review_status": previous_status,
-        }
-    # ---------------------------------------------------------
-    # Create review history record
-    # ---------------------------------------------------------
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": transition.reason,
+                "review_status": (
+                    previous_status
+                ),
+            },
+        )
+
+    # --------------------------------------------------------
+    # Create human review history
+    # --------------------------------------------------------
 
     review_record = ReportReview(
         report_id=report.id,
@@ -395,7 +654,9 @@ def review_report(
         reviewer=review.reviewer,
     )
 
-    report.review_status = review.new_status
+    report.review_status = (
+        review.new_status
+    )
 
     db.add(review_record)
 
@@ -405,32 +666,60 @@ def review_report(
         db.refresh(report)
         db.refresh(review_record)
 
-    except Exception:
+    except Exception as exc:
         db.rollback()
 
-        return {
-            "error": "Unable to save review."
-        }
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to save review.",
+        ) from exc
 
     return {
-        "report_id": f"CV-{report.id:06d}",
+        "report_id": (
+            f"CV-{report.id:06d}"
+        ),
+
         "review": {
-            "previous_status": review_record.previous_status,
-            "new_status": review_record.new_status,
-            "decision": review_record.decision,
-            "notes": review_record.notes,
-            "reviewer": review_record.reviewer,
-            "created_at": review_record.created_at,
+            "previous_status": (
+                review_record.previous_status
+            ),
+            "new_status": (
+                review_record.new_status
+            ),
+            "decision": (
+                review_record.decision
+            ),
+            "notes": (
+                review_record.notes
+            ),
+            "reviewer": (
+                review_record.reviewer
+            ),
+            "created_at": (
+                review_record.created_at
+            ),
         },
+
         "report": {
             "platform": report.platform,
             "url": report.url,
             "reason": report.reason,
-            "risk_level": report.risk_level,
-            "risk_score": report.risk_score,
-            "review_status": report.review_status,
+            "risk_level": (
+                report.risk_level
+            ),
+            "risk_score": (
+                report.risk_score
+            ),
+            "review_status": (
+                report.review_status
+            ),
         },
     }
+
+
+# ============================================================
+# REVIEW HISTORY
+# ============================================================
 
 
 @router.get("/{report_id}/reviews")
@@ -444,14 +733,16 @@ def get_report_reviews(
     )
 
     if report is None:
-        return {
-            "error": "Report not found."
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found.",
+        )
 
     reviews = (
         db.query(ReportReview)
         .filter(
-            ReportReview.report_id == report_id
+            ReportReview.report_id
+            == report_id
         )
         .order_by(
             ReportReview.created_at.asc()
@@ -462,15 +753,328 @@ def get_report_reviews(
     return [
         {
             "review_id": review.id,
-            "previous_status": review.previous_status,
-            "new_status": review.new_status,
+            "previous_status": (
+                review.previous_status
+            ),
+            "new_status": (
+                review.new_status
+            ),
             "decision": review.decision,
             "notes": review.notes,
             "reviewer": review.reviewer,
-            "created_at": review.created_at,
+            "created_at": (
+                review.created_at
+            ),
         }
         for review in reviews
     ]
+
+
+# ============================================================
+# AUDIT
+# ============================================================
+
+
+@router.get("/{report_id}/audit")
+def get_report_audit(
+    report_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Read-only audit view for a report.
+
+    Includes:
+    - original report
+    - deterministic assessment
+    - latest AI assessment
+    - AI analysis history
+    - risk comparison
+    - computed queue priority
+    - human review history
+    """
+
+    # --------------------------------------------------------
+    # Find report
+    # --------------------------------------------------------
+
+    report = db.get(
+        Report,
+        report_id,
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found.",
+        )
+
+    # --------------------------------------------------------
+    # AI history
+    # --------------------------------------------------------
+
+    ai_analyses = (
+        db.query(ReportAIAnalysis)
+        .filter(
+            ReportAIAnalysis.report_id
+            == report_id
+        )
+        .order_by(
+            ReportAIAnalysis.created_at.asc()
+        )
+        .all()
+    )
+
+    ai_history = [
+        {
+            "analysis_id": analysis.id,
+            "model": analysis.model,
+            "level": analysis.level,
+            "score": analysis.score,
+            "reasons": parse_ai_reasons(
+                analysis.reasons
+            ),
+            "created_at": (
+                analysis.created_at
+            ),
+        }
+        for analysis in ai_analyses
+    ]
+
+    latest_ai = (
+        ai_analyses[-1]
+        if ai_analyses
+        else None
+    )
+
+    # Historical stored scores are preserved,
+    # while current comparison logic uses 0-100.
+    comparison_rule_score = normalize_score(
+        report.risk_score
+    )
+
+    # --------------------------------------------------------
+    # AI assessment + comparison
+    # --------------------------------------------------------
+
+    if latest_ai is not None:
+        comparison_ai_score = (
+            normalize_score(
+                latest_ai.score
+            )
+        )
+
+        ai_assessment = {
+            "level": latest_ai.level,
+            "score": latest_ai.score,
+            "reasons": parse_ai_reasons(
+                latest_ai.reasons
+            ),
+            "model": latest_ai.model,
+            "created_at": (
+                latest_ai.created_at
+            ),
+        }
+
+        try:
+            comparison = (
+                compare_risk_assessments(
+                    rule_level=(
+                        report.risk_level
+                    ),
+                    rule_score=(
+                        comparison_rule_score
+                    ),
+                    ai_level=(
+                        latest_ai.level
+                    ),
+                    ai_score=(
+                        comparison_ai_score
+                    ),
+                )
+            )
+
+            queue_priority = (
+                determine_queue_priority(
+                    risk_level=(
+                        report.risk_level
+                    ),
+                    risk_score=(
+                        comparison_rule_score
+                    ),
+                    ai_level=(
+                        latest_ai.level
+                    ),
+                    ai_score=(
+                        comparison_ai_score
+                    ),
+                )
+            )
+
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "Invalid stored risk data: "
+                    f"{exc}"
+                ),
+            ) from exc
+
+        comparison_data = {
+            "relationship": (
+                comparison.relationship
+            ),
+            "level_difference": (
+                comparison.level_difference
+            ),
+            "score_difference": (
+                comparison.score_difference
+            ),
+            "needs_attention": (
+                comparison.needs_attention
+            ),
+        }
+
+    else:
+        ai_assessment = {
+            "status": "unavailable",
+        }
+
+        comparison_data = {
+            "status": "unavailable",
+        }
+
+        try:
+            queue_priority = (
+                determine_queue_priority(
+                    risk_level=(
+                        report.risk_level
+                    ),
+                    risk_score=(
+                        comparison_rule_score
+                    ),
+                )
+            )
+
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "Invalid stored risk data: "
+                    f"{exc}"
+                ),
+            ) from exc
+
+    # --------------------------------------------------------
+    # Human review history
+    # --------------------------------------------------------
+
+    reviews = (
+        db.query(ReportReview)
+        .filter(
+            ReportReview.report_id
+            == report_id
+        )
+        .order_by(
+            ReportReview.created_at.asc()
+        )
+        .all()
+    )
+
+    review_history = [
+        {
+            "review_id": review.id,
+            "previous_status": (
+                review.previous_status
+            ),
+            "new_status": (
+                review.new_status
+            ),
+            "decision": (
+                review.decision
+            ),
+            "notes": review.notes,
+            "reviewer": (
+                review.reviewer
+            ),
+            "created_at": (
+                review.created_at
+            ),
+        }
+        for review in reviews
+    ]
+
+    return {
+        "report_id": (
+            f"CV-{report.id:06d}"
+        ),
+
+        "report": {
+            "id": report.id,
+            "platform": report.platform,
+            "url": report.url,
+            "reason": report.reason,
+            "description": (
+                report.description
+            ),
+            "status": report.status,
+            "created_at": (
+                report.created_at
+            ),
+        },
+
+        "deterministic_assessment": {
+            # Historical stored value is preserved.
+            "level": report.risk_level,
+            "score": report.risk_score,
+        },
+
+        "ai_assessment": (
+            ai_assessment
+        ),
+
+        "ai_analysis_history": (
+            ai_history
+        ),
+
+        "risk_comparison": (
+            comparison_data
+        ),
+
+        "review": {
+            "current_status": (
+                report.review_status
+            ),
+            "review_count": len(
+                review_history
+            ),
+            "history": (
+                review_history
+            ),
+        },
+
+        "queue_priority": {
+            # A finalized report is no longer actually
+            # present in the pending review queue.
+            "active": (
+                report.review_status
+                == "pending"
+            ),
+            "priority": (
+                queue_priority.priority
+            ),
+            "priority_score": (
+                queue_priority.priority_score
+            ),
+            "reason": (
+                queue_priority.reason
+            ),
+        },
+    }
+
+
+# ============================================================
+# GET SINGLE REPORT
+# ============================================================
 
 
 @router.get("/{report_id}")
@@ -484,19 +1088,32 @@ def get_report(
     )
 
     if report is None:
-        return {
-            "error": "Report not found."
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found.",
+        )
 
     return {
-        "report_id": f"CV-{report.id:06d}",
+        "report_id": (
+            f"CV-{report.id:06d}"
+        ),
         "platform": report.platform,
         "url": report.url,
         "reason": report.reason,
-        "description": report.description,
+        "description": (
+            report.description
+        ),
         "status": report.status,
-        "risk_level": report.risk_level,
-        "risk_score": report.risk_score,
-        "review_status": report.review_status,
-        "created_at": report.created_at,
+        "risk_level": (
+            report.risk_level
+        ),
+        "risk_score": (
+            report.risk_score
+        ),
+        "review_status": (
+            report.review_status
+        ),
+        "created_at": (
+            report.created_at
+        ),
     }

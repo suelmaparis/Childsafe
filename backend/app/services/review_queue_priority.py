@@ -1,6 +1,14 @@
 from dataclasses import dataclass
 
 
+LEVEL_RANK = {
+    "low": 1,
+    "medium": 2,
+    "high": 3,
+    "critical": 4,
+}
+
+
 @dataclass
 class ReviewQueuePriority:
     priority: str
@@ -26,41 +34,46 @@ def determine_queue_priority(
     appear in the human review queue.
     """
 
-    level_rank = {
-        "low": 1,
-        "medium": 2,
-        "high": 3,
-        "critical": 4,
-    }
+    if risk_level not in LEVEL_RANK:
+        raise ValueError(
+            f"Invalid deterministic risk level: {risk_level}"
+        )
 
-    rule_rank = level_rank.get(risk_level, 0)
+    if not 0 <= risk_score <= 100:
+        raise ValueError(
+            "Deterministic risk score must be between 0 and 100."
+        )
 
-    # ---------------------------------------------------------
-    # No AI analysis available
-    # ---------------------------------------------------------
-    #
-    # Do NOT treat missing AI data as a disagreement.
-    #
+    # No AI analysis available.
     if ai_level is None or ai_score is None:
         if risk_level == "critical":
             return ReviewQueuePriority(
                 priority="urgent",
                 priority_score=1000,
-                reason="Deterministic assessment indicates critical potential child-safety risk.",
+                reason=(
+                    "Deterministic assessment indicates "
+                    "critical potential child-safety risk."
+                ),
             )
 
         if risk_level == "high":
             return ReviewQueuePriority(
                 priority="priority",
                 priority_score=700,
-                reason="Deterministic assessment indicates high potential child-safety risk.",
+                reason=(
+                    "Deterministic assessment indicates "
+                    "high potential child-safety risk."
+                ),
             )
 
         if risk_level == "medium":
             return ReviewQueuePriority(
                 priority="normal",
                 priority_score=500,
-                reason="Deterministic assessment indicates moderate potential child-safety risk.",
+                reason=(
+                    "Deterministic assessment indicates "
+                    "moderate potential child-safety risk."
+                ),
             )
 
         return ReviewQueuePriority(
@@ -69,45 +82,79 @@ def determine_queue_priority(
             reason="Standard human review required.",
         )
 
-    # ---------------------------------------------------------
-    # AI analysis is available
-    # ---------------------------------------------------------
+    if ai_level not in LEVEL_RANK:
+        raise ValueError(
+            f"Invalid AI risk level: {ai_level}"
+        )
 
-    ai_rank = level_rank.get(ai_level, 0)
+    if not 0 <= ai_score <= 100:
+        raise ValueError(
+            "AI risk score must be between 0 and 100."
+        )
 
-    score_difference = abs(ai_score - risk_score)
-    level_difference = abs(ai_rank - rule_rank)
+    rule_rank = LEVEL_RANK[risk_level]
+    ai_rank = LEVEL_RANK[ai_level]
 
-    # Critical AI assessment.
-    if ai_level == "critical":
+    score_difference = abs(
+        ai_score - risk_score
+    )
+
+    level_difference = abs(
+        ai_rank - rule_rank
+    )
+
+    # Critical risk identified by either layer.
+    if (
+        risk_level == "critical"
+        or ai_level == "critical"
+    ):
         return ReviewQueuePriority(
             priority="urgent",
             priority_score=1000,
-            reason="AI assessment indicates critical potential child-safety risk.",
+            reason=(
+                "Critical potential child-safety "
+                "risk identified."
+            ),
         )
 
-    # Significant disagreement between deterministic and AI analysis.
-    if level_difference >= 2 or score_difference >= 30:
+    # Significant disagreement.
+    if (
+        level_difference >= 2
+        or score_difference >= 30
+    ):
         return ReviewQueuePriority(
             priority="urgent",
             priority_score=900,
-            reason="Significant disagreement between deterministic and AI risk assessments.",
+            reason=(
+                "Significant disagreement between "
+                "deterministic and AI risk assessments."
+            ),
         )
 
-    # High risk identified by either assessment.
-    if risk_level == "high" or ai_level == "high":
+    # High risk identified by either layer.
+    if (
+        risk_level == "high"
+        or ai_level == "high"
+    ):
         return ReviewQueuePriority(
             priority="priority",
             priority_score=700,
-            reason="High potential child-safety risk identified.",
+            reason=(
+                "High potential child-safety risk identified."
+            ),
         )
 
     # Medium risk.
-    if risk_level == "medium" or ai_level == "medium":
+    if (
+        risk_level == "medium"
+        or ai_level == "medium"
+    ):
         return ReviewQueuePriority(
             priority="normal",
             priority_score=500,
-            reason="Moderate potential child-safety risk identified.",
+            reason=(
+                "Moderate potential child-safety risk identified."
+            ),
         )
 
     return ReviewQueuePriority(

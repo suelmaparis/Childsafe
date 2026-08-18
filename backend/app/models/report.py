@@ -9,7 +9,10 @@ from app.core.database import Base
 class Report(Base):
     __tablename__ = "reports"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True,
+    )
 
     platform: Mapped[str] = mapped_column(
         String(50),
@@ -37,6 +40,10 @@ class Report(Base):
         default="medium",
     )
 
+    risk_score: Mapped[int] = mapped_column(
+        default=0,
+    )
+
     review_status: Mapped[str] = mapped_column(
         String(30),
         default="pending",
@@ -46,7 +53,3 @@ class Report(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
     )
-
-    risk_score: Mapped[int] = mapped_column(
-    default=0,
-)

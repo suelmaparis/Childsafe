@@ -15,19 +15,23 @@ def assess_risk(
     """
     Perform a basic rule-based risk assessment.
 
-    This is an initial development version.
-    It does not determine guilt or make enforcement decisions.
+    The score is normalized to a 0-100 range.
+
+    This assessment does not determine guilt
+    or make enforcement decisions.
     """
 
     text = f"{reason} {description}".lower()
 
     score = 0
-    reasons = []
+    reasons: list[str] = []
 
     # Potential exposure of a child.
     if "potential_child_exposure" in text:
         score += 20
-        reasons.append("Potential exposure of a minor.")
+        reasons.append(
+            "Potential exposure of a minor."
+        )
 
     # Vulnerability indicators.
     vulnerability_terms = [
@@ -38,9 +42,14 @@ def assess_risk(
         "abuse",
     ]
 
-    if any(term in text for term in vulnerability_terms):
+    if any(
+        term in text
+        for term in vulnerability_terms
+    ):
         score += 30
-        reasons.append("Possible vulnerability or safety concern.")
+        reasons.append(
+            "Possible vulnerability or safety concern."
+        )
 
     # Sexual exploitation indicators.
     exploitation_terms = [
@@ -51,9 +60,14 @@ def assess_risk(
         "exploitation",
     ]
 
-    if any(term in text for term in exploitation_terms):
+    if any(
+        term in text
+        for term in exploitation_terms
+    ):
         score += 40
-        reasons.append("Possible sexual exploitation indicator.")
+        reasons.append(
+            "Possible sexual exploitation indicator."
+        )
 
     # Immediate danger indicators.
     danger_terms = [
@@ -63,11 +77,20 @@ def assess_risk(
         "trafficking",
     ]
 
-    if any(term in text for term in danger_terms):
+    if any(
+        term in text
+        for term in danger_terms
+    ):
         score += 50
-        reasons.append("Possible immediate or severe danger.")
+        reasons.append(
+            "Possible immediate or severe danger."
+        )
 
-    # Convert score into a risk level.
+    # Normalize score to the same 0-100 scale
+    # used by the AI risk assessment.
+    score = min(score, 100)
+
+    # Convert normalized score into a risk level.
     if score >= 70:
         level = "critical"
     elif score >= 40:
@@ -76,6 +99,7 @@ def assess_risk(
         level = "medium"
     else:
         level = "low"
+
     return RiskAssessment(
         level=level,
         score=score,
