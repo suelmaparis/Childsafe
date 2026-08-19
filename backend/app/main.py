@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.auth import router as auth_router
 from app.api.reports import router as reports_router
 from app.core.init_db import init_db
 
@@ -14,6 +15,7 @@ app = FastAPI(
 )
 
 
+app.include_router(auth_router)
 app.include_router(reports_router)
 
 

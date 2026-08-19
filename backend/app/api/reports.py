@@ -25,7 +25,8 @@ from app.services.risk_assessment import assess_risk
 from app.services.risk_comparison import (
     compare_risk_assessments,
 )
-
+from app.api.auth import get_current_reviewer
+from app.models.reviewer import Reviewer
 
 router = APIRouter(
     prefix="/reports",
@@ -49,9 +50,6 @@ class ReportReviewCreate(BaseModel):
     new_status: str
     decision: str
     notes: str
-    reviewer: str
-
-
 # ============================================================
 # DATABASE DEPENDENCY
 # ============================================================
@@ -574,6 +572,9 @@ def review_report(
     report_id: int,
     review: ReportReviewCreate,
     db: Session = Depends(get_db),
+    current_reviewer: Reviewer = Depends(
+        get_current_reviewer
+    ),
 ):
     allowed_statuses = {
         "under_review",
@@ -651,9 +652,8 @@ def review_report(
         new_status=review.new_status,
         decision=review.decision,
         notes=review.notes,
-        reviewer=review.reviewer,
-    )
-
+        reviewer=current_reviewer.username,
+)
     report.review_status = (
         review.new_status
     )
