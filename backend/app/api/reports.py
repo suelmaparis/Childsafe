@@ -1,13 +1,16 @@
 import json
 
+from sqlalchemy import func
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from datetime import datetime, timedelta, timezone
 from app.core.database import SessionLocal
 from app.models.report import Report
 from app.models.report_ai_analysis import ReportAIAnalysis
 from app.models.report_review import ReportReview
+from app.api.auth import require_role
 from app.services.ai_risk_assessment import (
     AI_MODEL,
     assess_risk_with_ai,
@@ -1069,6 +1072,246 @@ def get_report_audit(
                 queue_priority.reason
             ),
         },
+    }
+# ============================================================
+# ADMIN METRICS
+# ============================================================
+
+
+@router.get("/admin/metrics")
+def get_admin_metrics(
+    days: int | None = None,
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "admin",
+            "senior_reviewer",
+        )
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    Return operational metrics for the ChildSafe review system.
+
+    Accessible only to administrators and senior reviewers.
+
+    Report totals and distributions are calculated with SQL
+    aggregation instead of loading every report into memory.
+
+    Optional period filter:
+    - days: include only reports created within the last 1-365 days.
+    """
+
+    # ---------------------------------------------------------
+    # Optional period filter
+    # ---------------------------------------------------------
+
+    if days is not None:
+        if days < 1 or days > 365:
+            raise HTTPException(
+                status_code=422,
+                detail="days must be between 1 and 365.",
+            )
+
+        period_start = (
+            datetime.now(timezone.utc)
+            - timedelta(days=days)
+        )
+    else:
+        period_start = None
+
+    # ---------------------------------------------------------
+    # Total reports
+    # ---------------------------------------------------------
+
+    total_query = db.query(
+        func.count(Report.id)
+    )
+
+    if period_start is not None:
+        total_query = total_query.filter(
+            Report.created_at >= period_start
+        )
+
+    total_reports = (
+        total_query.scalar()
+        or 0
+    )
+
+    # ---------------------------------------------------------
+    # Review-status distribution
+    # ---------------------------------------------------------
+
+    review_status_query = db.query(
+        Report.review_status,
+        func.count(Report.id),
+    )
+
+    if period_start is not None:
+        review_status_query = (
+            review_status_query.filter(
+                Report.created_at >= period_start
+            )
+        )
+
+    review_status_rows = (
+        review_status_query
+        .group_by(Report.review_status)
+        .all()
+    )
+
+    review_status_counts = {
+        "pending": 0,
+        "under_review": 0,
+        "reviewed": 0,
+        "confirmed": 0,
+        "dismissed": 0,
+        "escalated": 0,
+    }
+
+    for status, count in review_status_rows:
+        if status in review_status_counts:
+            review_status_counts[status] = count
+
+    # ---------------------------------------------------------
+    # Risk-level distribution
+    # ---------------------------------------------------------
+
+    risk_query = db.query(
+        Report.risk_level,
+        func.count(Report.id),
+    )
+
+    if period_start is not None:
+        risk_query = risk_query.filter(
+            Report.created_at >= period_start
+        )
+
+    risk_rows = (
+        risk_query
+        .group_by(Report.risk_level)
+        .all()
+    )
+
+    risk_distribution = {
+        "low": 0,
+        "medium": 0,
+        "high": 0,
+        "critical": 0,
+    }
+
+    for risk_level, count in risk_rows:
+        if risk_level in risk_distribution:
+            risk_distribution[risk_level] = count
+
+    # ---------------------------------------------------------
+    # Latest AI assessment per report
+    # ---------------------------------------------------------
+    #
+    # Use one subquery to identify the newest AI analysis ID
+    # for each report, avoiding an N+1 query pattern.
+    # ---------------------------------------------------------
+
+    latest_ai_subquery = (
+        db.query(
+            ReportAIAnalysis.report_id.label(
+                "report_id"
+            ),
+            func.max(
+                ReportAIAnalysis.id
+            ).label(
+                "latest_analysis_id"
+            ),
+        )
+        .group_by(
+            ReportAIAnalysis.report_id
+        )
+        .subquery()
+    )
+
+    # ---------------------------------------------------------
+    # Urgent pending reports
+    # ---------------------------------------------------------
+
+    pending_query = (
+        db.query(
+            Report,
+            ReportAIAnalysis,
+        )
+        .outerjoin(
+            latest_ai_subquery,
+            latest_ai_subquery.c.report_id
+            == Report.id,
+        )
+        .outerjoin(
+            ReportAIAnalysis,
+            ReportAIAnalysis.id
+            == latest_ai_subquery.c.latest_analysis_id,
+        )
+        .filter(
+            Report.review_status == "pending"
+        )
+    )
+
+    if period_start is not None:
+        pending_query = pending_query.filter(
+            Report.created_at >= period_start
+        )
+
+    pending_rows = pending_query.all()
+
+    urgent_pending = 0
+
+    for report, ai_analysis in pending_rows:
+        ai_level = (
+            ai_analysis.level
+            if ai_analysis is not None
+            else None
+        )
+
+        ai_score = (
+            normalize_score(
+                ai_analysis.score
+            )
+            if ai_analysis is not None
+            else None
+        )
+
+        queue_priority = determine_queue_priority(
+            risk_level=report.risk_level,
+            risk_score=normalize_score(
+                report.risk_score
+            ),
+            ai_level=ai_level,
+            ai_score=ai_score,
+        )
+
+        if queue_priority.priority == "urgent":
+            urgent_pending += 1
+
+    # ---------------------------------------------------------
+    # Response
+    # ---------------------------------------------------------
+
+    return {
+        "total_reports": total_reports,
+        "pending": review_status_counts["pending"],
+        "under_review": (
+            review_status_counts["under_review"]
+        ),
+        "reviewed": (
+            review_status_counts["reviewed"]
+        ),
+        "confirmed": (
+            review_status_counts["confirmed"]
+        ),
+        "dismissed": (
+            review_status_counts["dismissed"]
+        ),
+        "escalated": (
+            review_status_counts["escalated"]
+        ),
+        "risk_distribution": risk_distribution,
+        "urgent_pending": urgent_pending,
     }
 
 

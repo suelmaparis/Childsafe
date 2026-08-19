@@ -698,15 +698,15 @@ def test_report_creation_rolls_back_on_database_failure(
     # object registered by the route.
     from app.main import app
 
+    previous_override = app.dependency_overrides.get(
+    original_get_db
+    )
+
     app.dependency_overrides[
         original_get_db
     ] = failing_get_db
 
     try:
-        # -----------------------------------------------------
-        # Attempt report creation
-        # -----------------------------------------------------
-
         response = client.post(
             "/reports/",
             json={
@@ -726,7 +726,6 @@ def test_report_creation_rolls_back_on_database_failure(
             },
         )
 
-        # The endpoint should report a persistence failure.
         assert response.status_code == 500
 
         assert response.json() == {
@@ -734,13 +733,17 @@ def test_report_creation_rolls_back_on_database_failure(
         }
 
     finally:
-        # Remove our temporary override even if an assertion
-        # fails.
-        app.dependency_overrides.pop(
-            original_get_db,
-            None,
-        )
-
+        # Restore the test database dependency override
+        # instead of deleting it.
+        if previous_override is not None:
+            app.dependency_overrides[
+                original_get_db
+            ] = previous_override
+        else:
+            app.dependency_overrides.pop(
+                original_get_db,
+                None,
+            )
     # ---------------------------------------------------------
     # Verify rollback
     # ---------------------------------------------------------
@@ -1655,3 +1658,192 @@ def test_audit_logs_reject_limit_above_100(
     assert response.json() == {
         "detail": "limit must be between 1 and 100."
     }
+
+def test_regular_reviewer_cannot_access_admin_metrics(
+    client,
+    auth_headers,
+):
+    response = client.get(
+        "/reports/admin/metrics",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 403
+
+    assert response.json() == {
+        "detail": "Insufficient permissions."
+    }
+
+
+def test_admin_can_access_admin_metrics(
+    client,
+    admin_auth_headers,
+):
+    response = client.get(
+        "/reports/admin/metrics",
+        headers=admin_auth_headers,
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert "total_reports" in data
+    assert "risk_distribution" in data
+    assert "urgent_pending" in data
+
+
+def test_senior_reviewer_can_access_admin_metrics(
+    client,
+    db_session,
+):
+    from app.models.reviewer import Reviewer
+    from app.services.auth import hash_password
+
+    senior = Reviewer(
+        username="test_senior",
+        password_hash=hash_password(
+            "SeniorPassword123!"
+        ),
+        role="senior_reviewer",
+        is_active=True,
+    )
+
+    db_session.add(senior)
+    db_session.commit()
+    db_session.refresh(senior)
+
+    response = client.post(
+        "/auth/login",
+        data={
+            "username": "test_senior",
+            "password": "SeniorPassword123!",
+        },
+    )
+
+    assert response.status_code == 200
+
+    token = response.json()["access_token"]
+
+    response = client.get(
+        "/reports/admin/metrics",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+    )
+
+    assert response.status_code == 200
+
+
+def test_admin_metrics_count_reports_correctly(
+    client,
+    monkeypatch,
+    admin_auth_headers,
+):
+    from app.services.ai_risk_assessment import AIRiskAssessment
+
+    def fake_ai_assessment(
+        reason: str,
+        description: str,
+    ):
+        return AIRiskAssessment(
+            level="medium",
+            score=20,
+            reasons=[
+                "Test assessment.",
+            ],
+        )
+
+    monkeypatch.setattr(
+        "app.api.reports.assess_risk_with_ai",
+        fake_ai_assessment,
+    )
+
+    # Create two medium-risk reports.
+    for index in range(2):
+        response = client.post(
+            "/reports/",
+            json={
+                "platform": "Instagram",
+                "url": (
+                    f"https://example.com/"
+                    f"metrics-{index}"
+                ),
+                "reason": "potential_child_exposure",
+                "description": (
+                    "Metrics test report."
+                ),
+            },
+        )
+
+        assert response.status_code == 200
+
+    response = client.get(
+        "/reports/admin/metrics",
+        headers=admin_auth_headers,
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total_reports"] == 2
+    assert data["pending"] == 2
+
+    assert (
+        data["risk_distribution"]["medium"]
+        == 2
+    )
+
+
+def test_admin_metrics_count_urgent_pending_correctly(
+    client,
+    monkeypatch,
+    admin_auth_headers,
+):
+    from app.services.ai_risk_assessment import AIRiskAssessment
+
+    def fake_ai_assessment(
+        reason: str,
+        description: str,
+    ):
+        return AIRiskAssessment(
+            level="high",
+            score=75,
+            reasons=[
+                "Significant AI risk signal.",
+            ],
+        )
+
+    monkeypatch.setattr(
+        "app.api.reports.assess_risk_with_ai",
+        fake_ai_assessment,
+    )
+
+    response = client.post(
+        "/reports/",
+        json={
+            "platform": "Instagram",
+            "url": "https://example.com/urgent-metrics",
+            "reason": "potential_child_exposure",
+            "description": (
+                "A public post shows a child "
+                "and may reveal regular location information."
+            ),
+        },
+    )
+
+    assert response.status_code == 200
+
+    response = client.get(
+        "/reports/admin/metrics",
+        headers=admin_auth_headers,
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total_reports"] == 1
+    assert data["pending"] == 1
+    assert data["urgent_pending"] == 1
