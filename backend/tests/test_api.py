@@ -122,6 +122,7 @@ def test_create_report_when_ai_is_unavailable(
 def test_created_report_can_be_retrieved(
     client,
     monkeypatch,
+    auth_headers,
 ):
     """
     A newly created report should be persisted in the
@@ -163,8 +164,9 @@ def test_created_report_can_be_retrieved(
     )
 
     get_response = client.get(
-        f"/reports/{report_id}"
-    )
+        f"/reports/{report_id}",
+        headers=auth_headers,
+)
 
     assert get_response.status_code == 200
 
@@ -186,9 +188,13 @@ def test_created_report_can_be_retrieved(
     }
 
 
-def test_report_not_found_returns_404(client):
+def test_report_not_found_returns_404(
+    client,
+    auth_headers,
+):
     response = client.get(
-        "/reports/999999"
+        "/reports/999999",
+        headers=auth_headers,
     )
 
     assert response.status_code == 404
@@ -288,8 +294,9 @@ def test_complete_report_review_workflow(
     # ---------------------------------------------------------
 
     response = client.get(
-        "/reports/review-queue"
-    )
+        "/reports/review-queue",
+        headers=auth_headers,
+)
 
     assert response.status_code == 200
 
@@ -333,7 +340,9 @@ def test_complete_report_review_workflow(
 
     # Verify failed transition did not change the report.
     response = client.get(
-        f"/reports/{report_id}"
+        f"/reports/{report_id}",
+        headers=auth_headers,
+
     )
 
     assert response.status_code == 200
@@ -432,9 +441,9 @@ def test_complete_report_review_workflow(
     # ---------------------------------------------------------
     # 8. Review history
     # ---------------------------------------------------------
-
     response = client.get(
-        f"/reports/{report_id}/reviews"
+        f"/reports/{report_id}/reviews",
+        headers=auth_headers,
     )
 
     assert response.status_code == 200
@@ -458,8 +467,9 @@ def test_complete_report_review_workflow(
     # ---------------------------------------------------------
 
     response = client.get(
-        "/reports/review-queue"
-    )
+    "/reports/review-queue",
+    headers=auth_headers,
+)
 
     assert response.status_code == 200
 
@@ -476,9 +486,9 @@ def test_complete_report_review_workflow(
     # ---------------------------------------------------------
 
     response = client.get(
-        f"/reports/{report_id}/audit"
-    )
-
+        f"/reports/{report_id}/audit",
+        headers=auth_headers,
+)
     assert response.status_code == 200
 
     audit = response.json()
@@ -882,8 +892,9 @@ def test_authenticated_reviewer_identity_is_saved_from_token(
     assert response.status_code == 200
 
     response = client.get(
-        f"/reports/{report_id}/reviews"
-    )
+        f"/reports/{report_id}/reviews",
+        headers=auth_headers,
+        )
 
     assert response.status_code == 200
 
@@ -1847,3 +1858,794 @@ def test_admin_metrics_count_urgent_pending_correctly(
     assert data["total_reports"] == 1
     assert data["pending"] == 1
     assert data["urgent_pending"] == 1
+
+from datetime import datetime, timedelta, timezone
+
+
+def test_admin_metrics_days_filters_old_reports(
+    client,
+    monkeypatch,
+    admin_auth_headers,
+    db_session,
+):
+    from app.models.report import Report
+    from app.services.ai_risk_assessment import AIRiskAssessment
+
+    def fake_ai_assessment(
+        reason: str,
+        description: str,
+    ):
+        return AIRiskAssessment(
+            level="medium",
+            score=20,
+            reasons=["Test assessment."],
+        )
+
+    monkeypatch.setattr(
+        "app.api.reports.assess_risk_with_ai",
+        fake_ai_assessment,
+    )
+
+    # Recent report.
+    response = client.post(
+        "/reports/",
+        json={
+            "platform": "Instagram",
+            "url": "https://example.com/recent-report",
+            "reason": "potential_child_exposure",
+            "description": "Recent metrics report.",
+        },
+    )
+
+    assert response.status_code == 200
+
+    # Old report.
+    response = client.post(
+        "/reports/",
+        json={
+            "platform": "Instagram",
+            "url": "https://example.com/old-report",
+            "reason": "potential_child_exposure",
+            "description": "Old metrics report.",
+        },
+    )
+
+    assert response.status_code == 200
+
+    old_report_id = int(
+        response.json()["report_id"].replace(
+            "CV-",
+            "",
+        )
+    )
+
+    old_report = db_session.get(
+        Report,
+        old_report_id,
+    )
+
+    old_report.created_at = (
+        datetime.now(timezone.utc)
+        - timedelta(days=30)
+    )
+
+    db_session.commit()
+
+    response = client.get(
+        "/reports/admin/metrics",
+        headers=admin_auth_headers,
+        params={"days": 7},
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total_reports"] == 1
+    assert data["pending"] == 1
+    assert data["risk_distribution"]["medium"] == 1
+
+
+def test_admin_metrics_without_days_includes_all_reports(
+    client,
+    monkeypatch,
+    admin_auth_headers,
+    db_session,
+):
+    from app.models.report import Report
+    from app.services.ai_risk_assessment import AIRiskAssessment
+
+    def fake_ai_assessment(
+        reason: str,
+        description: str,
+    ):
+        return AIRiskAssessment(
+            level="medium",
+            score=20,
+            reasons=["Test assessment."],
+        )
+
+    monkeypatch.setattr(
+        "app.api.reports.assess_risk_with_ai",
+        fake_ai_assessment,
+    )
+
+    for index in range(2):
+        response = client.post(
+            "/reports/",
+            json={
+                "platform": "Instagram",
+                "url": f"https://example.com/all-{index}",
+                "reason": "potential_child_exposure",
+                "description": "Metrics all-period test.",
+            },
+        )
+
+        assert response.status_code == 200
+
+    first_report = (
+        db_session.query(Report)
+        .order_by(Report.id.asc())
+        .first()
+    )
+
+    first_report.created_at = (
+        datetime.now(timezone.utc)
+        - timedelta(days=60)
+    )
+
+    db_session.commit()
+
+    response = client.get(
+        "/reports/admin/metrics",
+        headers=admin_auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["total_reports"] == 2
+
+
+def test_admin_metrics_reject_days_below_one(
+    client,
+    admin_auth_headers,
+):
+    response = client.get(
+        "/reports/admin/metrics",
+        headers=admin_auth_headers,
+        params={"days": 0},
+    )
+
+    assert response.status_code == 422
+
+    assert response.json() == {
+        "detail": "days must be between 1 and 365."
+    }
+
+
+def test_admin_metrics_reject_days_above_365(
+    client,
+    admin_auth_headers,
+):
+    response = client.get(
+        "/reports/admin/metrics",
+        headers=admin_auth_headers,
+        params={"days": 366},
+    )
+
+    assert response.status_code == 422
+
+    assert response.json() == {
+        "detail": "days must be between 1 and 365."
+    }
+def test_admin_metrics_calculates_outcome_rates(
+    client,
+    monkeypatch,
+    admin_auth_headers,
+):
+    from app.services.ai_risk_assessment import AIRiskAssessment
+
+    def fake_ai_assessment(
+        reason: str,
+        description: str,
+    ):
+        return AIRiskAssessment(
+            level="medium",
+            score=20,
+            reasons=["Test assessment."],
+        )
+
+    monkeypatch.setattr(
+        "app.api.reports.assess_risk_with_ai",
+        fake_ai_assessment,
+    )
+
+    # Create four reports.
+    report_ids = []
+
+    for index in range(4):
+        response = client.post(
+            "/reports/",
+            json={
+                "platform": "Instagram",
+                "url": (
+                    f"https://example.com/"
+                    f"outcome-rate-{index}"
+                ),
+                "reason": "potential_child_exposure",
+                "description": "Outcome rate test.",
+            },
+        )
+
+        assert response.status_code == 200
+
+        report_ids.append(
+            int(
+                response.json()["report_id"]
+                .replace("CV-", "")
+            )
+        )
+
+    # Move first report through the valid workflow
+    # until confirmed.
+    for new_status in (
+        "under_review",
+        "reviewed",
+        "confirmed",
+    ):
+        response = client.patch(
+            f"/reports/{report_ids[0]}/review",
+            headers=admin_auth_headers,
+            json={
+                "new_status": new_status,
+                "decision": (
+                    f"test_{new_status}"
+                ),
+                "notes": "Outcome rate test.",
+            },
+        )
+
+        assert response.status_code == 200
+
+    # Move second report through the valid workflow
+    # until escalated.
+    #
+    # If your state machine does not allow "escalated"
+    # from reviewed, this assertion will tell us and
+    # we'll adapt the test to the actual workflow.
+    for new_status in (
+        "under_review",
+        "reviewed",
+        "escalated",
+    ):
+        response = client.patch(
+            f"/reports/{report_ids[1]}/review",
+            headers=admin_auth_headers,
+            json={
+                "new_status": new_status,
+                "decision": (
+                    f"test_{new_status}"
+                ),
+                "notes": "Outcome rate test.",
+            },
+        )
+
+        assert response.status_code == 200
+
+    response = client.get(
+        "/reports/admin/metrics",
+        headers=admin_auth_headers,
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total_reports"] == 4
+    assert data["confirmed"] == 1
+    assert data["escalated"] == 1
+
+    assert data["confirmation_rate"] == 25.0
+    assert data["escalation_rate"] == 25.0
+
+
+def test_admin_metrics_rates_are_zero_without_reports(
+    client,
+    admin_auth_headers,
+):
+    response = client.get(
+        "/reports/admin/metrics",
+        headers=admin_auth_headers,
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total_reports"] == 0
+    assert data["confirmation_rate"] == 0.0
+    assert data["escalation_rate"] == 0.0
+
+
+def test_admin_metrics_rates_respect_days_filter(
+    client,
+    monkeypatch,
+    admin_auth_headers,
+    db_session,
+):
+    from datetime import datetime, timedelta, timezone
+
+    from app.models.report import Report
+    from app.services.ai_risk_assessment import AIRiskAssessment
+
+    def fake_ai_assessment(
+        reason: str,
+        description: str,
+    ):
+        return AIRiskAssessment(
+            level="medium",
+            score=20,
+            reasons=["Test assessment."],
+        )
+
+    monkeypatch.setattr(
+        "app.api.reports.assess_risk_with_ai",
+        fake_ai_assessment,
+    )
+
+    # Create two reports.
+    report_ids = []
+
+    for index in range(2):
+        response = client.post(
+            "/reports/",
+            json={
+                "platform": "Instagram",
+                "url": (
+                    f"https://example.com/"
+                    f"rate-period-{index}"
+                ),
+                "reason": "potential_child_exposure",
+                "description": "Rate period test.",
+            },
+        )
+
+        assert response.status_code == 200
+
+        report_ids.append(
+            int(
+                response.json()["report_id"]
+                .replace("CV-", "")
+            )
+        )
+
+    # Confirm the first report.
+    for new_status in (
+        "under_review",
+        "reviewed",
+        "confirmed",
+    ):
+        response = client.patch(
+            f"/reports/{report_ids[0]}/review",
+            headers=admin_auth_headers,
+            json={
+                "new_status": new_status,
+                "decision": (
+                    f"test_{new_status}"
+                ),
+                "notes": "Rate period test.",
+            },
+        )
+
+        assert response.status_code == 200
+
+    # Make the confirmed report old.
+    old_report = db_session.get(
+        Report,
+        report_ids[0],
+    )
+
+    old_report.created_at = (
+        datetime.now(timezone.utc)
+        - timedelta(days=30)
+    )
+
+    db_session.commit()
+
+    # Only the recent pending report should now
+    # belong to the 7-day window.
+    response = client.get(
+        "/reports/admin/metrics",
+        headers=admin_auth_headers,
+        params={
+            "days": 7,
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total_reports"] == 1
+    assert data["confirmed"] == 0
+    assert data["confirmation_rate"] == 0.0
+    assert data["escalation_rate"] == 0.0
+def test_regular_reviewer_cannot_access_metrics_trend(
+    client,
+    auth_headers,
+):
+    response = client.get(
+        "/reports/admin/metrics/trend",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 403
+
+    assert response.json() == {
+        "detail": "Insufficient permissions."
+    }
+
+
+def test_metrics_trend_rejects_invalid_days(
+    client,
+    admin_auth_headers,
+):
+    response = client.get(
+        "/reports/admin/metrics/trend",
+        headers=admin_auth_headers,
+        params={"days": 0},
+    )
+
+    assert response.status_code == 422
+
+    assert response.json() == {
+        "detail": "days must be between 1 and 365."
+    }
+
+
+def test_metrics_trend_returns_requested_number_of_days(
+    client,
+    admin_auth_headers,
+):
+    response = client.get(
+        "/reports/admin/metrics/trend",
+        headers=admin_auth_headers,
+        params={"days": 7},
+    )
+
+    assert response.status_code == 200
+
+    trend = response.json()
+
+    assert len(trend) == 7
+
+    for item in trend:
+        assert set(item.keys()) == {
+            "date",
+            "created",
+            "confirmed",
+            "escalated",
+        }
+
+
+def test_metrics_trend_is_chronologically_ordered(
+    client,
+    admin_auth_headers,
+):
+    response = client.get(
+        "/reports/admin/metrics/trend",
+        headers=admin_auth_headers,
+        params={"days": 5},
+    )
+
+    assert response.status_code == 200
+
+    trend = response.json()
+
+    dates = [
+        item["date"]
+        for item in trend
+    ]
+
+    assert dates == sorted(dates)
+
+
+def test_metrics_trend_counts_reports_by_creation_date(
+    client,
+    monkeypatch,
+    admin_auth_headers,
+    db_session,
+):
+    from datetime import datetime, timedelta, timezone
+
+    from app.models.report import Report
+    from app.services.ai_risk_assessment import AIRiskAssessment
+
+    def fake_ai_assessment(
+        reason: str,
+        description: str,
+    ):
+        return AIRiskAssessment(
+            level="medium",
+            score=20,
+            reasons=["Trend test assessment."],
+        )
+
+    monkeypatch.setattr(
+        "app.api.reports.assess_risk_with_ai",
+        fake_ai_assessment,
+    )
+
+    report_ids = []
+
+    for index in range(2):
+        response = client.post(
+            "/reports/",
+            json={
+                "platform": "Instagram",
+                "url": (
+                    f"https://example.com/"
+                    f"trend-report-{index}"
+                ),
+                "reason": "potential_child_exposure",
+                "description": "Trend metrics test.",
+            },
+        )
+
+        assert response.status_code == 200
+
+        report_ids.append(
+            int(
+                response.json()["report_id"]
+                .replace("CV-", "")
+            )
+        )
+
+    # Move the first report to yesterday.
+    first_report = db_session.get(
+        Report,
+        report_ids[0],
+    )
+
+    first_report.created_at = (
+        datetime.now(timezone.utc)
+        - timedelta(days=1)
+    )
+
+    db_session.commit()
+
+    # Confirm the second report, which remains today.
+    for new_status in (
+        "under_review",
+        "reviewed",
+        "confirmed",
+    ):
+        response = client.patch(
+            f"/reports/{report_ids[1]}/review",
+            headers=admin_auth_headers,
+            json={
+                "new_status": new_status,
+                "decision": f"trend_{new_status}",
+                "notes": "Trend metrics test.",
+            },
+        )
+
+        assert response.status_code == 200
+
+    response = client.get(
+        "/reports/admin/metrics/trend",
+        headers=admin_auth_headers,
+        params={"days": 2},
+    )
+
+    assert response.status_code == 200
+
+    trend = response.json()
+
+    assert len(trend) == 2
+
+    yesterday = trend[0]
+    today = trend[1]
+
+    assert yesterday["created"] == 1
+    assert yesterday["confirmed"] == 0
+    assert yesterday["escalated"] == 0
+
+    assert today["created"] == 1
+    assert today["confirmed"] == 1
+    assert today["escalated"] == 0
+def test_regular_reviewer_cannot_access_review_trend(
+    client,
+    auth_headers,
+):
+    response = client.get(
+        "/reports/admin/review-trend",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 403
+
+    assert response.json() == {
+        "detail": "Insufficient permissions."
+    }
+
+
+def test_review_trend_rejects_invalid_days(
+    client,
+    admin_auth_headers,
+):
+    response = client.get(
+        "/reports/admin/review-trend",
+        headers=admin_auth_headers,
+        params={"days": 0},
+    )
+
+    assert response.status_code == 422
+
+    assert response.json() == {
+        "detail": "days must be between 1 and 365."
+    }
+
+
+def test_review_trend_returns_requested_number_of_days(
+    client,
+    admin_auth_headers,
+):
+    response = client.get(
+        "/reports/admin/review-trend",
+        headers=admin_auth_headers,
+        params={"days": 7},
+    )
+
+    assert response.status_code == 200
+
+    trend = response.json()
+
+    assert len(trend) == 7
+
+    for item in trend:
+        assert set(item.keys()) == {
+            "date",
+            "review_events",
+            "confirmed",
+            "dismissed",
+            "escalated",
+        }
+
+
+def test_review_trend_is_chronologically_ordered(
+    client,
+    admin_auth_headers,
+):
+    response = client.get(
+        "/reports/admin/review-trend",
+        headers=admin_auth_headers,
+        params={"days": 5},
+    )
+
+    assert response.status_code == 200
+
+    trend = response.json()
+
+    dates = [
+        item["date"]
+        for item in trend
+    ]
+
+    assert dates == sorted(dates)
+
+
+def test_review_trend_counts_human_review_events(
+    client,
+    monkeypatch,
+    admin_auth_headers,
+    db_session,
+):
+    from datetime import datetime, timedelta, timezone
+
+    from app.models.report_review import ReportReview
+    from app.services.ai_risk_assessment import AIRiskAssessment
+
+    def fake_ai_assessment(
+        reason: str,
+        description: str,
+    ):
+        return AIRiskAssessment(
+            level="medium",
+            score=20,
+            reasons=["Review trend test."],
+        )
+
+    monkeypatch.setattr(
+        "app.api.reports.assess_risk_with_ai",
+        fake_ai_assessment,
+    )
+
+    # Create one report.
+    response = client.post(
+        "/reports/",
+        json={
+            "platform": "Instagram",
+            "url": "https://example.com/review-trend",
+            "reason": "potential_child_exposure",
+            "description": "Review trend test.",
+        },
+    )
+
+    assert response.status_code == 200
+
+    report_id = int(
+        response.json()["report_id"].replace(
+            "CV-",
+            "",
+        )
+    )
+
+    # Complete the valid review workflow.
+    for new_status in (
+        "under_review",
+        "reviewed",
+        "confirmed",
+    ):
+        response = client.patch(
+            f"/reports/{report_id}/review",
+            headers=admin_auth_headers,
+            json={
+                "new_status": new_status,
+                "decision": f"review_trend_{new_status}",
+                "notes": "Review trend test.",
+            },
+        )
+
+        assert response.status_code == 200
+
+    reviews = (
+        db_session.query(ReportReview)
+        .filter(
+            ReportReview.report_id == report_id
+        )
+        .order_by(ReportReview.id.asc())
+        .all()
+    )
+
+    assert len(reviews) == 3
+
+    # Move the first two workflow events to yesterday.
+    yesterday = (
+        datetime.now(timezone.utc)
+        - timedelta(days=1)
+    )
+
+    reviews[0].created_at = yesterday
+    reviews[1].created_at = yesterday
+
+    db_session.commit()
+
+    response = client.get(
+        "/reports/admin/review-trend",
+        headers=admin_auth_headers,
+        params={"days": 2},
+    )
+
+    assert response.status_code == 200
+
+    trend = response.json()
+
+    assert len(trend) == 2
+
+    yesterday_data = trend[0]
+    today_data = trend[1]
+
+    # Yesterday:
+    # pending -> under_review
+    # under_review -> reviewed
+    assert yesterday_data["review_events"] == 2
+    assert yesterday_data["confirmed"] == 0
+    assert yesterday_data["dismissed"] == 0
+    assert yesterday_data["escalated"] == 0
+
+    # Today:
+    # reviewed -> confirmed
+    assert today_data["review_events"] == 1
+    assert today_data["confirmed"] == 1
+    assert today_data["dismissed"] == 0
+    assert today_data["escalated"] == 0

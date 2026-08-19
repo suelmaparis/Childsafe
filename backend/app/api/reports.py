@@ -426,6 +426,13 @@ def list_reports(
 
 @router.get("/review-queue")
 def review_queue(
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "reviewer",
+            "senior_reviewer",
+            "admin",
+        )
+    ),
     db: Session = Depends(get_db),
 ):
     reports = (
@@ -728,6 +735,13 @@ def review_report(
 @router.get("/{report_id}/reviews")
 def get_report_reviews(
     report_id: int,
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "reviewer",
+            "senior_reviewer",
+            "admin",
+        )
+    ),
     db: Session = Depends(get_db),
 ):
     report = db.get(
@@ -781,6 +795,13 @@ def get_report_reviews(
 @router.get("/{report_id}/audit")
 def get_report_audit(
     report_id: int,
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "reviewer",
+            "senior_reviewer",
+            "admin",
+        )
+    ),
     db: Session = Depends(get_db),
 ):
     """
@@ -1287,6 +1308,43 @@ def get_admin_metrics(
 
         if queue_priority.priority == "urgent":
             urgent_pending += 1
+         # ---------------------------------------------------------
+    # Outcome rates
+    # ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # Outcome rates
+    # ---------------------------------------------------------
+
+    confirmed_reports = (
+        review_status_counts["confirmed"]
+    )
+
+    escalated_reports = (
+        review_status_counts["escalated"]
+    )
+
+    if total_reports > 0:
+        confirmation_rate = round(
+            (
+                confirmed_reports
+                / total_reports
+            )
+            * 100,
+            2,
+        )
+
+        escalation_rate = round(
+            (
+                escalated_reports
+                / total_reports
+            )
+            * 100,
+            2,
+        )
+
+    else:
+        confirmation_rate = 0.0
+        escalation_rate = 0.0
 
     # ---------------------------------------------------------
     # Response
@@ -1294,9 +1352,13 @@ def get_admin_metrics(
 
     return {
         "total_reports": total_reports,
-        "pending": review_status_counts["pending"],
+        "pending": (
+            review_status_counts["pending"]
+        ),
         "under_review": (
-            review_status_counts["under_review"]
+            review_status_counts[
+                "under_review"
+            ]
         ),
         "reviewed": (
             review_status_counts["reviewed"]
@@ -1310,11 +1372,234 @@ def get_admin_metrics(
         "escalated": (
             review_status_counts["escalated"]
         ),
-        "risk_distribution": risk_distribution,
+        "risk_distribution": (
+            risk_distribution
+        ),
         "urgent_pending": urgent_pending,
+        "confirmation_rate": (
+            confirmation_rate
+        ),
+        "escalation_rate": (
+            escalation_rate
+        ),
     }
+# ============================================================
+# ADMIN METRICS TREND
+# ============================================================
 
 
+@router.get("/admin/metrics/trend")
+def get_admin_metrics_trend(
+    days: int = 30,
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "admin",
+            "senior_reviewer",
+        )
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    Return a daily report trend for the ChildSafe dashboard.
+
+    Accessible only to administrators and senior reviewers.
+
+    The result includes every calendar day in the requested
+    period, including days with zero reports.
+    """
+
+    if days < 1 or days > 365:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "days must be between 1 and 365."
+            ),
+        )
+
+    now = datetime.now(timezone.utc)
+    today = now.date()
+
+    start_date = (
+        today
+        - timedelta(days=days - 1)
+    )
+
+    period_start = datetime.combine(
+        start_date,
+        datetime.min.time(),
+        tzinfo=timezone.utc,
+    )
+
+    # ---------------------------------------------------------
+    # Reports created during the period
+    # ---------------------------------------------------------
+
+    reports = (
+        db.query(Report)
+        .filter(
+            Report.created_at >= period_start
+        )
+        .all()
+    )
+
+    # ---------------------------------------------------------
+    # Initialize every day with zero values
+    # ---------------------------------------------------------
+
+    daily_metrics = {}
+
+    for day_offset in range(days):
+        current_date = (
+            start_date
+            + timedelta(days=day_offset)
+        )
+
+        daily_metrics[current_date] = {
+            "date": current_date.isoformat(),
+            "created": 0,
+            "confirmed": 0,
+            "escalated": 0,
+        }
+
+    # ---------------------------------------------------------
+    # Aggregate reports by creation date
+    # ---------------------------------------------------------
+
+    for report in reports:
+        report_date = report.created_at.date()
+
+        if report_date not in daily_metrics:
+            continue
+
+        daily_metrics[
+            report_date
+        ]["created"] += 1
+
+        if report.review_status == "confirmed":
+            daily_metrics[
+                report_date
+            ]["confirmed"] += 1
+
+        if report.review_status == "escalated":
+            daily_metrics[
+                report_date
+            ]["escalated"] += 1
+
+    return list(
+        daily_metrics.values()
+    )
+# ============================================================
+# ADMIN REVIEW TREND
+# ============================================================
+
+
+@router.get("/admin/review-trend")
+def get_admin_review_trend(
+    days: int = 30,
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "admin",
+            "senior_reviewer",
+        )
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    Return daily human-review decision activity.
+
+    Unlike /admin/metrics/trend, which groups reports by
+    report creation date, this endpoint groups review events
+    by the date on which the human decision was recorded.
+
+    Accessible only to administrators and senior reviewers.
+    """
+
+    if days < 1 or days > 365:
+        raise HTTPException(
+            status_code=422,
+            detail="days must be between 1 and 365.",
+        )
+
+    now = datetime.now(timezone.utc)
+    today = now.date()
+
+    start_date = (
+        today
+        - timedelta(days=days - 1)
+    )
+
+    period_start = datetime.combine(
+        start_date,
+        datetime.min.time(),
+        tzinfo=timezone.utc,
+    )
+
+    # ---------------------------------------------------------
+    # Review events in requested period
+    # ---------------------------------------------------------
+
+    review_events = (
+        db.query(ReportReview)
+        .filter(
+            ReportReview.created_at >= period_start
+        )
+        .all()
+    )
+
+    # ---------------------------------------------------------
+    # Initialize every calendar day
+    # ---------------------------------------------------------
+
+    daily_metrics = {}
+
+    for day_offset in range(days):
+        current_date = (
+            start_date
+            + timedelta(days=day_offset)
+        )
+
+        daily_metrics[current_date] = {
+            "date": current_date.isoformat(),
+            "review_events": 0,
+            "confirmed": 0,
+            "dismissed": 0,
+            "escalated": 0,
+        }
+
+    # ---------------------------------------------------------
+    # Aggregate human-review events
+    # ---------------------------------------------------------
+
+    for review in review_events:
+        review_date = (
+            review.created_at.date()
+        )
+
+        if review_date not in daily_metrics:
+            continue
+
+        daily_metrics[
+            review_date
+        ]["review_events"] += 1
+
+        if review.new_status == "confirmed":
+            daily_metrics[
+                review_date
+            ]["confirmed"] += 1
+
+        elif review.new_status == "dismissed":
+            daily_metrics[
+                review_date
+            ]["dismissed"] += 1
+
+        elif review.new_status == "escalated":
+            daily_metrics[
+                review_date
+            ]["escalated"] += 1
+
+    return list(
+        daily_metrics.values()
+    )
 # ============================================================
 # GET SINGLE REPORT
 # ============================================================
@@ -1323,6 +1608,13 @@ def get_admin_metrics(
 @router.get("/{report_id}")
 def get_report(
     report_id: int,
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "reviewer",
+            "senior_reviewer",
+            "admin",
+        )
+    ),
     db: Session = Depends(get_db),
 ):
     report = db.get(
