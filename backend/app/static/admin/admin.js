@@ -354,6 +354,82 @@ function getNumericReportId(reportId) {
 
     return Number(match[1]);
 }
+function getAllowedNextStatuses(currentStatus) {
+    const transitions = {
+        pending: [
+            "under_review",
+        ],
+
+        under_review: [
+            "reviewed",
+        ],
+
+        reviewed: [
+            "confirmed",
+            "dismissed",
+            "escalated",
+        ],
+
+        confirmed: [],
+        dismissed: [],
+        escalated: [],
+    };
+
+    return transitions[currentStatus] || [];
+}
+function updateStatusOptions(currentStatus) {
+    const select = document.getElementById(
+        "review-new-status"
+    );
+
+    const allowedStatuses =
+        getAllowedNextStatuses(currentStatus);
+
+    select.innerHTML = "";
+
+    if (!allowedStatuses.length) {
+        const option = document.createElement(
+            "option"
+        );
+
+        option.value = "";
+        option.textContent = "No further action";
+
+        select.appendChild(option);
+        select.disabled = true;
+
+        return;
+    }
+
+    select.disabled = false;
+
+    const placeholder = document.createElement(
+        "option"
+    );
+
+    placeholder.value = "";
+    placeholder.textContent = "Select status";
+    placeholder.disabled = true;
+    placeholder.selected = true;
+
+    select.appendChild(placeholder);
+
+    allowedStatuses.forEach(status => {
+        const option = document.createElement(
+            "option"
+        );
+
+        option.value = status;
+
+        option.textContent = status
+            .replaceAll("_", " ")
+            .replace(/\b\w/g, letter =>
+                letter.toUpperCase()
+            );
+
+        select.appendChild(option);
+    });
+}
 async function openReport(reportId) {
     selectedReportId = reportId;
     const numericReportId =
@@ -429,7 +505,8 @@ async function openReport(reportId) {
     const currentStatus = (
         data.review?.current_status || "unknown"
     );
-    
+   
+
     const statusElement = document.getElementById(
         "review-current-status"
     );
@@ -497,6 +574,8 @@ async function openReport(reportId) {
         "review-form"
     ).reset();
 
+    updateStatusOptions(currentStatus);
+    
     document.getElementById(
         "review-message"
     ).textContent = "";
