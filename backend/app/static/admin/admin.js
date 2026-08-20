@@ -10,6 +10,7 @@ const periodFilter = document.getElementById("period-filter");
 
 let accessToken = sessionStorage.getItem("childsafe_access_token");
 let currentUser = null;
+let selectedReportId = null;
 
 
 function authHeaders() {
@@ -329,13 +330,283 @@ async function loadReviewTrend() {
     );
 }
 
+function escapeHtml(value) {
+    if (value === null || value === undefined) {
+        return "";
+    }
 
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function getNumericReportId(reportId) {
+    const match = String(reportId).match(/^CV-(\d+)$/);
+
+    if (!match) {
+        throw new Error(
+            `Invalid report ID: ${reportId}`
+        );
+    }
+
+    return Number(match[1]);
+}
+async function openReport(reportId) {
+    selectedReportId = reportId;
+    const numericReportId =
+    getNumericReportId(reportId);
+
+    console.log(
+        "Opening report:",
+        reportId
+    );
+
+    const panel = document.getElementById(
+        "report-review-panel"
+    );
+
+    const response = await apiFetch(
+        `/reports/${numericReportId}/audit`
+    );
+
+    if (!response.ok) {
+        const errorText = await response.text();
+
+        console.error(
+            "Unable to load report audit:",
+            response.status,
+            errorText
+        );
+
+        throw new Error(
+            `Unable to load report ${reportId}.`
+        );
+    }
+
+    const data = await response.json();
+
+    console.log(
+        "Report audit loaded:",
+        data
+    );
+
+    document.getElementById(
+        "selected-report-id"
+    ).textContent = reportId;
+
+    document.getElementById(
+        "review-platform"
+    ).textContent = (
+        data.report?.platform || "—"
+    );
+
+    document.getElementById(
+        "review-risk-level"
+    ).textContent = (
+        data.deterministic_assessment?.level || "—"
+    );
+
+    const riskLevel = (
+        data.deterministic_assessment?.level || "unknown"
+    );
+    
+    const riskElement = document.getElementById(
+        "review-risk-level"
+    );
+    
+    riskElement.textContent = riskLevel
+        .replaceAll("_", " ")
+        .toUpperCase();
+    
+    riskElement.className = (
+        `status-badge risk-${riskLevel}`
+    );
+    
+    
+    const currentStatus = (
+        data.review?.current_status || "unknown"
+    );
+    
+    const statusElement = document.getElementById(
+        "review-current-status"
+    );
+    
+    statusElement.textContent = currentStatus
+        .replaceAll("_", " ")
+        .toUpperCase();
+    
+    statusElement.className = (
+        `status-badge status-${currentStatus}`
+    );
+
+    document.getElementById(
+        "review-reason"
+    ).textContent = (
+        data.report?.reason || "—"
+    );
+
+    document.getElementById(
+        "review-description"
+    ).textContent = (
+        data.report?.description || "—"
+    );
+
+    const reportUrl = document.getElementById(
+        "review-url"
+    );
+
+    if (data.report?.url) {
+        reportUrl.href = data.report.url;
+        reportUrl.textContent = "Open reported content";
+    } else {
+        reportUrl.href = "#";
+        reportUrl.textContent = "No URL available";
+    }
+
+    renderTable(
+        "report-review-history",
+        [
+            {
+                key: "previous_status",
+                label: "Previous",
+            },
+            {
+                key: "new_status",
+                label: "New status",
+            },
+            {
+                key: "decision",
+                label: "Decision",
+            },
+            {
+                key: "reviewer",
+                label: "Reviewer",
+            },
+            {
+                key: "created_at",
+                label: "Created",
+            },
+        ],
+        data.review?.history || [],
+    );
+
+    document.getElementById(
+        "review-form"
+    ).reset();
+
+    document.getElementById(
+        "review-message"
+    ).textContent = "";
+
+    panel.classList.remove("hidden");
+
+    panel.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+    });
+}
+
+async function submitReview(
+    reportId,
+    newStatus,
+    decision,
+    notes,
+) {
+    const numericReportId =
+    getNumericReportId(reportId);
+    const response = await apiFetch(
+        `/reports/${numericReportId}/review`,
+        {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                new_status: newStatus,
+                decision,
+                notes,
+            }),
+        },
+    );
+
+    if (!response.ok) {
+        const errorData = await response.json();
+
+        const detail = errorData.detail;
+
+        if (typeof detail === "string") {
+            throw new Error(detail);
+        }
+
+        if (detail?.error) {
+            throw new Error(detail.error);
+        }
+
+        throw new Error(
+            "Unable to submit review."
+        );
+    }
+
+    return response.json();
+}
+
+
+async function loadReportHistory(reportId) {
+    const numericReportId =
+        getNumericReportId(reportId);
+
+    const response = await apiFetch(
+        `/reports/${numericReportId}/reviews`
+    );
+
+    // restante código igual
+
+    if (!response.ok) {
+        return;
+    }
+
+    const rows = await response.json();
+
+    renderTable(
+        "report-review-history",
+        [
+            {
+                key: "previous_status",
+                label: "Previous",
+            },
+            {
+                key: "new_status",
+                label: "New status",
+            },
+            {
+                key: "decision",
+                label: "Decision",
+            },
+            {
+                key: "reviewer",
+                label: "Reviewer",
+            },
+            {
+                key: "created_at",
+                label: "Created",
+            },
+        ],
+        rows,
+    );
+}
 async function loadReviewQueue() {
     const response = await apiFetch(
         "/reports/review-queue"
     );
 
     if (!response.ok) {
+        console.error(
+            "Unable to load review queue:",
+            response.status
+        );
         return;
     }
 
@@ -345,39 +616,73 @@ async function loadReviewQueue() {
         row => row.queue_priority === "urgent"
     );
 
-    renderTable(
-        "review-queue",
-        [
-            {
-                key: "report_id",
-                label: "Report",
-            },
-            {
-                key: "platform",
-                label: "Platform",
-            },
-            {
-                key: "risk_level",
-                label: "Risk",
-            },
-            {
-                key: "risk_score",
-                label: "Score",
-            },
-            {
-                key: "queue_priority_reason",
-                label: "Priority reason",
-            },
-            {
-                key: "created_at",
-                label: "Created",
-            },
-        ],
-        urgentRows,
+    const container = document.getElementById(
+        "review-queue"
     );
+
+    if (!urgentRows.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                No urgent reports awaiting review.
+            </div>
+        `;
+        return;
+    }
+
+    const rowsHtml = urgentRows
+        .map(row => `
+            <tr
+                class="review-queue-row"
+                data-report-id="${escapeHtml(row.report_id)}"
+            >
+                <td>
+                    <button
+                        type="button"
+                        class="report-link"
+                        data-report-id="${escapeHtml(row.report_id)}"
+                    >
+                        ${escapeHtml(row.report_id)}
+                    </button>
+                </td>
+
+                <td>${escapeHtml(row.platform)}</td>
+
+                <td>${escapeHtml(row.risk_level)}</td>
+
+                <td>${escapeHtml(row.risk_score)}</td>
+
+                <td>
+                    ${escapeHtml(
+                        row.queue_priority_reason
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(row.created_at)}
+                </td>
+            </tr>
+        `)
+        .join("");
+
+    container.innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Report</th>
+                    <th>Platform</th>
+                    <th>Risk</th>
+                    <th>Score</th>
+                    <th>Priority reason</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                ${rowsHtml}
+            </tbody>
+        </table>
+    `;
 }
-
-
 async function loadReviewers() {
     if (
         !currentUser
@@ -558,7 +863,106 @@ periodFilter.addEventListener(
         ]);
     }
 );
+document.getElementById(
+    "close-report-button"
+).addEventListener(
+    "click",
+    () => {
+        selectedReportId = null;
 
+        document.getElementById(
+            "report-review-panel"
+        ).classList.add("hidden");
+    },
+);
+
+
+document
+    .getElementById("review-queue")
+    .addEventListener(
+        "click",
+        async event => {
+            const button = event.target.closest(
+                ".report-link"
+            );
+
+            if (!button) {
+                return;
+            }
+
+            const reportId =
+                button.dataset.reportId;
+
+            console.log(
+                "Report clicked:",
+                reportId
+            );
+
+            try {
+                await openReport(reportId);
+            } catch (error) {
+                console.error(
+                    "Unable to open report:",
+                    error
+                );
+            }
+        },
+    );
+
+document.getElementById(
+    "review-form"
+).addEventListener(
+    "submit",
+    async event => {
+        event.preventDefault();
+
+        if (!selectedReportId) {
+            return;
+        }
+
+        const message = document.getElementById(
+            "review-message"
+        );
+
+        message.textContent = "";
+
+        const newStatus = document.getElementById(
+            "review-new-status"
+        ).value;
+
+        const decision = document.getElementById(
+            "review-decision"
+        ).value.trim();
+
+        const notes = document.getElementById(
+            "review-notes"
+        ).value.trim();
+
+        try {
+            await submitReview(
+                selectedReportId,
+                newStatus,
+                decision,
+                notes,
+            );
+
+            message.textContent = (
+                "Review submitted successfully."
+            );
+
+            await Promise.all([
+                openReport(selectedReportId),
+                loadReviewQueue(),
+                loadMetrics(),
+                loadReviewTrend(),
+                loadAuditLog(),
+            ]);
+
+        } catch (error) {
+            message.textContent = error.message;
+        }
+    },
+);
 
 if (accessToken) {
     showDashboard();

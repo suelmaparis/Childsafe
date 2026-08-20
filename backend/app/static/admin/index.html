@@ -197,6 +197,149 @@
                         class="table-wrapper"
                     ></div>
                 </section>
+                <section id="report-review-panel" class="panel hidden">
+            <div class="panel-header">
+                <div>
+                    <h2>Report review</h2>
+                    <p id="selected-report-id"></p>
+                </div>
+
+                <button
+                    id="close-report-button"
+                    type="button"
+                    class="secondary-button"
+                >
+                    Close
+                </button>
+            </div>
+
+            <div id="report-details">
+                <div class="review-details-grid">
+
+                    <div>
+                        <span>Platform</span>
+                        <strong id="review-platform">—</strong>
+                    </div>
+
+                    <div>
+                        <span>Risk level</span>
+                        <strong id="review-risk-level">—</strong>
+                    </div>
+
+                    <div>
+                        <span>Risk score</span>
+                        <strong id="review-risk-score">—</strong>
+                    </div>
+
+                    <div>
+                        <span>Current status</span>
+                        <strong id="review-current-status">—</strong>
+                    </div>
+
+                </div>
+
+                <div class="review-field">
+                    <span>Reason</span>
+                    <p id="review-reason">—</p>
+                </div>
+
+                <div class="review-field">
+                    <span>Description</span>
+                    <p id="review-description">—</p>
+                </div>
+
+                <div class="review-field">
+                    <span>Report URL</span>
+                    <a
+                        id="review-url"
+                        href="#"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Open reported content
+                    </a>
+                </div>
+            </div>
+
+            <div class="review-form-section">
+                <h3>Review action</h3>
+
+                <form id="review-form">
+
+                    <label>
+                        New status
+
+                        <select
+                            id="review-new-status"
+                            required
+                        >
+                            <option value="">
+                                Select status
+                            </option>
+
+                            <option value="under_review">
+                                Under review
+                            </option>
+
+                            <option value="reviewed">
+                                Reviewed
+                            </option>
+
+                            <option value="confirmed">
+                                Confirmed
+                            </option>
+
+                            <option value="dismissed">
+                                Dismissed
+                            </option>
+
+                            <option value="escalated">
+                                Escalated
+                            </option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Decision
+
+                        <input
+                            id="review-decision"
+                            type="text"
+                            required
+                        >
+                    </label>
+
+                    <label>
+                        Notes
+
+                        <textarea
+                            id="review-notes"
+                            rows="4"
+                            required
+                        ></textarea>
+                    </label>
+
+                    <button type="submit">
+                        Submit review
+                    </button>
+
+                    <p
+                        id="review-message"
+                        class="error-message"
+                    ></p>
+
+                </form>
+            </div>
+
+            <div class="review-history-section">
+                <h3>Review history</h3>
+
+                <div
+                    id="report-review-history"
+                    class="table-wrapper"
+                ></div>
+            </div>
+            </section>
 
                 <section
                     id="reviewers-panel"
