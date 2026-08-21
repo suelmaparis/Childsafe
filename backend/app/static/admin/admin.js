@@ -533,6 +533,72 @@ async function openReport(reportId) {
             ?.replaceAll("_", " ")
             || "—"
     );
+    const detectionSection = document.getElementById(
+        "automated-detection-section"
+    );
+    
+    const detection = data.detection || {};
+    
+    if (
+        data.report?.source_type === "automated_monitoring"
+        && detection.confidence !== null
+        && detection.confidence !== undefined
+    ) {
+        detectionSection.classList.remove(
+            "hidden"
+        );
+    
+        document.getElementById(
+            "review-detection-confidence"
+        ).textContent = (
+            `${Math.round(
+                detection.confidence * 100
+            )}%`
+        );
+    
+        document.getElementById(
+            "review-detection-source"
+        ).textContent = (
+            detection.source || "—"
+        );
+    
+        const signalsContainer =
+            document.getElementById(
+                "review-detection-signals"
+            );
+    
+        const signals = Array.isArray(
+            detection.signals
+        )
+            ? detection.signals
+            : [];
+    
+        if (!signals.length) {
+            signalsContainer.innerHTML = `
+                <span class="detection-empty">
+                    No detection signals available.
+                </span>
+            `;
+        } else {
+            signalsContainer.innerHTML = signals
+                .map(signal => `
+                    <span class="detection-chip">
+                        ${escapeHtml(
+                            signal.replaceAll(
+                                "_",
+                                " "
+                            )
+                        )}
+                    </span>
+                `)
+                .join("");
+        }
+    
+    } else {
+        detectionSection.classList.add(
+            "hidden"
+        );
+    }
     document.getElementById(
         "review-reason"
     ).textContent = (
@@ -884,6 +950,8 @@ async function loadDashboard() {
         loadReviewQueue(),
         loadReviewers(),
         loadAuditLog(),
+        loadMonitoringRuns(),
+        loadRecentReports(),
     ]);
 }
 
@@ -899,7 +967,250 @@ async function showDashboard() {
     }
 }
 
+async function loadMonitoringRuns() {
+    const response = await apiFetch(
+        "/monitoring/runs?limit=10"
+    );
 
+    if (!response.ok) {
+        console.error(
+            "Unable to load monitoring runs:",
+            response.status
+        );
+        return;
+    }
+
+    const runs = await response.json();
+
+    const lastRun = runs[0];
+
+    if (lastRun) {
+        document.getElementById(
+            "monitoring-last-run"
+        ).textContent = (
+            `#${lastRun.run_id}`
+        );
+
+        document.getElementById(
+            "monitoring-status"
+        ).textContent = (
+            lastRun.status || "—"
+        );
+
+        document.getElementById(
+            "monitoring-platform"
+        ).textContent = (
+            lastRun.platform || "—"
+        );
+
+        document.getElementById(
+            "monitoring-candidates"
+        ).textContent = (
+            lastRun.candidates_found ?? 0
+        );
+
+        document.getElementById(
+            "monitoring-relevant"
+        ).textContent = (
+            lastRun.candidates_relevant ?? 0
+        );
+
+        document.getElementById(
+            "monitoring-ignored"
+        ).textContent = (
+            lastRun.candidates_ignored ?? 0
+        );
+
+        document.getElementById(
+            "monitoring-created"
+        ).textContent = (
+            lastRun.reports_created ?? 0
+        );
+
+        document.getElementById(
+            "monitoring-duplicates"
+        ).textContent = (
+            lastRun.duplicates_skipped ?? 0
+        );
+
+        document.getElementById(
+            "monitoring-errors"
+        ).textContent = (
+            lastRun.errors_count ?? 0
+        );
+    }
+
+    renderTable(
+        "monitoring-runs",
+        [
+            {
+                key: "run_id",
+                label: "Run",
+            },
+            {
+                key: "platform",
+                label: "Platform",
+            },
+            {
+                key: "status",
+                label: "Status",
+            },
+            {
+                key: "candidates_found",
+                label: "Found",
+            },
+            {
+                key: "candidates_relevant",
+                label: "Relevant",
+            },
+            {
+                key: "candidates_ignored",
+                label: "Ignored",
+            },
+            {
+                key: "reports_created",
+                label: "Created",
+            },
+            {
+                key: "duplicates_skipped",
+                label: "Duplicates",
+            },
+            {
+                key: "errors_count",
+                label: "Errors",
+            },
+            {
+                key: "started_at",
+                label: "Started",
+            },
+        ],
+        runs,
+    );
+}
+
+async function loadRecentReports() {
+    const container = document.getElementById(
+        "recent-reports"
+    );
+
+    const response = await apiFetch(
+        "/reports/"
+    );
+
+    if (!response.ok) {
+        console.error(
+            "Unable to load recent reports:",
+            response.status
+        );
+
+        container.innerHTML = `
+            <div class="empty-state">
+                Unable to load reports.
+            </div>
+        `;
+
+        return;
+    }
+
+    const reports = await response.json();
+
+    const rows = reports.slice(0, 20);
+
+    if (!rows.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                No reports available.
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Report</th>
+                    <th>Platform</th>
+                    <th>Source</th>
+                    <th>Risk</th>
+                    <th>Score</th>
+                    <th>Review status</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                ${rows.map(report => {
+
+                    const source = (
+                        report.source_type
+                        || "unknown"
+                    )
+                        .replaceAll("_", " ");
+
+                    const status = (
+                        report.review_status
+                        || "unknown"
+                    )
+                        .replaceAll("_", " ");
+
+                    return `
+                        <tr>
+                            <td>
+                                <button
+                                    type="button"
+                                    class="report-link recent-report-link"
+                                    data-report-id="${escapeHtml(
+                                        report.report_id
+                                    )}"
+                                >
+                                    ${escapeHtml(
+                                        report.report_id
+                                    )}
+                                </button>
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    report.platform || "—"
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(source)}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    report.risk_level || "—"
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    String(
+                                        report.risk_score ?? "—"
+                                    )
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(status)}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    report.created_at || "—"
+                                )}
+                            </td>
+                        </tr>
+                    `;
+                }).join("")}
+            </tbody>
+        </table>
+    `;
+}
 loginForm.addEventListener(
     "submit",
     async event => {
@@ -1001,6 +1312,39 @@ document
             }
         },
     );
+    document
+    .getElementById("recent-reports")
+    .addEventListener(
+        "click",
+        async event => {
+            const button = event.target.closest(
+                ".recent-report-link"
+            );
+
+            if (!button) {
+                return;
+            }
+
+            const reportId =
+                button.dataset.reportId;
+
+            console.log(
+                "Recent report clicked:",
+                reportId
+            );
+
+            try {
+                await openReport(
+                    reportId
+                );
+            } catch (error) {
+                console.error(
+                    "Unable to open recent report:",
+                    error
+                );
+            }
+        },
+    );
 
 document.getElementById(
     "review-form"
@@ -1055,6 +1399,7 @@ document.getElementById(
             message.textContent = error.message;
         }
     },
+
 );
 
 if (accessToken) {

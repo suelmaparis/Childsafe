@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -11,3 +11,12 @@ class MonitoringCandidate:
 
     source_channel: str = "unknown_collector"
     source_reference: str | None = None
+
+    contains_child: bool | None = None
+    location_detected: bool | None = None
+    volunteer_context: bool | None = None
+    tourism_context: bool | None = None
+
+    metadata: dict = field(
+        default_factory=dict
+    )

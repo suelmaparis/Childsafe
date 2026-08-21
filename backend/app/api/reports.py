@@ -66,6 +66,10 @@ class ReportCreate(BaseModel):
     source_channel: str | None = None
     source_reference: str | None = None
 
+    detection_confidence: float | None = None
+    detection_signals: list[str] | None = None
+    detection_source: str | None = None
+
 class PublicReportCreate(BaseModel):
     platform: str
 
@@ -304,19 +308,33 @@ def create_report_record(
     # --------------------------------------------------------
 
     new_report = Report(
-        platform=report.platform,
-        url=report.url,
-        reason=report.reason,
-        description=report.description,
+    platform=report.platform,
+    url=report.url,
+    reason=report.reason,
+    description=report.description,
 
-        source_type=report.source_type,
-        source_channel=report.source_channel,
-        source_reference=report.source_reference,
+    source_type=report.source_type,
+    source_channel=report.source_channel,
+    source_reference=report.source_reference,
 
-        risk_level=assessment.level,
-        risk_score=assessment.score,
-        review_status="pending",
-    )
+    detection_confidence=(
+        report.detection_confidence
+    ),
+
+    detection_signals=(
+        json.dumps(report.detection_signals)
+        if report.detection_signals is not None
+        else None
+    ),
+
+    detection_source=(
+        report.detection_source
+    ),
+
+    risk_level=assessment.level,
+    risk_score=assessment.score,
+    review_status="pending",
+)
 
     db.add(new_report)
 
@@ -527,32 +545,37 @@ def list_reports(
     )
 
     return [
-        {
-            "report_id": (
-                f"CV-{report.id:06d}"
-            ),
-            "platform": report.platform,
-            "url": report.url,
-            "reason": report.reason,
-            "description": (
-                report.description
-            ),
-            "status": report.status,
-            "risk_level": (
-                report.risk_level
-            ),
-            "risk_score": (
-                report.risk_score
-            ),
-            "review_status": (
-                report.review_status
-            ),
-            "created_at": (
-                report.created_at
-            ),
-        }
-        for report in reports
-    ]
+    {
+        "report_id": (
+            f"CV-{report.id:06d}"
+        ),
+        "platform": report.platform,
+        "url": report.url,
+        "reason": report.reason,
+        "description": (
+            report.description
+        ),
+
+        "source_type": report.source_type,
+        "source_channel": report.source_channel,
+        "source_reference": report.source_reference,
+
+        "status": report.status,
+        "risk_level": (
+            report.risk_level
+        ),
+        "risk_score": (
+            report.risk_score
+        ),
+        "review_status": (
+            report.review_status
+        ),
+        "created_at": (
+            report.created_at
+        ),
+    }
+    for report in reports
+]
 
 
 # ============================================================
@@ -1184,6 +1207,19 @@ def get_report_audit(
             "status": report.status,
             "created_at": (
                 report.created_at
+            ),
+        },
+        "detection": {
+            "confidence": (
+                report.detection_confidence
+            ),
+            "signals": (
+                json.loads(report.detection_signals)
+                if report.detection_signals
+                else []
+            ),
+            "source": (
+                report.detection_source
             ),
         },
 

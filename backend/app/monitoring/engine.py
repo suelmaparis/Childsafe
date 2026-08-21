@@ -10,7 +10,9 @@ from app.models.report import Report
 from app.monitoring.candidate import (
     MonitoringCandidate,
 )
-
+from app.monitoring.detector import (
+    detect_candidate,
+)
 
 def process_candidate(
     candidate: MonitoringCandidate,
@@ -23,7 +25,22 @@ def process_candidate(
     Duplicate content is skipped when a report with
     the same platform and URL already exists.
     """
+    detection = detect_candidate(
+    candidate
+)
 
+    if not detection.relevant:
+        return {
+            "status": "ignored",
+            "message": (
+                "Monitoring candidate was not relevant "
+                "enough to create a report."
+            ),
+            "detection": {
+                "confidence": detection.confidence,
+                "signals": detection.signals,
+            },
+        }
     existing_report = None
 
     if candidate.source_reference:
@@ -58,14 +75,30 @@ def process_candidate(
             ),
     }
     report = ReportCreate(
-        platform=candidate.platform,
-        url=candidate.url,
-        reason=candidate.reason,
-        description=candidate.description,
-        source_type="automated_monitoring",
-        source_channel=candidate.source_channel,
-        source_reference=candidate.source_reference,
-    )
+            platform=candidate.platform,
+            url=candidate.url,
+            reason=(
+                detection.reason
+                or candidate.reason
+            ),
+            description=candidate.description,
+
+            source_type="automated_monitoring",
+            source_channel=candidate.source_channel,
+            source_reference=candidate.source_reference,
+
+            detection_confidence=(
+                detection.confidence
+            ),
+
+            detection_signals=(
+                detection.signals
+            ),
+
+            detection_source=(
+                "monitoring_detector_v1"
+            ),
+        )
 
     return create_report_record(
         report=report,

@@ -44,6 +44,19 @@ class Report(Base):
         String(255),
         nullable=True,
     )
+    detection_confidence: Mapped[float | None] = mapped_column(
+            nullable=True,
+        )
+
+    detection_signals: Mapped[str | None] = mapped_column(
+            Text,
+            nullable=True,
+        )
+
+    detection_source: Mapped[str | None] = mapped_column(
+            String(100),
+            nullable=True,
+        )
 
     status: Mapped[str] = mapped_column(
         String(30),

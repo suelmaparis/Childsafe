@@ -15,6 +15,9 @@ from app.api.reports import (
 )
 
 from app.core.init_db import init_db
+from app.api.monitoring import (
+    router as monitoring_router,
+)
 
 
 init_db()
@@ -28,6 +31,12 @@ app = FastAPI(
     version="0.1.0",
 )
 
+
+app.include_router(auth_router)
+
+app.include_router(reports_router)
+
+app.include_router(monitoring_router)
 
 app.state.limiter = limiter
 

@@ -141,7 +141,7 @@
                     <div class="panel-header">
                         <h2>Risk distribution</h2>
                     </div>
-
+                     
                     <div id="risk-distribution">
                         <div class="risk-row">
                             <span>Low</span>
@@ -164,7 +164,87 @@
                         </div>
                     </div>
                 </section>
-
+                <section class="panel">
+                    <div class="panel-header">
+                        <h2>Automated monitoring</h2>
+                    </div>
+                
+                    <div class="monitoring-summary-grid">
+                
+                        <article class="monitoring-stat">
+                            <span>Last run</span>
+                            <strong id="monitoring-last-run">
+                                —
+                            </strong>
+                        </article>
+                
+                        <article class="monitoring-stat">
+                            <span>Status</span>
+                            <strong id="monitoring-status">
+                                —
+                            </strong>
+                        </article>
+                
+                        <article class="monitoring-stat">
+                            <span>Platform</span>
+                            <strong id="monitoring-platform">
+                                —
+                            </strong>
+                        </article>
+                
+                        <article class="monitoring-stat">
+                            <span>Candidates</span>
+                            <strong id="monitoring-candidates">
+                                0
+                            </strong>
+                        </article>
+                
+                        <article class="monitoring-stat">
+                            <span>Relevant</span>
+                            <strong id="monitoring-relevant">
+                                0
+                            </strong>
+                        </article>
+                
+                        <article class="monitoring-stat">
+                            <span>Ignored</span>
+                            <strong id="monitoring-ignored">
+                                0
+                            </strong>
+                        </article>
+                
+                        <article class="monitoring-stat">
+                            <span>Reports created</span>
+                            <strong id="monitoring-created">
+                                0
+                            </strong>
+                        </article>
+                
+                        <article class="monitoring-stat">
+                            <span>Duplicates</span>
+                            <strong id="monitoring-duplicates">
+                                0
+                            </strong>
+                        </article>
+                
+                        <article class="monitoring-stat">
+                            <span>Errors</span>
+                            <strong id="monitoring-errors">
+                                0
+                            </strong>
+                        </article>
+                
+                    </div>
+                
+                    <div class="monitoring-runs-section">
+                        <h3>Recent monitoring runs</h3>
+                
+                        <div
+                            id="monitoring-runs"
+                            class="table-wrapper"
+                        ></div>
+                    </div>
+                </section>
                 <section class="panel">
                     <div class="panel-header">
                         <h2>Report trend</h2>
@@ -194,6 +274,16 @@
 
                     <div
                         id="review-queue"
+                        class="table-wrapper"
+                    ></div>
+                </section>
+                <section class="panel">
+                    <div class="panel-header">
+                        <h2>Recent reports</h2>
+                    </div>
+                
+                    <div
+                        id="recent-reports"
                         class="table-wrapper"
                     ></div>
                 </section>
@@ -245,7 +335,34 @@
                     </div>
 
                 </div>
-
+                <div
+                id="automated-detection-section"
+                class="review-field hidden"
+            >
+                <span>Automated detection</span>
+            
+                <div class="detection-summary">
+                    <div>
+                        <small>Confidence</small>
+                        <strong id="review-detection-confidence">
+                            —
+                        </strong>
+                    </div>
+            
+                    <div>
+                        <small>Detector</small>
+                        <strong id="review-detection-source">
+                            —
+                        </strong>
+                    </div>
+                </div>
+            
+                <div class="detection-signals">
+                    <small>Signals</small>
+            
+                    <div id="review-detection-signals"></div>
+                </div>
+            </div>
                 <div class="review-field">
                     <span>Reason</span>
                     <p id="review-reason">—</p>
