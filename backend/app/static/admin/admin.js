@@ -518,7 +518,21 @@ async function openReport(reportId) {
     statusElement.className = (
         `status-badge status-${currentStatus}`
     );
-
+    document.getElementById(
+        "review-source-type"
+    ).textContent = (
+        data.report?.source_type
+            ?.replaceAll("_", " ")
+            || "Unknown"
+    );
+    
+    document.getElementById(
+        "review-source-channel"
+    ).textContent = (
+        data.report?.source_channel
+            ?.replaceAll("_", " ")
+            || "—"
+    );
     document.getElementById(
         "review-reason"
     ).textContent = (

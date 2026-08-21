@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Report Child Safety Concern | ChildSafe</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/report/report.css"
+    >
+</head>
+
+<body>
+
+    <main class="public-report-page">
+
+        <section class="report-card">
+
+            <header class="report-hero">
+                <div class="language-switcher">
+                    <label
+                        for="language-select"
+                        data-i18n="languageLabel"
+                    >
+                        Language
+                    </label>
+                
+                    <select id="language-select">
+                        <option value="en">English</option>
+                        <option value="pt">Português</option>
+                        <option value="fr">Français</option>
+                        <option value="es">Español</option>
+                    </select>
+                </div>
+
+                <div class="brand">
+
+                    <div
+                        class="brand-logo"
+                        aria-hidden="true"
+                    >
+                        <svg
+                            viewBox="0 0 64 64"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                d="M32 5L52 13V28C52 42 43.5 53 32 59C20.5 53 12 42 12 28V13L32 5Z"
+                                fill="currentColor"
+                            />
+
+                            <path
+                                d="M24 31L29 36L40 24"
+                                fill="none"
+                                stroke="white"
+                                stroke-width="5"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+                        </svg>
+                    </div>
+
+                    <div>
+                        <h1>ChildSafe</h1>
+                        <p class="brand-subtitle">
+                            Digital Child Protection
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="hero-content">
+                    <span class="eyebrow">
+                        Public Reporting
+                    </span>
+
+                    <h2>
+                        Help protect a child online
+                    </h2>
+
+                    <p>
+                        Report public online content that may expose,
+                        identify or endanger a child.
+                    </p>
+                </div>
+
+            </header>
+
+
+            <section class="report-content">
+
+                <div class="privacy-banner">
+                    <div class="privacy-icon">
+                        ✓
+                    </div>
+
+                    <div>
+                        <strong>
+                            You can report anonymously
+                        </strong>
+
+                        <p>
+                            We do not ask for your name or email.
+                            Submit only the link to the public content
+                            and information needed to explain your concern.
+                        </p>
+                    </div>
+                </div>
+
+
+                <div class="warning-box">
+
+                    <strong>
+                        Protect the child while reporting
+                    </strong>
+
+                    <p>
+                        Do not download, screenshot, copy or upload
+                        images or videos of the child to ChildSafe.
+                        Please submit the original public link instead.
+                    </p>
+
+                </div>
+
+
+                <div class="emergency-note">
+
+                    <strong>
+                        Immediate danger?
+                    </strong>
+
+                    <p>
+                        If you believe a child is in immediate physical
+                        danger, contact the appropriate emergency or
+                        child-protection authorities in addition to
+                        submitting this report.
+                    </p>
+
+                </div>
+
+
+                <form id="public-report-form">
+
+                    <div class="form-section-heading">
+                        <span>Report details</span>
+
+                        <p>
+                            Tell us where you found the content and why
+                            you believe it may place a child at risk.
+                        </p>
+                    </div>
+
+
+                    <div class="form-grid">
+
+                        <label>
+                            <span class="field-label">
+                                Platform
+                            </span>
+
+                            <select
+                                id="platform"
+                                required
+                            >
+                                <option value="">
+                                    Select platform
+                                </option>
+
+                                <option value="Instagram">
+                                    Instagram
+                                </option>
+
+                                <option value="Facebook">
+                                    Facebook
+                                </option>
+
+                                <option value="TikTok">
+                                    TikTok
+                                </option>
+
+                                <option value="YouTube">
+                                    YouTube
+                                </option>
+
+                                <option value="X">
+                                    X
+                                </option>
+
+                                <option value="Other">
+                                    Other
+                                </option>
+                            </select>
+                        </label>
+
+
+                        <label>
+                            <span class="field-label">
+                                Why are you concerned?
+                            </span>
+
+                            <select
+                                id="reason"
+                                required
+                            >
+                                <option value="">
+                                    Select a reason
+                                </option>
+
+                                <option value="potential_child_exposure">
+                                    Child shown or exposed publicly
+                                </option>
+
+                                <option value="location_exposure">
+                                    Location, school or routine revealed
+                                </option>
+
+                                <option value="privacy_concern">
+                                    Child's personal information exposed
+                                </option>
+
+                                <option value="suspected_exploitation">
+                                    Possible exploitation or abuse
+                                </option>
+
+                                <option value="sexualized_content">
+                                    Sexualized or inappropriate content
+                                </option>
+
+                                <option value="other">
+                                    Other child-safety concern
+                                </option>
+                            </select>
+                        </label>
+
+                    </div>
+
+
+                    <label>
+                        <span class="field-label">
+                            Link to the public content
+                        </span>
+
+                        <span class="field-help">
+                            Paste the original post, photo or video URL.
+                        </span>
+
+                        <input
+                            id="url"
+                            type="url"
+                            placeholder="https://..."
+                            required
+                        >
+                    </label>
+
+
+                    <label>
+                        <span class="field-label">
+                            What did you notice?
+                        </span>
+
+                        <span class="field-help">
+                            Describe what concerns you. Do not include
+                            unnecessary personal information about the child.
+                        </span>
+
+                        <textarea
+                        id="description"
+                        rows="6"
+                        minlength="10"
+                        maxlength="2000"
+                        placeholder="Describe what you saw and why you are concerned."
+                        required
+                    ></textarea>
+
+                        <span class="character-note">
+                            Maximum 2,000 characters
+                        </span>
+                    </label>
+
+
+                    <div class="submission-note">
+                        <p>
+                            ChildSafe will assess the report and may
+                            prioritise it for human review based on
+                            child-safety risk indicators.
+                        </p>
+                    </div>
+
+
+                    <button
+                        id="submit-button"
+                        type="submit"
+                    >
+                        Submit child safety report
+                    </button>
+
+                    <p
+                        id="form-message"
+                        class="form-message"
+                        aria-live="polite"
+                    ></p>
+
+                </form>
+
+            </section>
+
+        </section>
+
+        <footer class="public-footer">
+            ChildSafe · Digital child protection and online safety
+        </footer>
+
+    </main>
+
+    <script src="/static/report/report.js"></script>
+</body>
+</html>

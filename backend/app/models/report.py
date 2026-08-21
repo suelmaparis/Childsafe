@@ -30,6 +30,21 @@ class Report(Base):
         Text,
     )
 
+    source_type: Mapped[str] = mapped_column(
+        String(50),
+        default="unknown",
+    )
+
+    source_channel: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    source_reference: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
     status: Mapped[str] = mapped_column(
         String(30),
         default="received",

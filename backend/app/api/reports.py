@@ -1,9 +1,21 @@
 import json
 
 from sqlalchemy import func
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+)
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+    field_validator,
+)
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from datetime import datetime, timedelta, timezone
 from app.core.database import SessionLocal
@@ -36,7 +48,9 @@ router = APIRouter(
     tags=["Reports"],
 )
 
-
+limiter = Limiter(
+    key_func=get_remote_address
+)
 # ============================================================
 # REQUEST MODELS
 # ============================================================
@@ -48,7 +62,84 @@ class ReportCreate(BaseModel):
     reason: str
     description: str
 
+    source_type: str = "unknown"
+    source_channel: str | None = None
+    source_reference: str | None = None
 
+class PublicReportCreate(BaseModel):
+    platform: str
+
+    url: HttpUrl
+
+    reason: str
+
+    description: str = Field(
+        min_length=10,
+        max_length=2000,
+    )
+
+    @field_validator("platform")
+    @classmethod
+    def validate_platform(
+        cls,
+        value: str,
+    ) -> str:
+        allowed_platforms = {
+            "Instagram",
+            "Facebook",
+            "TikTok",
+            "YouTube",
+            "X",
+            "Other",
+        }
+
+        value = value.strip()
+
+        if value not in allowed_platforms:
+            raise ValueError(
+                "Unsupported platform."
+            )
+
+        return value
+
+    @field_validator("reason")
+    @classmethod
+    def validate_reason(
+        cls,
+        value: str,
+    ) -> str:
+        allowed_reasons = {
+            "potential_child_exposure",
+            "location_exposure",
+            "privacy_concern",
+            "suspected_exploitation",
+            "sexualized_content",
+            "other",
+        }
+
+        value = value.strip()
+
+        if value not in allowed_reasons:
+            raise ValueError(
+                "Unsupported report reason."
+            )
+
+        return value
+
+    @field_validator("description")
+    @classmethod
+    def clean_description(
+        cls,
+        value: str,
+    ) -> str:
+        value = value.strip()
+
+        if not value:
+            raise ValueError(
+                "Description cannot be empty."
+            )
+
+        return value
 class ReportReviewCreate(BaseModel):
     new_status: str
     decision: str
@@ -143,11 +234,9 @@ def get_latest_ai_analysis(
 # CREATE REPORT
 # ============================================================
 
-
-@router.post("/")
-def create_report(
+def create_report_record(
     report: ReportCreate,
-    db: Session = Depends(get_db),
+    db: Session,
 ):
     """
     Create a child-safety report.
@@ -219,6 +308,11 @@ def create_report(
         url=report.url,
         reason=report.reason,
         description=report.description,
+
+        source_type=report.source_type,
+        source_channel=report.source_channel,
+        source_reference=report.source_reference,
+
         risk_level=assessment.level,
         risk_score=assessment.score,
         review_status="pending",
@@ -290,6 +384,11 @@ def create_report(
             "description": (
                 new_report.description
             ),
+
+            "source_type": new_report.source_type,
+            "source_channel": new_report.source_channel,
+            "source_reference": new_report.source_reference,
+
             "status": new_report.status,
 
             # Deterministic assessment
@@ -372,7 +471,44 @@ def create_report(
 
     return response
 
+@router.post("/")
+def create_report(
+    report: ReportCreate,
+    db: Session = Depends(get_db),
+):
+    return create_report_record(
+        report=report,
+        db=db,
+    )
+@router.post("/public")
+@limiter.limit("5/minute")
+def create_public_report(
+    request: Request,
+    report: PublicReportCreate,
+    db: Session = Depends(get_db),
+):
+    internal_report = ReportCreate(
+        platform=report.platform,
+        url=str(report.url),
+        reason=report.reason,
+        description=report.description,
+        source_type="public_report",
+        source_channel="public_web_form",
+        source_reference=None,
+    )
 
+    result = create_report_record(
+        report=internal_report,
+        db=db,
+    )
+
+    return {
+        "report_id": result["report_id"],
+        "status": result["status"],
+        "message": (
+            "Report submitted successfully."
+        ),
+    }
 # ============================================================
 # LIST REPORTS
 # ============================================================
@@ -1040,6 +1176,11 @@ def get_report_audit(
             "description": (
                 report.description
             ),
+
+            "source_type": report.source_type,
+            "source_channel": report.source_channel,
+            "source_reference": report.source_reference,
+
             "status": report.status,
             "created_at": (
                 report.created_at
