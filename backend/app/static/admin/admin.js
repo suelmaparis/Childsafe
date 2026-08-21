@@ -478,7 +478,7 @@ async function openReport(reportId) {
     ).textContent = (
         data.report?.platform || "—"
     );
-
+   
     document.getElementById(
         "review-risk-level"
     ).textContent = (
@@ -486,7 +486,8 @@ async function openReport(reportId) {
     );
 
     const riskLevel = (
-        data.deterministic_assessment?.level || "unknown"
+        data.deterministic_assessment?.level
+        || "unknown"
     );
     
     const riskElement = document.getElementById(
@@ -501,6 +502,13 @@ async function openReport(reportId) {
         `status-badge risk-${riskLevel}`
     );
     
+    document.getElementById(
+        "review-risk-score"
+    ).textContent = (
+        data.deterministic_assessment?.score
+        ?? "—"
+    );
+   
     
     const currentStatus = (
         data.review?.current_status || "unknown"
