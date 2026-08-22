@@ -66,6 +66,7 @@
                 </div>
 
                 <div class="topbar-actions">
+
                     <select id="period-filter">
                         <option value="7">7 days</option>
                         <option value="30" selected>
@@ -73,13 +74,42 @@
                         </option>
                         <option value="90">90 days</option>
                     </select>
-
-                    <button
-                        id="refresh-button"
-                        type="button"
-                    >
-                        Refresh
-                    </button>
+                
+                    <select id="dashboard-section-select">
+                        <option value="overview">
+                            Overview
+                        </option>
+                
+                        <option value="monitoring">
+                            Automated monitoring
+                        </option>
+                
+                        <option value="report-trend">
+                            Report trend
+                        </option>
+                
+                        <option value="review-trend">
+                            Human review trend
+                        </option>
+                
+                        <option value="urgent-queue">
+                            Urgent review queue
+                        </option>
+                
+                        <option value="recent-reports">
+                            Recent reports
+                        </option>
+                
+                        <option value="reviewers">
+                            Reviewers
+                        </option>
+                
+                        <option value="audit">
+                            Administrative audit log
+                        </option>
+                    </select>
+                
+                </div>
 
                     <button
                         id="logout-button"
@@ -88,55 +118,63 @@
                     >
                         Logout
                     </button>
-                </div>
+               
             </header>
 
+           
+                
             <main class="dashboard">
-
-                <section class="metrics-grid">
-                    <article class="metric-card">
-                        <span>Total reports</span>
-                        <strong id="metric-total">
-                            0
-                        </strong>
-                    </article>
-
-                    <article class="metric-card">
-                        <span>Pending</span>
-                        <strong id="metric-pending">
-                            0
-                        </strong>
-                    </article>
-
-                    <article class="metric-card">
-                        <span>Urgent pending</span>
-                        <strong id="metric-urgent">
-                            0
-                        </strong>
-                    </article>
-
-                    <article class="metric-card">
-                        <span>Confirmed</span>
-                        <strong id="metric-confirmed">
-                            0
-                        </strong>
-                    </article>
-
-                    <article class="metric-card">
-                        <span>Escalated</span>
-                        <strong id="metric-escalated">
-                            0
-                        </strong>
-                    </article>
-
-                    <article class="metric-card">
-                        <span>Confirmation rate</span>
-                        <strong id="metric-confirmation-rate">
-                            0%
-                        </strong>
-                    </article>
-                </section>
-
+             
+                        <!-- SEMPRE VISÍVEL -->
+                     <section class="metrics-grid">
+                    
+                            <article
+                                class="metric-card metric-filter"
+                                data-report-filter="all"
+                            >
+                                <span>Total reports</span>
+                                <strong id="metric-total">0</strong>
+                            </article>
+                    
+                            <article
+                                class="metric-card metric-filter"
+                                data-report-filter="pending"
+                            >
+                                <span>Pending</span>
+                                <strong id="metric-pending">0</strong>
+                            </article>
+                    
+                            <article
+                                class="metric-card metric-filter"
+                                data-report-filter="urgent"
+                            >
+                                <span>Urgent pending</span>
+                                <strong id="metric-urgent">0</strong>
+                            </article>
+                    
+                            <article
+                                class="metric-card metric-filter"
+                                data-report-filter="confirmed"
+                            >
+                                <span>Confirmed</span>
+                                <strong id="metric-confirmed">0</strong>
+                            </article>
+                    
+                            <article
+                                class="metric-card metric-filter"
+                                data-report-filter="escalated"
+                            >
+                                <span>Escalated</span>
+                                <strong id="metric-escalated">0</strong>
+                            </article>
+                    
+                            <article class="metric-card">
+                                <span>Confirmation rate</span>
+                                <strong id="metric-confirmation-rate">0%</strong>
+                            </article>
+                    
+                        </section>
+                <div id="overview-section">
                 <section class="panel">
                     <div class="panel-header">
                         <h2>Risk distribution</h2>
@@ -164,7 +202,8 @@
                         </div>
                     </div>
                 </section>
-                <section class="panel">
+                </div>
+                <section  id="monitoring-section" class="panel">
                     <div class="panel-header">
                         <h2>Automated monitoring</h2>
                     </div>
@@ -245,7 +284,7 @@
                         ></div>
                     </div>
                 </section>
-                <section class="panel">
+                <section id="report-trend-section" class="panel">
                     <div class="panel-header">
                         <h2>Report trend</h2>
                     </div>
@@ -256,7 +295,7 @@
                     ></div>
                 </section>
 
-                <section class="panel">
+                <section id="review-trend-section" class="panel">
                     <div class="panel-header">
                         <h2>Human review trend</h2>
                     </div>
@@ -267,7 +306,7 @@
                     ></div>
                 </section>
 
-                <section class="panel">
+                <section  id="urgent-queue-section" class="panel">
                     <div class="panel-header">
                         <h2>Urgent review queue</h2>
                     </div>
@@ -277,7 +316,7 @@
                         class="table-wrapper"
                     ></div>
                 </section>
-                <section class="panel">
+                <section  id="recent-reports-section" class="panel">
                     <div class="panel-header">
                         <h2>Recent reports</h2>
                     </div>
@@ -287,13 +326,14 @@
                         class="table-wrapper"
                     ></div>
                 </section>
-                <section id="report-review-panel" class="panel hidden">
+            <section id="report-review-panel" class="panel hidden">
             <div class="panel-header">
+                
                 <div>
                     <h2>Report review</h2>
                     <p id="selected-report-id"></p>
                 </div>
-
+                  
                 <button
                     id="close-report-button"
                     type="button"
@@ -309,6 +349,10 @@
                     <div>
                         <span>Platform</span>
                         <strong id="review-platform">—</strong>
+                    </div>
+                    <div>
+                        <span>Source reference</span>
+                        <strong id="review-source-reference">—</strong>
                     </div>
                     <div>
                         <span>Source</span>
@@ -361,8 +405,44 @@
                     <small>Signals</small>
             
                     <div id="review-detection-signals"></div>
+                    </div>
                 </div>
-            </div>
+                <div class="review-field">
+                    <span>AI assessment</span>
+                
+                    <div class="detection-summary">
+                        <div>
+                            <small>AI risk level</small>
+                            <strong id="review-ai-level">—</strong>
+                        </div>
+                
+                        <div>
+                            <small>AI risk score</small>
+                            <strong id="review-ai-score">—</strong>
+                        </div>
+                    </div>
+                
+                    <div class="detection-signals">
+                        <small>AI reasons</small>
+                        <div id="review-ai-reasons"></div>
+                    </div>
+                </div>
+                
+                <div class="review-field">
+                    <span>Risk comparison</span>
+                
+                    <div class="detection-summary">
+                        <div>
+                            <small>Relationship</small>
+                            <strong id="review-risk-relationship">—</strong>
+                        </div>
+                
+                        <div>
+                            <small>Needs attention</small>
+                            <strong id="review-risk-attention">—</strong>
+                        </div>
+                    </div>
+                </div>
                 <div class="review-field">
                     <span>Reason</span>
                     <p id="review-reason">—</p>

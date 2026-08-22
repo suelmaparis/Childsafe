@@ -134,30 +134,6 @@ button {
     margin: 0 auto;
 }
 
-.metrics-grid {
-    display: grid;
-    grid-template-columns:
-        repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.metric-card {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-}
-
-.metric-card span {
-    display: block;
-    color: #6b7280;
-    margin-bottom: 10px;
-}
-
-.metric-card strong {
-    font-size: 30px;
-}
 
 .panel {
     background: white;
@@ -957,5 +933,97 @@ td {
 @media (max-width: 650px) {
     .detection-summary {
         grid-template-columns: 1fr;
+    }
+}
+.ai-reason-item {
+    padding: 10px 12px;
+    margin-bottom: 8px;
+
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+
+    color: #334155;
+
+    font-size: 0.84rem;
+    line-height: 1.5;
+}
+.metric-filter {
+    cursor: pointer;
+
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.metric-filter:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 20px rgba(15, 23, 42, 0.08);
+
+    border-color: #94a3b8;
+}
+.metrics-grid {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 14px;
+    width: 100%;
+    margin-bottom: 22px;
+}
+
+.metric-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    min-width: 0;
+    min-height: 82px;
+
+    padding: 16px 18px;
+
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+
+    box-shadow:
+        0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+.metric-card span {
+    display: block;
+    margin-bottom: 7px;
+
+    font-size: 0.78rem;
+    font-weight: 700;
+
+    color: #64748b;
+}
+
+.metric-card strong {
+    display: block;
+
+    font-size: 1.35rem;
+    font-weight: 800;
+
+    color: #0f172a;
+}
+
+.metric-filter {
+    cursor: pointer;
+}
+
+.metric-filter:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+@media (max-width: 1100px) {
+    .metrics-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr)) !important;
     }
 }

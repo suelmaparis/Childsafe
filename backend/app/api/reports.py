@@ -693,6 +693,9 @@ def review_queue(
             "created_at": (
                 report.created_at
             ),
+            "source_type": report.source_type,
+            "source_channel": report.source_channel,
+            "source_reference": report.source_reference,
         }
 
         if ai_analysis is not None:

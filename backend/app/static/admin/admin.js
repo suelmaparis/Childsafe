@@ -5,12 +5,15 @@ const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 
 const logoutButton = document.getElementById("logout-button");
-const refreshButton = document.getElementById("refresh-button");
 const periodFilter = document.getElementById("period-filter");
+const dashboardSectionSelect =document.getElementById("dashboard-section-select");
 
 let accessToken = sessionStorage.getItem("childsafe_access_token");
 let currentUser = null;
 let selectedReportId = null;
+let cachedReports = [];
+let activeReportFilter = "all";
+
 
 
 function authHeaders() {
@@ -541,6 +544,12 @@ async function openReport(reportId) {
             ?.replaceAll("_", " ")
             || "—"
     );
+    document.getElementById(
+        "review-source-reference"
+    ).textContent = (
+        data.report?.source_reference
+        || "—"
+    );
     const detectionSection = document.getElementById(
         "automated-detection-section"
     );
@@ -607,6 +616,68 @@ async function openReport(reportId) {
             "hidden"
         );
     }
+    const aiAssessment = data.ai_assessment || {};
+
+document.getElementById(
+    "review-ai-level"
+).textContent = (
+    aiAssessment.level
+        ? aiAssessment.level.toUpperCase()
+        : "UNAVAILABLE"
+);
+
+document.getElementById(
+    "review-ai-score"
+).textContent = (
+    aiAssessment.score ?? "—"
+);
+
+const aiReasonsContainer = document.getElementById(
+    "review-ai-reasons"
+);
+
+const aiReasons = Array.isArray(
+    aiAssessment.reasons
+)
+    ? aiAssessment.reasons
+    : [];
+
+if (!aiReasons.length) {
+    aiReasonsContainer.innerHTML = `
+        <span class="detection-empty">
+            No AI reasons available.
+        </span>
+    `;
+} else {
+    aiReasonsContainer.innerHTML = aiReasons
+        .map(reason => `
+            <div class="ai-reason-item">
+                ${escapeHtml(reason)}
+            </div>
+        `)
+        .join("");
+}
+
+
+        const comparison = data.risk_comparison || {};
+
+        document.getElementById(
+            "review-risk-relationship"
+        ).textContent = (
+            comparison.relationship
+                ?.replaceAll("_", " ")
+                || "—"
+        );
+
+        document.getElementById(
+            "review-risk-attention"
+        ).textContent = (
+            comparison.needs_attention === true
+                ? "Yes"
+                : comparison.needs_attention === false
+                    ? "No"
+                    : "—"
+        );
     document.getElementById(
         "review-reason"
     ).textContent = (
@@ -813,8 +884,18 @@ async function loadReviewQueue() {
                 </td>
 
                 <td>${escapeHtml(row.platform)}</td>
+              
+                <td>
+                    ${escapeHtml(
+                        (
+                            row.source_type
+                            || "unknown"
+                        ).replaceAll("_", " ")
+                    )}
+                </td>
 
                 <td>${escapeHtml(row.risk_level)}</td>
+
 
                 <td>${escapeHtml(row.risk_score)}</td>
 
@@ -834,14 +915,15 @@ async function loadReviewQueue() {
     container.innerHTML = `
         <table>
             <thead>
-                <tr>
-                    <th>Report</th>
-                    <th>Platform</th>
-                    <th>Risk</th>
-                    <th>Score</th>
-                    <th>Priority reason</th>
-                    <th>Created</th>
-                </tr>
+            <tr>
+                <th>Report</th>
+                <th>Platform</th>
+                <th>Source</th>
+                <th>Risk</th>
+                <th>Score</th>
+                <th>Priority reason</th>
+                <th>Created</th>
+             </tr>
             </thead>
 
             <tbody>
@@ -1095,39 +1177,17 @@ async function loadMonitoringRuns() {
         runs,
     );
 }
-
-async function loadRecentReports() {
+function renderRecentReportsTable(reports) {
     const container = document.getElementById(
         "recent-reports"
     );
 
-    const response = await apiFetch(
-        "/reports/"
-    );
-
-    if (!response.ok) {
-        console.error(
-            "Unable to load recent reports:",
-            response.status
-        );
-
-        container.innerHTML = `
-            <div class="empty-state">
-                Unable to load reports.
-            </div>
-        `;
-
-        return;
-    }
-
-    const reports = await response.json();
-
-    const rows = reports.slice(0, 20);
+    const rows = reports.slice(0, 100);
 
     if (!rows.length) {
         container.innerHTML = `
             <div class="empty-state">
-                No reports available.
+                No reports found.
             </div>
         `;
 
@@ -1150,18 +1210,15 @@ async function loadRecentReports() {
 
             <tbody>
                 ${rows.map(report => {
-
                     const source = (
                         report.source_type
                         || "unknown"
-                    )
-                        .replaceAll("_", " ");
+                    ).replaceAll("_", " ");
 
                     const status = (
                         report.review_status
                         || "unknown"
-                    )
-                        .replaceAll("_", " ");
+                    ).replaceAll("_", " ");
 
                     return `
                         <tr>
@@ -1219,6 +1276,31 @@ async function loadRecentReports() {
         </table>
     `;
 }
+async function loadRecentReports() {
+    const response = await apiFetch(
+        "/reports/"
+    );
+
+    if (!response.ok) {
+        console.error(
+            "Unable to load recent reports:",
+            response.status
+        );
+
+        return;
+    }
+
+    cachedReports = await response.json();
+
+    if (
+        dashboardSectionSelect.value
+        === "recent-reports"
+    ) {
+        renderRecentReportsTable(
+            cachedReports
+        );
+    }
+}
 loginForm.addEventListener(
     "submit",
     async event => {
@@ -1251,20 +1333,59 @@ loginForm.addEventListener(
         }
     }
 );
+function applyReportFilter(filter) {
+    activeReportFilter = filter;
 
+    if (filter === "urgent") {
+        dashboardSectionSelect.value =
+            "urgent-queue";
 
+        showDashboardSection(
+            "urgent-queue"
+        );
+
+        loadReviewQueue();
+        return;
+    }
+
+    let reports = cachedReports;
+
+    if (filter === "pending") {
+        reports = cachedReports.filter(
+            report =>
+                report.review_status === "pending"
+        );
+    }
+
+    if (filter === "confirmed") {
+        reports = cachedReports.filter(
+            report =>
+                report.review_status === "confirmed"
+        );
+    }
+
+    if (filter === "escalated") {
+        reports = cachedReports.filter(
+            report =>
+                report.review_status === "escalated"
+        );
+    }
+
+    dashboardSectionSelect.value =
+        "recent-reports";
+
+    showDashboardSection(
+        "recent-reports"
+    );
+
+    renderRecentReportsTable(
+        reports
+    );
+}
 logoutButton.addEventListener(
     "click",
     logout,
 );
-
-
-refreshButton.addEventListener(
-    "click",
-    loadDashboard,
-);
-
-
 periodFilter.addEventListener(
     "change",
     async () => {
@@ -1275,6 +1396,7 @@ periodFilter.addEventListener(
         ]);
     }
 );
+
 document.getElementById(
     "close-report-button"
 ).addEventListener(
@@ -1353,7 +1475,65 @@ document
             }
         },
     );
-
+   
+    function showDashboardSection(section) {
+        const sections = {
+           
+            monitoring:
+                document.getElementById(
+                    "monitoring-section"
+                ),
+    
+            "report-trend":
+                document.getElementById(
+                    "report-trend-section"
+                ),
+    
+            "review-trend":
+                document.getElementById(
+                    "review-trend-section"
+                ),
+    
+            "urgent-queue":
+                document.getElementById(
+                    "urgent-queue-section"
+                ),
+    
+            "recent-reports":
+                document.getElementById(
+                    "recent-reports-section"
+                ),
+    
+            reviewers:
+                document.getElementById(
+                    "reviewers-panel"
+                ),
+    
+            audit:
+                document.getElementById(
+                    "audit-panel"
+                ),
+        };
+    
+        Object.values(sections).forEach(
+            element => {
+                if (element) {
+                    element.classList.add(
+                        "hidden"
+                    );
+                }
+            }
+        );
+    
+        const selected =
+            sections[section];
+    
+        if (selected) {
+            selected.classList.remove(
+                "hidden"
+            );
+        }
+    }
 document.getElementById(
     "review-form"
 ).addEventListener(
@@ -1410,6 +1590,53 @@ document.getElementById(
 
 );
 
+
+dashboardSectionSelect.addEventListener(
+    "change",
+    async () => {
+        const section =
+            dashboardSectionSelect.value;
+
+        if (section === "monitoring") {
+            await loadMonitoringRuns();
+        }
+
+        if (section === "urgent-queue") {
+            await loadReviewQueue();
+        }
+
+        if (section === "recent-reports") {
+            await loadRecentReports();
+        }
+
+        if (section === "reviewers") {
+            await loadReviewers();
+        }
+
+        if (section === "audit") {
+            await loadAuditLog();
+        }
+
+        showDashboardSection(section);
+    }
+);
 if (accessToken) {
     showDashboard();
 }
+document.addEventListener(
+    "click",
+    event => {
+        const card = event.target.closest(
+            ".metric-filter"
+        );
+
+        if (!card) {
+            return;
+        }
+
+        const filter =
+            card.dataset.reportFilter;
+
+        applyReportFilter(filter);
+    }
+);
