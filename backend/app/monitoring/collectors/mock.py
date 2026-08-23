@@ -6,6 +6,10 @@ from app.monitoring.collectors.base import (
     BaseCollector,
 )
 
+from app.core.settings import (
+    MOCK_INSTAGRAM_ENABLED,
+)
+
 
 class MockInstagramCollector(BaseCollector):
     platform = "Instagram"
@@ -14,6 +18,9 @@ class MockInstagramCollector(BaseCollector):
     def collect(
         self,
     ) -> list[MonitoringCandidate]:
+
+        if not MOCK_INSTAGRAM_ENABLED:
+            return []
 
         return [
             MonitoringCandidate(

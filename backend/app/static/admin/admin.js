@@ -93,6 +93,7 @@ async function login(
     }
 
     const data = await response.json();
+    
 
     accessToken = data.access_token;
 
@@ -1042,6 +1043,7 @@ async function loadDashboard() {
         loadAuditLog(),
         loadMonitoringRuns(),
         loadRecentReports(),
+        loadMonitoringStatus(),
     ]);
 }
 
@@ -1129,7 +1131,12 @@ async function loadMonitoringRuns() {
             lastRun.errors_count ?? 0
         );
     }
-
+    const monitoringRows = runs.map(run => ({
+        ...run,
+        started_display: formatDateTime(
+            run.started_at
+        ),
+    }));
     renderTable(
         "monitoring-runs",
         [
@@ -1170,11 +1177,13 @@ async function loadMonitoringRuns() {
                 label: "Errors",
             },
             {
-                key: "started_at",
+                key: "started_display",
                 label: "Started",
+               
             },
+            
         ],
-        runs,
+        monitoringRows,
     );
 }
 function renderRecentReportsTable(reports) {
@@ -1534,6 +1543,137 @@ document
             );
         }
     }
+    function formatDateTime(value) {
+        if (!value) {
+            return "—";
+        }
+    
+        return new Date(value).toLocaleString(
+            undefined,
+            {
+                dateStyle: "medium",
+                timeStyle: "short",
+            }
+        );
+    }
+    async function loadMonitoringStatus() {
+        const response = await apiFetch(
+            "/monitoring/status"
+        );
+    
+        if (!response.ok) {
+            console.error(
+                "Unable to load monitoring status:",
+                response.status
+            );
+    
+            return;
+        }
+    
+        const data = await response.json();
+        const worker = data.worker || {};
+
+        document.getElementById(
+            "monitoring-worker-status"
+        ).textContent = (
+            worker.status
+                ? worker.status.toUpperCase()
+                : "UNKNOWN"
+        );
+
+        document.getElementById(
+            "monitoring-worker-heartbeat"
+        ).textContent = (
+            worker.last_heartbeat
+                ? new Date(
+                    worker.last_heartbeat
+                ).toLocaleString()
+                : "—"
+        );
+
+        document.getElementById(
+            "monitoring-worker-started"
+        ).textContent = (
+            worker.started_at
+                ? new Date(
+                    worker.started_at
+                ).toLocaleString()
+                : "—"
+        );
+        document.getElementById(
+            "monitoring-enabled"
+        ).textContent = (
+            data.monitoring_enabled
+                ? "YES"
+                : "NO"
+        );
+        
+        document.getElementById(
+            "monitoring-interval"
+        ).textContent = (
+            `${data.interval_minutes} minutes`
+        );
+    
+        const container = document.getElementById(
+            "collector-status-list"
+        );
+    
+        const collectors = data.collectors || [];
+    
+        if (!collectors.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    No collectors configured.
+                </div>
+            `;
+    
+            return;
+        }
+    
+        container.innerHTML = collectors
+            .map(collector => `
+                <div class="collector-card">
+                    <div>
+                        <strong>
+                            ${escapeHtml(
+                                collector.platform
+                            )}
+                        </strong>
+    
+                        <span>
+                            ${escapeHtml(
+                                collector.name
+                                    .replaceAll("_", " ")
+                            )}
+                        </span>
+                    </div>
+    
+                    <div class="collector-meta">
+                        <span class="collector-mode">
+                            ${escapeHtml(
+                                collector.mode.toUpperCase()
+                            )}
+                        </span>
+    
+                        <span
+                            class="
+                                collector-status
+                                collector-status-${escapeHtml(
+                                    collector.status
+                                )}
+                            "
+                        >
+                            ${escapeHtml(
+                                collector.status
+                                    .replaceAll("_", " ")
+                                    .toUpperCase()
+                            )}
+                        </span>
+                    </div>
+                </div>
+            `)
+            .join("");
+    }
 document.getElementById(
     "review-form"
 ).addEventListener(
@@ -1597,9 +1737,12 @@ dashboardSectionSelect.addEventListener(
         const section =
             dashboardSectionSelect.value;
 
-        if (section === "monitoring") {
-            await loadMonitoringRuns();
-        }
+            if (section === "monitoring") {
+                await Promise.all([
+                    loadMonitoringRuns(),
+                    loadMonitoringStatus(),
+                ]);
+            }
 
         if (section === "urgent-queue") {
             await loadReviewQueue();

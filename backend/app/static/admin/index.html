@@ -83,7 +83,7 @@
                         <option value="monitoring">
                             Automated monitoring
                         </option>
-                
+                        
                         <option value="report-trend">
                             Report trend
                         </option>
@@ -172,6 +172,19 @@
                                 <span>Confirmation rate</span>
                                 <strong id="metric-confirmation-rate">0%</strong>
                             </article>
+                            <article class="monitoring-stat">
+                                <span>Monitoring enabled</span>
+                                <strong id="monitoring-enabled">
+                                    —
+                                </strong>
+                            </article>
+                            
+                            <article class="monitoring-stat">
+                                <span>Interval</span>
+                                <strong id="monitoring-interval">
+                                    —
+                                </strong>
+                            </article>
                     
                         </section>
                 <div id="overview-section">
@@ -203,86 +216,125 @@
                     </div>
                 </section>
                 </div>
-                <section  id="monitoring-section" class="panel">
+                <section id="monitoring-section" class="panel">
+
                     <div class="panel-header">
                         <h2>Automated monitoring</h2>
                     </div>
                 
-                    <div class="monitoring-summary-grid">
                 
-                        <article class="monitoring-stat">
-                            <span>Last run</span>
-                            <strong id="monitoring-last-run">
-                                —
-                            </strong>
-                        </article>
+                    <!-- OVERVIEW PRINCIPAL -->
+                    <div class="monitoring-overview">
                 
-                        <article class="monitoring-stat">
-                            <span>Status</span>
-                            <strong id="monitoring-status">
-                                —
-                            </strong>
-                        </article>
+                        <div class="monitoring-primary-grid">
                 
-                        <article class="monitoring-stat">
-                            <span>Platform</span>
-                            <strong id="monitoring-platform">
-                                —
-                            </strong>
-                        </article>
+                            <article class="monitoring-primary-card worker-card">
+                                <span>Worker status</span>
+                                <strong id="monitoring-worker-status">—</strong>
+                            </article>
                 
-                        <article class="monitoring-stat">
-                            <span>Candidates</span>
-                            <strong id="monitoring-candidates">
-                                0
-                            </strong>
-                        </article>
+                            <article class="monitoring-primary-card">
+                                <span>Last run</span>
+                                <strong id="monitoring-last-run">—</strong>
+                            </article>
                 
-                        <article class="monitoring-stat">
-                            <span>Relevant</span>
-                            <strong id="monitoring-relevant">
-                                0
-                            </strong>
-                        </article>
+                            <article class="monitoring-primary-card">
+                                <span>Status</span>
+                                <strong id="monitoring-status">—</strong>
+                            </article>
                 
-                        <article class="monitoring-stat">
-                            <span>Ignored</span>
-                            <strong id="monitoring-ignored">
-                                0
-                            </strong>
-                        </article>
+                            <article class="monitoring-primary-card">
+                                <span>Platform</span>
+                                <strong id="monitoring-platform">—</strong>
+                            </article>
                 
-                        <article class="monitoring-stat">
-                            <span>Reports created</span>
-                            <strong id="monitoring-created">
-                                0
-                            </strong>
-                        </article>
+                        </div>
                 
-                        <article class="monitoring-stat">
-                            <span>Duplicates</span>
-                            <strong id="monitoring-duplicates">
-                                0
-                            </strong>
-                        </article>
                 
-                        <article class="monitoring-stat">
-                            <span>Errors</span>
-                            <strong id="monitoring-errors">
-                                0
-                            </strong>
-                        </article>
+                        <!-- TEMPOS DO WORKER -->
+                        <div class="monitoring-time-row">
+                
+                            <div>
+                                <span>Last heartbeat</span>
+                                <strong id="monitoring-worker-heartbeat">—</strong>
+                            </div>
+                
+                            <div>
+                                <span>Worker started</span>
+                                <strong id="monitoring-worker-started">—</strong>
+                            </div>
+                
+                        </div>
+                
+                
+                        <!-- RESUMO DO ÚLTIMO RUN -->
+                        <div class="monitoring-subsection">
+                
+                            <h3>Run summary</h3>
+                
+                            <div class="monitoring-metrics-grid">
+                
+                                <div>
+                                    <span>Candidates</span>
+                                    <strong id="monitoring-candidates">0</strong>
+                                </div>
+                
+                                <div>
+                                    <span>Relevant</span>
+                                    <strong id="monitoring-relevant">0</strong>
+                                </div>
+                
+                                <div>
+                                    <span>Ignored</span>
+                                    <strong id="monitoring-ignored">0</strong>
+                                </div>
+                
+                                <div>
+                                    <span>Reports created</span>
+                                    <strong id="monitoring-created">0</strong>
+                                </div>
+                
+                                <div>
+                                    <span>Duplicates</span>
+                                    <strong id="monitoring-duplicates">0</strong>
+                                </div>
+                
+                                <div>
+                                    <span>Errors</span>
+                                    <strong id="monitoring-errors">0</strong>
+                                </div>
+                
+                            </div>
+                        </div>
                 
                     </div>
                 
+                
+                    <!-- COLLECTORS -->
+                    <div class="collector-status-section">
+                
+                        <h3>Collector status</h3>
+                
+                        <div
+                            id="collector-status-list"
+                            class="collector-status-grid"
+                        ></div>
+                
+                    </div>
+                
+                
+                    <!-- HISTÓRICO -->
                     <div class="monitoring-runs-section">
+                
                         <h3>Recent monitoring runs</h3>
                 
                         <div
                             id="monitoring-runs"
                             class="table-wrapper"
                         ></div>
+                
                     </div>
+                
                 </section>
                 <section id="report-trend-section" class="panel">
                     <div class="panel-header">
