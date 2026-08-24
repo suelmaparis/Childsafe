@@ -1,3 +1,17 @@
+from datetime import datetime, timezone
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+)
+
+from sqlalchemy.orm import Session
+
+from app.api.auth import require_role
+
+from app.core.database import SessionLocal
+
 from app.core.settings import (
     MOCK_INSTAGRAM_ENABLED,
     META_INSTAGRAM_ENABLED,
@@ -5,35 +19,49 @@ from app.core.settings import (
     META_ACCESS_TOKEN,
     META_APP_ID,
     META_APP_SECRET,
-)
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-)
-from app.core.settings import (
     MONITORING_ENABLED,
     MONITORING_INTERVAL_MINUTES,
 )
 
-from sqlalchemy.orm import Session
-
-from app.api.auth import require_role
-from app.core.database import SessionLocal
-from app.models.monitoring_run import MonitoringRun
-from app.models.reviewer import Reviewer
-from datetime import datetime, timezone
-
-from app.core.database import SessionLocal
+from app.models.monitoring_run import (
+    MonitoringRun,
+)
 
 from app.models.monitoring_worker_status import (
     MonitoringWorkerStatus,
 )
 
+from app.models.reviewer import (
+    Reviewer,
+)
+
+
 router = APIRouter(
     prefix="/monitoring",
     tags=["Monitoring"],
 )
+
+
+def get_db():
+    db = SessionLocal()
+
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def meta_is_configured() -> bool:
+    return all(
+        [
+            META_ACCESS_TOKEN,
+            META_APP_ID,
+            META_APP_SECRET,
+        ]
+    )
+
+
+
 def get_worker_status():
     db = SessionLocal()
 
@@ -59,7 +87,9 @@ def get_worker_status():
             worker.last_heartbeat
             and status == "running"
         ):
-            now = datetime.now(timezone.utc)
+            now = datetime.now(
+                timezone.utc
+            )
 
             heartbeat = (
                 worker.last_heartbeat
@@ -95,38 +125,28 @@ def get_worker_status():
 
     finally:
         db.close()
-def get_db():
-    db = SessionLocal()
 
-    try:
-        yield db
-    finally:
-        db.close()
-
-def meta_is_configured() -> bool:
-    return all(
-        [
-            META_ACCESS_TOKEN,
-            META_APP_ID,
-            META_APP_SECRET,
-        ]
-    )
 
 @router.get("/runs")
 def list_monitoring_runs(
     limit: int = 20,
+
     current_reviewer: Reviewer = Depends(
         require_role(
             "admin",
             "senior_reviewer",
         )
     ),
+
     db: Session = Depends(get_db),
 ):
     if limit < 1 or limit > 100:
         raise HTTPException(
             status_code=422,
-            detail="limit must be between 1 and 100.",
+            detail=(
+                "limit must be between "
+                "1 and 100."
+            ),
         )
 
     runs = (
@@ -142,9 +162,11 @@ def list_monitoring_runs(
         {
             "run_id": run.id,
             "platform": run.platform,
+
             "source_channel": (
                 run.source_channel
             ),
+
             "status": run.status,
 
             "candidates_found": (
@@ -183,8 +205,27 @@ def list_monitoring_runs(
                 run.finished_at
             ),
         }
+
         for run in runs
     ]
+
+
+
+def get_last_run_for_collector(
+    db: Session,
+    source_channel: str,
+):
+    return (
+        db.query(MonitoringRun)
+        .filter(
+            MonitoringRun.source_channel
+            == source_channel
+        )
+        .order_by(
+            MonitoringRun.id.desc()
+        )
+        .first()
+    )
 @router.get("/status")
 def monitoring_status(
     current_reviewer: Reviewer = Depends(
@@ -193,73 +234,157 @@ def monitoring_status(
             "senior_reviewer",
         )
     ),
+    db: Session = Depends(get_db),
 ):
-    meta_configured = (
-        meta_is_configured()
-    )
+    meta_configured = meta_is_configured()
     worker = get_worker_status()
-    
+
+    mock_last_run = get_last_run_for_collector(
+        db,
+        "mock_instagram_collector",
+    )
+
+    meta_instagram_last_run = (
+        get_last_run_for_collector(
+            db,
+            "meta_instagram_collector",
+        )
+    )
+
+    meta_facebook_last_run = (
+        get_last_run_for_collector(
+            db,
+            "meta_facebook_collector",
+        )
+    )
+
+    mock_status = (
+        "disabled"
+        if not MOCK_INSTAGRAM_ENABLED
+        else (
+            "error"
+            if (
+                mock_last_run
+                and mock_last_run.status == "failed"
+            )
+            else "active"
+        )
+    )
+
     return {
         "monitoring_enabled": MONITORING_ENABLED,
         "interval_minutes": (
             MONITORING_INTERVAL_MINUTES
         ),
-         "worker": worker,
-        "monitoring_enabled": True,
+        "worker": worker,
 
         "collectors": [
             {
-                "name": (
-                    "mock_instagram_collector"
-                ),
+                "name": "mock_instagram_collector",
                 "platform": "Instagram",
-                "status": (
-                    "active"
-                    if MOCK_INSTAGRAM_ENABLED
-                    else "disabled"
-                ),
+                "status": mock_status,
                 "mode": "mock",
-               
+
+                "last_run_id": (
+                    mock_last_run.id
+                    if mock_last_run
+                    else None
+                ),
+
+                "last_error": (
+                    mock_last_run.error_message
+                    if (
+                        mock_last_run
+                        and mock_last_run.status == "failed"
+                    )
+                    else None
+                ),
             },
 
             {
-                "name": (
-                    "meta_instagram_collector"
-                ),
+                "name": "meta_instagram_collector",
                 "platform": "Instagram",
+
                 "status": (
-                    "active"
-                    if (
-                        META_INSTAGRAM_ENABLED
-                        and meta_configured
-                    )
+                    "not_configured"
+                    if not meta_configured
                     else (
-                        "not_configured"
-                        if not meta_configured
-                        else "disabled"
+                        "disabled"
+                        if not META_INSTAGRAM_ENABLED
+                        else (
+                            "error"
+                            if (
+                                meta_instagram_last_run
+                                and
+                                meta_instagram_last_run.status
+                                == "failed"
+                            )
+                            else "active"
+                        )
                     )
                 ),
+
                 "mode": "api",
+
+                "last_run_id": (
+                    meta_instagram_last_run.id
+                    if meta_instagram_last_run
+                    else None
+                ),
+
+                "last_error": (
+                    meta_instagram_last_run.error_message
+                    if (
+                        meta_instagram_last_run
+                        and
+                        meta_instagram_last_run.status
+                        == "failed"
+                    )
+                    else None
+                ),
             },
 
             {
-                "name": (
-                    "meta_facebook_collector"
-                ),
+                "name": "meta_facebook_collector",
                 "platform": "Facebook",
+
                 "status": (
-                    "active"
-                    if (
-                        META_FACEBOOK_ENABLED
-                        and meta_configured
-                    )
+                    "not_configured"
+                    if not meta_configured
                     else (
-                        "not_configured"
-                        if not meta_configured
-                        else "disabled"
+                        "disabled"
+                        if not META_FACEBOOK_ENABLED
+                        else (
+                            "error"
+                            if (
+                                meta_facebook_last_run
+                                and
+                                meta_facebook_last_run.status
+                                == "failed"
+                            )
+                            else "active"
+                        )
                     )
                 ),
+
                 "mode": "api",
+
+                "last_run_id": (
+                    meta_facebook_last_run.id
+                    if meta_facebook_last_run
+                    else None
+                ),
+
+                "last_error": (
+                    meta_facebook_last_run.error_message
+                    if (
+                        meta_facebook_last_run
+                        and
+                        meta_facebook_last_run.status
+                        == "failed"
+                    )
+                    else None
+                ),
             },
         ],
     }

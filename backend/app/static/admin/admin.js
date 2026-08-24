@@ -1573,14 +1573,20 @@ document
         const data = await response.json();
         const worker = data.worker || {};
 
+        const workerStatusElement =
         document.getElementById(
-            "monitoring-worker-status"
-        ).textContent = (
-            worker.status
-                ? worker.status.toUpperCase()
-                : "UNKNOWN"
-        );
+                "monitoring-worker-status"
+            );
 
+                const workerStatus = (
+                    worker.status || "unknown"
+                );
+
+                workerStatusElement.textContent =
+                    workerStatus.toUpperCase();
+
+                workerStatusElement.className =
+                    `worker-status worker-status-${workerStatus}`;
         document.getElementById(
             "monitoring-worker-heartbeat"
         ).textContent = (

@@ -61,3 +61,6 @@ MONITORING_INTERVAL_MINUTES = int(
         "60",
     )
 )
+META_INSTAGRAM_USER_ID = os.getenv(
+    "META_INSTAGRAM_USER_ID"
+)

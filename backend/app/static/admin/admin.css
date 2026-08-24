@@ -1254,3 +1254,22 @@ td {
     background: #fee2e2;
     color: #991b1b;
 }
+.worker-status {
+    font-weight: 800;
+}
+
+.worker-status-running {
+    color: #166534;
+}
+
+.worker-status-stopped {
+    color: #64748b;
+}
+
+.worker-status-stale {
+    color: #b45309;
+}
+
+.worker-status-unknown {
+    color: #64748b;
+}
