@@ -13,25 +13,26 @@ def test_meta_item_to_candidate():
             "p/test001/"
         ),
         "caption": (
-            "Volunteer visit with local children."
+            "Volunteer activity with local children "
+            "in Praia, Cabo Verde."
         ),
-        "contains_child": True,
-        "location_detected": True,
-        "volunteer_context": True,
-        "tourism_context": False,
     }
 
     candidate = collector._to_candidate(item)
 
     assert candidate.platform == "Instagram"
+
     assert (
         candidate.source_reference
         == "meta-test-001"
     )
+
     assert candidate.contains_child is True
     assert candidate.location_detected is True
     assert candidate.volunteer_context is True
     assert candidate.tourism_context is False
+
+
 def test_collect_returns_empty_when_disabled(
     monkeypatch,
 ):
@@ -76,6 +77,8 @@ def test_collect_returns_empty_without_token(
     )
 
     assert collector.collect() == []
+
+
 def test_collect_converts_items_from_client(
     monkeypatch,
 ):
@@ -110,10 +113,6 @@ def test_collect_converts_items_from_client(
                 "Volunteer activity "
                 "with local children."
             ),
-            "contains_child": True,
-            "location_detected": True,
-            "volunteer_context": True,
-            "tourism_context": False,
         }
     ]
 
@@ -130,6 +129,8 @@ def test_collect_converts_items_from_client(
 
     assert candidate.contains_child is True
     assert candidate.volunteer_context is True
+
+
 def test_fetch_items_uses_meta_client(
     monkeypatch,
 ):
@@ -177,7 +178,13 @@ def test_fetch_items_uses_meta_client(
     items = collector._fetch_items()
 
     assert len(items) == 1
-    assert items[0]["id"] == "meta-test-020"
+
+    assert (
+        items[0]["id"]
+        == "meta-test-020"
+    )
+
+
 def test_fetch_items_returns_empty_without_user_id(
     monkeypatch,
 ):
@@ -202,6 +209,7 @@ def test_fetch_items_returns_empty_without_user_id(
     )
 
     assert collector._fetch_items() == []
+
 
 def test_collect_full_flow_with_fake_client(
     monkeypatch,
@@ -244,13 +252,9 @@ def test_collect_full_flow_with_fake_client(
                         "p/flow001/"
                     ),
                     "caption": (
-                        "Volunteer visit "
-                        "with local children."
+                        "Volunteer activity with local children "
+                        "in Praia, Cabo Verde."
                     ),
-                    "contains_child": True,
-                    "location_detected": True,
-                    "volunteer_context": True,
-                    "tourism_context": False,
                 },
                 {
                     "id": "meta-flow-002",
@@ -259,13 +263,9 @@ def test_collect_full_flow_with_fake_client(
                         "p/flow002/"
                     ),
                     "caption": (
-                        "Tourist activity "
-                        "in a local community."
+                        "Tourist trip with local children "
+                        "in Sal, Cabo Verde."
                     ),
-                    "contains_child": True,
-                    "location_detected": True,
-                    "volunteer_context": False,
-                    "tourism_context": True,
                 },
             ]
 

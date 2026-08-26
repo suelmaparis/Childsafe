@@ -194,3 +194,20 @@ class MetaClient:
                 "limit": limit,
             },
         )
+    def get_facebook_posts(
+    self,
+    page_id: str,
+    limit: int = 25,
+) -> list[dict]:
+        return self.get_all_pages(
+        f"{page_id}/posts",
+        params={
+            "fields": (
+                "id,"
+                "message,"
+                "permalink_url,"
+                "created_time"
+            ),
+            "limit": limit,
+        },
+    )

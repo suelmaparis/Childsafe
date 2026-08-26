@@ -146,3 +146,57 @@ def test_get_all_pages_stops_without_next(
 
     assert len(items) == 1
     assert items[0]["id"] == "media-001"
+
+def test_get_facebook_posts_uses_expected_endpoint(
+    monkeypatch,
+):
+    client = MetaClient(
+        access_token="test-token",
+    )
+
+    captured = {}
+
+    def fake_get_all_pages(
+        path,
+        params=None,
+        max_pages=10,
+    ):
+        captured["path"] = path
+        captured["params"] = params
+
+        return [
+            {
+                "id": "facebook-post-001",
+                "message": "Test post",
+            }
+        ]
+
+    monkeypatch.setattr(
+        client,
+        "get_all_pages",
+        fake_get_all_pages,
+    )
+
+    posts = client.get_facebook_posts(
+        page_id="123456789",
+        limit=10,
+    )
+
+    assert (
+        captured["path"]
+        == "123456789/posts"
+    )
+
+    assert captured["params"]["limit"] == 10
+
+    assert "id" in captured["params"]["fields"]
+    assert "message" in captured["params"]["fields"]
+    assert "permalink_url" in (
+        captured["params"]["fields"]
+    )
+
+    assert len(posts) == 1
+    assert (
+        posts[0]["id"]
+        == "facebook-post-001"
+    )

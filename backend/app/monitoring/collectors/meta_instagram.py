@@ -17,6 +17,9 @@ from app.core.settings import (
     META_INSTAGRAM_ENABLED,
     META_INSTAGRAM_USER_ID,
 )
+from app.monitoring.signal_extractor import (
+    extract_signals,
+)
 
 class MetaInstagramCollector(BaseCollector):
     platform = "Instagram"
@@ -57,9 +60,19 @@ class MetaInstagramCollector(BaseCollector):
             for item in items
         ]
     def _to_candidate(
-        self,
+    self,
         item: dict,
     ) -> MonitoringCandidate:
+
+        description = (
+            item.get("caption")
+            or ""
+        )
+
+        signals = extract_signals(
+            description
+        )
+
         return MonitoringCandidate(
             platform=self.platform,
 
@@ -69,10 +82,7 @@ class MetaInstagramCollector(BaseCollector):
                 or ""
             ),
 
-            description=(
-                item.get("caption")
-                or ""
-            ),
+            description=description,
 
             reason=(
                 "potential_child_exposure"
@@ -85,31 +95,19 @@ class MetaInstagramCollector(BaseCollector):
                 or ""
             ),
 
-            contains_child=bool(
-                item.get(
-                    "contains_child",
-                    False,
-                )
-            ),
+            contains_child=signals[
+                "contains_child"
+            ],
 
-            location_detected=bool(
-                item.get(
-                    "location_detected",
-                    False,
-                )
-            ),
+            location_detected=signals[
+                "location_detected"
+            ],
 
-            volunteer_context=bool(
-                item.get(
-                    "volunteer_context",
-                    False,
-                )
-            ),
+            volunteer_context=signals[
+                "volunteer_context"
+            ],
 
-            tourism_context=bool(
-                item.get(
-                    "tourism_context",
-                    False,
-                )
-            ),
+            tourism_context=signals[
+                "tourism_context"
+            ],
         )
