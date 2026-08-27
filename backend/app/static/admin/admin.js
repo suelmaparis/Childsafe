@@ -55,6 +55,9 @@ async function apiFetch(
 function logout() {
     accessToken = null;
     currentUser = null;
+    cachedReports = [];
+    activeReportFilter = "all";
+
 
     sessionStorage.removeItem(
         "childsafe_access_token"
@@ -159,8 +162,11 @@ function applyRoleNavigation(user) {
     if (isAdmin) {
         select.value = "overview";
     } else {
-        select.value = "urgent-queue";
+        select.value = "recent-reports";
     }
+    showDashboardSection(
+        select.value
+    );
 }
 
 async function loadCurrentUser() {
@@ -188,6 +194,12 @@ async function loadCurrentUser() {
 
     const isAdmin = (
         currentUser.role === "admin"
+    );
+    document.getElementById(
+        "risk-distribution-section"
+    ).classList.toggle(
+        "hidden",
+        !isAdmin
     );
     document.querySelectorAll(
         ".admin-only"
@@ -222,38 +234,145 @@ async function loadCurrentUser() {
     );
 }
 async function loadMetrics() {
-    const days = periodFilter.value;
-
-    const response = await apiFetch(
-        `/reports/admin/metrics?days=${days}`
+    const days = Number(
+        periodFilter.value
     );
 
-    if (!response.ok) {
+    const isAdmin = (
+        currentUser?.role === "admin"
+    );
+
+    // ==========================================
+    // ADMIN
+    // ==========================================
+
+    if (isAdmin) {
+        const response = await apiFetch(
+            `/reports/admin/metrics?days=${days}`
+        );
+
+        if (!response.ok) {
+            console.error(
+                "Unable to load admin metrics:",
+                response.status
+            );
+
+            return;
+        }
+
+        const data = await response.json();
+
+        document.getElementById(
+            "metric-total"
+        ).textContent = (
+            data.total_reports
+        );
+
+        document.getElementById(
+            "metric-pending"
+        ).textContent = (
+            data.pending
+        );
+
+        document.getElementById(
+            "metric-urgent"
+        ).textContent = (
+            data.urgent_pending
+        );
+
+        document.getElementById(
+            "metric-confirmed"
+        ).textContent = (
+            data.confirmed
+        );
+
+        document.getElementById(
+            "metric-escalated"
+        ).textContent = (
+            data.escalated
+        );
+
+        document.getElementById(
+            "metric-confirmation-rate"
+        ).textContent = (
+            `${data.confirmation_rate}%`
+        );
+
         return;
     }
 
-    const data = await response.json();
 
-    document.getElementById(
-        "metric-total"
-    ).textContent = data.total_reports;
+    // ==========================================
+    // REVIEWER
+    // ==========================================
 
-    document.getElementById(
-        "metric-pending"
-    ).textContent = data.pending;
-    const underReviewCount =
-    cachedReports.filter(
-        report =>
-            report.review_status
-            === "under_review"
-    ).length;
+    const reportsResponse = await apiFetch(
+        "/reports/"
+    );
 
-    const reviewedCount =
-        cachedReports.filter(
+    if (!reportsResponse.ok) {
+        console.error(
+            "Unable to load reviewer reports:",
+            reportsResponse.status
+        );
+
+        return;
+    }
+
+    const reports =
+        await reportsResponse.json();
+
+
+    const cutoff = new Date();
+
+    cutoff.setDate(
+        cutoff.getDate() - days
+    );
+
+
+    const filteredReports =
+        reports.filter(report => {
+            if (!report.created_at) {
+                return true;
+            }
+
+            const created =
+                new Date(
+                    report.created_at
+                );
+
+            return created >= cutoff;
+        });
+
+
+    const pending =
+        filteredReports.filter(
+            report =>
+                report.review_status
+                === "pending"
+        ).length;
+
+
+    const underReview =
+        filteredReports.filter(
+            report =>
+                report.review_status
+                === "under_review"
+        ).length;
+
+
+    const reviewed =
+        filteredReports.filter(
             report =>
                 report.review_status
                 === "reviewed"
         ).length;
+
+
+    document.getElementById(
+        "metric-pending"
+    ).textContent = pending;
+
 
     const underReviewElement =
         document.getElementById(
@@ -262,8 +381,9 @@ async function loadMetrics() {
 
     if (underReviewElement) {
         underReviewElement.textContent =
-            underReviewCount;
+            underReview;
     }
+
 
     const reviewedElement =
         document.getElementById(
@@ -272,41 +392,41 @@ async function loadMetrics() {
 
     if (reviewedElement) {
         reviewedElement.textContent =
-            reviewedCount;
+            reviewed;
     }
-    document.getElementById(
-        "metric-urgent"
-    ).textContent = data.urgent_pending;
 
-    document.getElementById(
-        "metric-confirmed"
-    ).textContent = data.confirmed;
 
-    document.getElementById(
-        "metric-escalated"
-    ).textContent = data.escalated;
+    // ==========================================
+    // URGENT
+    // ==========================================
 
-    document.getElementById(
-        "metric-confirmation-rate"
-    ).textContent = (
-        `${data.confirmation_rate}%`
+    const urgentResponse = await apiFetch(
+        "/reports/review-queue"
     );
 
-    document.getElementById(
-        "risk-low"
-    ).textContent = data.risk_distribution.low;
+    if (!urgentResponse.ok) {
+        console.error(
+            "Unable to load urgent queue:",
+            urgentResponse.status
+        );
+
+        return;
+    }
+
+    const urgentReports =
+    await urgentResponse.json();
+
+    const urgentCount =
+        urgentReports.filter(
+            report =>
+                report.queue_priority === "urgent"
+        ).length;
 
     document.getElementById(
-        "risk-medium"
-    ).textContent = data.risk_distribution.medium;
-
-    document.getElementById(
-        "risk-high"
-    ).textContent = data.risk_distribution.high;
-
-    document.getElementById(
-        "risk-critical"
-    ).textContent = data.risk_distribution.critical;
+        "metric-urgent"
+    ).textContent = (
+        urgentCount
+    );
 }
 
 
@@ -640,6 +760,36 @@ async function openReport(reportId) {
     statusElement.className = (
         `status-badge status-${currentStatus}`
     );
+    const assignedReviewerId =
+    data.report?.assigned_reviewer_id;
+
+let assignmentText = "Unassigned";
+
+if (
+    assignedReviewerId
+    && currentUser
+    && assignedReviewerId
+        === currentUser.id
+) {
+    assignmentText =
+        "Assigned to me";
+}
+
+if (
+    assignedReviewerId
+    && (
+        !currentUser
+        || assignedReviewerId
+        !== currentUser.id
+    )
+) {
+    assignmentText =
+        `Reviewer #${assignedReviewerId}`;
+}
+
+document.getElementById(
+    "review-assignment"
+).textContent = assignmentText;
     document.getElementById(
         "review-source-type"
     ).textContent = (
@@ -999,36 +1149,89 @@ async function loadReviewQueue() {
     }
 
     const rowsHtml = urgentRows
-        .map(row => `
+    .map(row => {
+        let assignmentLabel =
+            "Unassigned";
+
+        if (
+            row.assigned_reviewer_id
+            && currentUser
+            && row.assigned_reviewer_id
+                === currentUser.id
+        ) {
+            assignmentLabel =
+                "Assigned to me";
+        }
+
+        if (
+            row.assigned_reviewer_id
+            && (
+                !currentUser
+                || row.assigned_reviewer_id
+                !== currentUser.id
+            )
+        ) {
+            assignmentLabel = (
+                `Reviewer #${row.assigned_reviewer_id}`
+            );
+        }
+
+        return `
             <tr
                 class="review-queue-row"
-                data-report-id="${escapeHtml(row.report_id)}"
+                data-report-id="${escapeHtml(
+                    row.report_id
+                )}"
             >
                 <td>
                     <button
                         type="button"
                         class="report-link"
-                        data-report-id="${escapeHtml(row.report_id)}"
+                        data-report-id="${escapeHtml(
+                            row.report_id
+                        )}"
                     >
-                        ${escapeHtml(row.report_id)}
+                        ${escapeHtml(
+                            row.report_id
+                        )}
                     </button>
                 </td>
 
-                <td>${escapeHtml(row.platform)}</td>
-              
+                <td>
+                    ${escapeHtml(
+                        row.platform
+                    )}
+                </td>
+
                 <td>
                     ${escapeHtml(
                         (
                             row.source_type
                             || "unknown"
-                        ).replaceAll("_", " ")
+                        ).replaceAll(
+                            "_",
+                            " "
+                        )
                     )}
                 </td>
 
-                <td>${escapeHtml(row.risk_level)}</td>
+                <td>
+                    ${escapeHtml(
+                        row.risk_level
+                    )}
+                </td>
 
+                <td>
+                    ${escapeHtml(
+                        row.risk_score
+                    )}
+                </td>
 
-                <td>${escapeHtml(row.risk_score)}</td>
+                <td>
+                    ${escapeHtml(
+                        assignmentLabel
+                    )}
+                </td>
 
                 <td>
                     ${escapeHtml(
@@ -1037,26 +1240,30 @@ async function loadReviewQueue() {
                 </td>
 
                 <td>
-                    ${escapeHtml(row.created_at)}
+                    ${escapeHtml(
+                        row.created_at
+                    )}
                 </td>
             </tr>
-        `)
-        .join("");
+        `;
+    })
+    .join("");
 
-    container.innerHTML = `
+        container.innerHTML = `
         <table>
             <thead>
-            <tr>
-                <th>Report</th>
-                <th>Platform</th>
-                <th>Source</th>
-                <th>Risk</th>
-                <th>Score</th>
-                <th>Priority reason</th>
-                <th>Created</th>
-             </tr>
+                <tr>
+                    <th>Report</th>
+                    <th>Platform</th>
+                    <th>Source</th>
+                    <th>Risk</th>
+                    <th>Score</th>
+                    <th>Assignment</th>
+                    <th>Priority reason</th>
+                    <th>Created</th>
+                </tr>
             </thead>
-
+    
             <tbody>
                 ${rowsHtml}
             </tbody>
@@ -1164,6 +1371,11 @@ async function loadAuditLog() {
 async function loadDashboard() {
     await loadCurrentUser();
 
+    // Primeiro carrega os reports,
+    // porque os cards do reviewer dependem deles.
+    await loadRecentReports();
+
+    // Depois calcula/carrega o restante dashboard.
     await Promise.all([
         loadMetrics(),
         loadReportTrend(),
@@ -1172,8 +1384,6 @@ async function loadDashboard() {
         loadReviewers(),
         loadAuditLog(),
         loadMonitoringRuns(),
-        loadRecentReports(),
-        loadMonitoringStatus(),
     ]);
 }
 
@@ -1320,7 +1530,7 @@ function renderRecentReportsTable(reports) {
     const container = document.getElementById(
         "recent-reports"
     );
-
+   
     const rows = reports.slice(0, 100);
 
     if (!rows.length) {
@@ -1333,87 +1543,109 @@ function renderRecentReportsTable(reports) {
         return;
     }
 
+   
     container.innerHTML = `
-        <table>
-            <thead>
-                <tr>
-                    <th>Report</th>
-                    <th>Platform</th>
-                    <th>Source</th>
-                    <th>Risk</th>
-                    <th>Score</th>
-                    <th>Review status</th>
-                    <th>Created</th>
-                </tr>
-            </thead>
+    <table>
+        <thead>
+            <tr>
+                <th>Report</th>
+                <th>Platform</th>
+                <th>Source</th>
+                <th>Risk</th>
+                <th>Score</th>
+                <th>Review status</th>
+                <th>Assignment</th>
+                <th>Created</th>
+                
+            </tr>
+        </thead>
 
-            <tbody>
-                ${rows.map(report => {
-                    const source = (
-                        report.source_type
-                        || "unknown"
-                    ).replaceAll("_", " ");
+        <tbody>
+            ${rows.map(report => {
+                const source = (
+                    report.source_type
+                    || "unknown"
+                ).replaceAll("_", " ");
 
-                    const status = (
-                        report.review_status
-                        || "unknown"
-                    ).replaceAll("_", " ");
+                const status = (
+                    report.review_status
+                    || "unknown"
+                ).replaceAll("_", " ");
 
-                    return `
-                        <tr>
-                            <td>
-                                <button
-                                    type="button"
-                                    class="report-link recent-report-link"
-                                    data-report-id="${escapeHtml(
-                                        report.report_id
-                                    )}"
-                                >
-                                    ${escapeHtml(
-                                        report.report_id
-                                    )}
-                                </button>
-                            </td>
+                let assignmentLabel =
+                    "Unassigned";
 
-                            <td>
+                if (
+                    report.assigned_reviewer_id
+                    && currentUser
+                    && report.assigned_reviewer_id
+                        === currentUser.id
+                ) {
+                    assignmentLabel =
+                        "Assigned to me";
+                }
+
+                return `
+                    <tr>
+                        <td>
+                            <button
+                                type="button"
+                                class="report-link recent-report-link"
+                                data-report-id="${escapeHtml(
+                                    report.report_id
+                                )}"
+                            >
                                 ${escapeHtml(
-                                    report.platform || "—"
+                                    report.report_id
                                 )}
-                            </td>
+                            </button>
+                        </td>
 
-                            <td>
-                                ${escapeHtml(source)}
-                            </td>
+                        <td>
+                            ${escapeHtml(
+                                report.platform || "—"
+                            )}
+                        </td>
 
-                            <td>
-                                ${escapeHtml(
-                                    report.risk_level || "—"
-                                )}
-                            </td>
+                        <td>
+                            ${escapeHtml(source)}
+                        </td>
 
-                            <td>
-                                ${escapeHtml(
-                                    String(
-                                        report.risk_score ?? "—"
-                                    )
-                                )}
-                            </td>
+                        <td>
+                            ${escapeHtml(
+                                report.risk_level || "—"
+                            )}
+                        </td>
 
-                            <td>
-                                ${escapeHtml(status)}
-                            </td>
+                        <td>
+                            ${escapeHtml(
+                                String(
+                                    report.risk_score ?? "—"
+                                )
+                            )}
+                        </td>
 
-                            <td>
-                                ${escapeHtml(
-                                    report.created_at || "—"
-                                )}
-                            </td>
-                        </tr>
-                    `;
-                }).join("")}
-            </tbody>
-        </table>
-    `;
+                        <td>
+                            ${escapeHtml(status)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                assignmentLabel
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                report.created_at || "—"
+                            )}
+                        </td>
+                    </tr>
+                `;
+            }).join("")}
+        </tbody>
+    </table>
+`;
 }
 async function loadRecentReports() {
     const response = await apiFetch(
@@ -1430,6 +1662,7 @@ async function loadRecentReports() {
     }
 
     cachedReports = await response.json();
+    renderReviewerReportGroups();
 
     if (
         dashboardSectionSelect.value
@@ -1440,6 +1673,26 @@ async function loadRecentReports() {
         );
     }
 }
+document.addEventListener(
+    "click",
+    async event => {
+        const button =
+            event.target.closest(
+                ".reviewer-report-link"
+            );
+
+        if (!button) {
+            return;
+        }
+
+        const reportId =
+            button.dataset.reportId;
+
+        await openReport(
+            reportId
+        );
+    }
+);
 loginForm.addEventListener(
     "submit",
     async event => {
@@ -1484,29 +1737,51 @@ function applyReportFilter(filter) {
         );
 
         loadReviewQueue();
+
         return;
     }
 
-    let reports = cachedReports;
+    let reports = [
+        ...cachedReports
+    ];
 
     if (filter === "pending") {
         reports = cachedReports.filter(
             report =>
-                report.review_status === "pending"
+                report.review_status
+                === "pending"
+        );
+    }
+
+    if (filter === "under_review") {
+        reports = cachedReports.filter(
+            report =>
+                report.review_status
+                === "under_review"
+        );
+    }
+
+    if (filter === "reviewed") {
+        reports = cachedReports.filter(
+            report =>
+                report.review_status
+                === "reviewed"
         );
     }
 
     if (filter === "confirmed") {
         reports = cachedReports.filter(
             report =>
-                report.review_status === "confirmed"
+                report.review_status
+                === "confirmed"
         );
     }
 
     if (filter === "escalated") {
         reports = cachedReports.filter(
             report =>
-                report.review_status === "escalated"
+                report.review_status
+                === "escalated"
         );
     }
 
@@ -1520,19 +1795,6 @@ function applyReportFilter(filter) {
     renderRecentReportsTable(
         reports
     );
-    if (filter === "under_review") {
-        reports = cachedReports.filter(
-            report =>
-                report.review_status === "under_review"
-        );
-    }
-    
-    if (filter === "reviewed") {
-        reports = cachedReports.filter(
-            report =>
-                report.review_status === "reviewed"
-        );
-    }
 }
 logoutButton.addEventListener(
     "click",
@@ -1932,3 +2194,138 @@ document.addEventListener(
         applyReportFilter(filter);
     }
 );
+
+function getReviewerReportGroups() {
+    const available = cachedReports.filter(
+        report =>
+            !report.assigned_reviewer_id
+    );
+
+    const assignedToMe = cachedReports.filter(
+        report =>
+            report.assigned_reviewer_id
+            === currentUser?.id
+    );
+
+    return {
+        available,
+        assignedToMe,
+    };
+}
+
+function renderReviewerReportGroups() {
+    if (
+        !currentUser
+        || currentUser.role !== "reviewer"
+    ) {
+        return;
+    }
+
+    const available = cachedReports.filter(
+        report =>
+            !report.assigned_reviewer_id
+    );
+
+    const assignedToMe = cachedReports.filter(
+        report =>
+            report.assigned_reviewer_id
+            === currentUser.id
+    );
+
+    renderReviewerReportTable(
+        "reviewer-available-reports",
+        available
+    );
+
+    renderReviewerReportTable(
+        "reviewer-assigned-reports",
+        assignedToMe
+    );
+}
+function renderReviewerReportTable(
+    containerId,
+    reports,
+) {
+    const container =
+        document.getElementById(
+            containerId
+        );
+
+    if (!container) {
+        return;
+    }
+
+    if (!reports.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                No reports available.
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Report</th>
+                    <th>Platform</th>
+                    <th>Risk</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                ${reports.map(report => `
+                    <tr>
+                        <td>
+                            <button
+                                type="button"
+                                class="report-link reviewer-report-link"
+                                data-report-id="${escapeHtml(
+                                    report.report_id
+                                )}"
+                            >
+                                ${escapeHtml(
+                                    report.report_id
+                                )}
+                            </button>
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                report.platform || "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                report.risk_level || "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                (
+                                    report.review_status
+                                    || "unknown"
+                                ).replaceAll(
+                                    "_",
+                                    " "
+                                )
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                report.created_at || "—"
+                            )}
+                        </td>
+                    </tr>
+                `).join("")}
+            </tbody>
+        </table>
+    `;
+}

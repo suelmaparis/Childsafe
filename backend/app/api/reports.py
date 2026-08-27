@@ -1,5 +1,6 @@
 import json
 
+from sqlalchemy import or_
 from sqlalchemy import func
 from fastapi import (
     APIRouter,
@@ -149,6 +150,9 @@ class ReportReviewCreate(BaseModel):
     new_status: str
     decision: str
     notes: str
+
+class ReportAssignmentCreate(BaseModel):
+    reviewer_id: int
 # ============================================================
 # DATABASE DEPENDENCY
 # ============================================================
@@ -162,7 +166,23 @@ def get_db():
     finally:
         db.close()
 
-
+def ensure_report_access(
+    report: Report,
+    reviewer: Reviewer,
+):
+    if reviewer.role == "reviewer":
+        if report.review_status not in {
+            "pending",
+            "under_review",
+            "reviewed",
+        }:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "Reviewer is not allowed "
+                    "to access this report."
+                ),
+            )
 # ============================================================
 # HELPERS
 # ============================================================
@@ -543,13 +563,40 @@ def create_public_report(
 # LIST REPORTS
 # ============================================================
 
-
 @router.get("/")
 def list_reports(
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "admin",
+            "senior_reviewer",
+            "reviewer",
+        )
+    ),
     db: Session = Depends(get_db),
 ):
+    query = db.query(
+        Report
+    )
+
+    if current_reviewer.role == "reviewer":
+        query = query.filter(
+            or_(
+                Report.assigned_reviewer_id
+                == current_reviewer.id,
+
+                (
+                    Report.assigned_reviewer_id
+                    .is_(None)
+                    & (
+                        Report.review_status
+                        == "pending"
+                    )
+                ),
+            )
+        )
+
     reports = (
-        db.query(Report)
+        query
         .order_by(
             Report.created_at.desc()
         )
@@ -557,43 +604,40 @@ def list_reports(
     )
 
     return [
-    {
-        "report_id": (
-            f"CV-{report.id:06d}"
-        ),
-        "platform": report.platform,
-        "url": report.url,
-        "reason": report.reason,
-        "description": (
-            report.description
-        ),
+        {
+            "report_id": (
+                f"CV-{report.id:06d}"
+            ),
+            "platform": report.platform,
+            "url": report.url,
+            "reason": report.reason,
+            "description": report.description,
 
-        "source_type": report.source_type,
-        "source_channel": report.source_channel,
-        "source_reference": report.source_reference,
+            "source_type": report.source_type,
+            "source_channel": (
+                report.source_channel
+            ),
+            "source_reference": (
+                report.source_reference
+            ),
 
-        "status": report.status,
-        "risk_level": (
-            report.risk_level
-        ),
-        "risk_score": (
-            report.risk_score
-        ),
-        "review_status": (
-            report.review_status
-        ),
-        "created_at": (
-            report.created_at
-        ),
-    }
-    for report in reports
-]
+            "assigned_reviewer_id": (
+                report.assigned_reviewer_id
+            ),
 
-
+            "status": report.status,
+            "risk_level": report.risk_level,
+            "risk_score": report.risk_score,
+            "review_status": (
+                report.review_status
+            ),
+            "created_at": report.created_at,
+        }
+        for report in reports
+    ]
 # ============================================================
 # REVIEW QUEUE
 # ============================================================
-
 
 @router.get("/review-queue")
 def review_queue(
@@ -606,11 +650,31 @@ def review_queue(
     ),
     db: Session = Depends(get_db),
 ):
-    reports = (
+    query = (
         db.query(Report)
         .filter(
-            Report.review_status == "pending"
+            Report.review_status
+            == "pending"
         )
+    )
+
+    # --------------------------------------------------------
+    # Reviewer assignment restriction
+    # --------------------------------------------------------
+
+    if current_reviewer.role == "reviewer":
+        query = query.filter(
+            or_(
+                Report.assigned_reviewer_id
+                == current_reviewer.id,
+
+                Report.assigned_reviewer_id
+                .is_(None),
+            )
+        )
+
+    reports = (
+        query
         .order_by(
             Report.risk_score.desc(),
             Report.created_at.asc(),
@@ -627,17 +691,18 @@ def review_queue(
             report_id=report.id,
         )
 
-        # Historical rule scores may exceed 100.
-        # Preserve the database value in the response,
-        # but normalize it for current comparison logic.
+        # Historical scores may exceed 100.
         comparison_rule_score = normalize_score(
             report.risk_score
         )
 
         if ai_analysis is not None:
             ai_level = ai_analysis.level
-            comparison_ai_score = normalize_score(
-                ai_analysis.score
+
+            comparison_ai_score = (
+                normalize_score(
+                    ai_analysis.score
+                )
             )
 
         else:
@@ -672,18 +737,36 @@ def review_queue(
             "report_id": (
                 f"CV-{report.id:06d}"
             ),
+
             "platform": report.platform,
             "url": report.url,
             "reason": report.reason,
             "description": (
                 report.description
             ),
+
+            "source_type": (
+                report.source_type
+            ),
+
+            "source_channel": (
+                report.source_channel
+            ),
+
+            "source_reference": (
+                report.source_reference
+            ),
+
+            "assigned_reviewer_id": (
+                report.assigned_reviewer_id
+            ),
+
             "status": report.status,
 
-            # Preserve original stored values.
             "risk_level": (
                 report.risk_level
             ),
+
             "risk_score": (
                 report.risk_score
             ),
@@ -695,9 +778,11 @@ def review_queue(
             "queue_priority": (
                 queue_priority.priority
             ),
+
             "queue_priority_score": (
                 queue_priority.priority_score
             ),
+
             "queue_priority_reason": (
                 queue_priority.reason
             ),
@@ -705,9 +790,6 @@ def review_queue(
             "created_at": (
                 report.created_at
             ),
-            "source_type": report.source_type,
-            "source_channel": report.source_channel,
-            "source_reference": report.source_reference,
         }
 
         if ai_analysis is not None:
@@ -728,7 +810,9 @@ def review_queue(
                 "status": "unavailable",
             }
 
-        queue_items.append(item)
+        queue_items.append(
+            item
+        )
 
     # Highest-priority reports first.
     queue_items.sort(
@@ -744,8 +828,6 @@ def review_queue(
     )
 
     return queue_items
-
-
 # ============================================================
 # REVIEW REPORT
 # ============================================================
@@ -790,9 +872,9 @@ def review_report(
     # --------------------------------------------------------
 
     report = db.get(
-        Report,
-        report_id,
-    )
+    Report,
+    report_id,
+)
 
     if report is None:
         raise HTTPException(
@@ -800,13 +882,31 @@ def review_report(
             detail="Report not found.",
         )
 
+# --------------------------------------------------------
+# Assignment access control
+# --------------------------------------------------------
+
+    if (
+        current_reviewer.role == "reviewer"
+        and report.assigned_reviewer_id is not None
+        and report.assigned_reviewer_id
+        != current_reviewer.id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "This report is assigned "
+                "to another reviewer."
+            ),
+        )
+
     previous_status = (
         report.review_status
     )
 
-    # --------------------------------------------------------
-    # Validate workflow transition
-    # --------------------------------------------------------
+# --------------------------------------------------------
+# Validate workflow transition
+# --------------------------------------------------------
 
     transition = (
         validate_review_transition(
@@ -826,9 +926,22 @@ def review_report(
             },
         )
 
-    # --------------------------------------------------------
-    # Create human review history
-    # --------------------------------------------------------
+# --------------------------------------------------------
+# Automatically claim an unassigned report
+# --------------------------------------------------------
+
+    if (
+        current_reviewer.role == "reviewer"
+        and report.assigned_reviewer_id is None
+        and review.new_status == "under_review"
+    ):
+        report.assigned_reviewer_id = (
+            current_reviewer.id
+        )
+
+# --------------------------------------------------------
+# Create human review history
+# --------------------------------------------------------
 
     review_record = ReportReview(
         report_id=report.id,
@@ -837,7 +950,7 @@ def review_report(
         decision=review.decision,
         notes=review.notes,
         reviewer=current_reviewer.username,
-)
+    )
     report.review_status = (
         review.new_status
     )
@@ -896,6 +1009,9 @@ def review_report(
             ),
             "review_status": (
                 report.review_status
+            ),
+            "assigned_reviewer_id": (
+                report.assigned_reviewer_id
             ),
         },
     }
@@ -978,6 +1094,7 @@ def get_report_audit(
     ),
     db: Session = Depends(get_db),
 ):
+    
     """
     Read-only audit view for a report.
 
@@ -1222,6 +1339,9 @@ def get_report_audit(
             "status": report.status,
             "created_at": (
                 report.created_at
+            ),
+            "assigned_reviewer_id": (
+                report.assigned_reviewer_id
             ),
         },
         "detection": {
@@ -1843,4 +1963,74 @@ def get_report(
         "created_at": (
             report.created_at
         ),
+    }
+@router.patch("/{report_id}/assign")
+def assign_report(
+    report_id: int,
+    assignment: ReportAssignmentCreate,
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "admin",
+            "senior_reviewer",
+        )
+    ),
+    db: Session = Depends(get_db),
+):
+    report = db.get(
+        Report,
+        report_id,
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found.",
+        )
+
+    reviewer = db.get(
+        Reviewer,
+        assignment.reviewer_id,
+    )
+
+    if reviewer is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Reviewer not found.",
+        )
+
+    if not reviewer.is_active:
+        raise HTTPException(
+            status_code=409,
+            detail="Reviewer is inactive.",
+        )
+
+    if reviewer.role not in {
+        "reviewer",
+        "senior_reviewer",
+    }:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Report can only be assigned "
+                "to a reviewer."
+            ),
+        )
+
+    report.assigned_reviewer_id = (
+        reviewer.id
+    )
+
+    db.commit()
+    db.refresh(report)
+
+    return {
+        "status": "assigned",
+        "report_id": (
+            f"CV-{report.id:06d}"
+        ),
+        "assigned_reviewer": {
+            "id": reviewer.id,
+            "username": reviewer.username,
+            "role": reviewer.role,
+        },
     }

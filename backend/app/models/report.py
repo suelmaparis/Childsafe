@@ -2,11 +2,17 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     DateTime,
+    ForeignKey,
     Integer,
     String,
     Text,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 from app.core.database import Base
 
@@ -40,28 +46,46 @@ class Report(Base):
         default="unknown",
     )
 
-    source_channel: Mapped[str | None] = mapped_column(
-        String(100),
-        nullable=True,
-    )
-
-    source_reference: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True,
-    )
-    detection_confidence: Mapped[float | None] = mapped_column(
-            nullable=True,
-        )
-
-    detection_signals: Mapped[str | None] = mapped_column(
-            Text,
-            nullable=True,
-        )
-
-    detection_source: Mapped[str | None] = mapped_column(
+    source_channel: Mapped[str | None] = (
+        mapped_column(
             String(100),
             nullable=True,
         )
+    )
+
+    source_reference: Mapped[str | None] = (
+        mapped_column(
+            String(255),
+            nullable=True,
+        )
+    )
+
+    detection_confidence: Mapped[
+        float | None
+    ] = mapped_column(
+        nullable=True,
+    )
+
+    detection_signal_score: Mapped[
+        int | None
+    ] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    detection_signals: Mapped[
+        str | None
+    ] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    detection_source: Mapped[
+        str | None
+    ] = mapped_column(
+        String(100),
+        nullable=True,
+    )
 
     status: Mapped[str] = mapped_column(
         String(30),
@@ -82,11 +106,25 @@ class Report(Base):
         default="pending",
     )
 
+    assigned_reviewer_id: Mapped[
+        int | None
+    ] = mapped_column(
+        ForeignKey("reviewers.id"),
+        nullable=True,
+    )
+
+    assigned_reviewer: Mapped[
+        "Reviewer | None"
+    ] = relationship(
+        "Reviewer",
+        foreign_keys=[
+            assigned_reviewer_id
+        ],
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-    )
-    detection_signal_score = mapped_column(
-        Integer,
-        nullable=True,
+        default=lambda: datetime.now(
+            timezone.utc
+        ),
     )
