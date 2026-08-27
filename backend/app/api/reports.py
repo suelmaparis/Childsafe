@@ -69,6 +69,7 @@ class ReportCreate(BaseModel):
     detection_confidence: float | None = None
     detection_signals: list[str] | None = None
     detection_source: str | None = None
+    detection_signal_score: int | None = None
 
 class PublicReportCreate(BaseModel):
     platform: str
@@ -241,6 +242,7 @@ def get_latest_ai_analysis(
 def create_report_record(
     report: ReportCreate,
     db: Session,
+    
 ):
     """
     Create a child-safety report.
@@ -308,32 +310,38 @@ def create_report_record(
     # --------------------------------------------------------
 
     new_report = Report(
-    platform=report.platform,
-    url=report.url,
-    reason=report.reason,
-    description=report.description,
+        platform=report.platform,
+        url=report.url,
+        reason=report.reason,
+        description=report.description,
 
-    source_type=report.source_type,
-    source_channel=report.source_channel,
-    source_reference=report.source_reference,
+        source_type=report.source_type,
+        source_channel=report.source_channel,
+        source_reference=report.source_reference,
 
-    detection_confidence=(
-        report.detection_confidence
-    ),
+        detection_confidence=(
+            report.detection_confidence
+        ),
 
-    detection_signals=(
-        json.dumps(report.detection_signals)
-        if report.detection_signals is not None
-        else None
-    ),
+        detection_signal_score=(
+            report.detection_signal_score
+        ),
 
-    detection_source=(
-        report.detection_source
-    ),
+        detection_signals=(
+            json.dumps(
+                report.detection_signals
+            )
+            if report.detection_signals is not None
+            else None
+        ),
 
-    risk_level=assessment.level,
-    risk_score=assessment.score,
-    review_status="pending",
+        detection_source=(
+            report.detection_source
+        ),
+
+        risk_level=assessment.level,
+        risk_score=assessment.score,
+        review_status="pending",
 )
 
     db.add(new_report)
@@ -493,6 +501,7 @@ def create_report_record(
 def create_report(
     report: ReportCreate,
     db: Session = Depends(get_db),
+    
 ):
     return create_report_record(
         report=report,
@@ -518,6 +527,9 @@ def create_public_report(
     result = create_report_record(
         report=internal_report,
         db=db,
+        detection_signal_score=(
+        report.detection_signal_score       
+       ),
     )
 
     return {

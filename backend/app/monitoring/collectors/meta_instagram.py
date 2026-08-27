@@ -73,6 +73,7 @@ class MetaInstagramCollector(BaseCollector):
             description
         )
 
+
         return MonitoringCandidate(
             platform=self.platform,
 
@@ -109,5 +110,12 @@ class MetaInstagramCollector(BaseCollector):
 
             tourism_context=signals[
                 "tourism_context"
+            ],
+            signal_score=signals[
+                "signal_score"
+            ],
+
+            signal_confidence=signals[
+                "signal_confidence"
             ],
         )

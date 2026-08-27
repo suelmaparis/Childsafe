@@ -33,6 +33,9 @@ def test_facebook_item_to_candidate():
     assert candidate.location_detected is True
     assert candidate.volunteer_context is True
     assert candidate.tourism_context is False
+    assert candidate.signal_score == 3
+    assert candidate.signal_confidence == 0.8
+
 
 
 def test_collect_returns_empty_when_disabled(
@@ -234,3 +237,4 @@ def test_fetch_items_returns_empty_without_page_id(
     )
 
     assert collector._fetch_items() == []
+  

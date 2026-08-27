@@ -31,6 +31,8 @@ def test_empty_text_returns_false_signals():
         "location_detected": False,
         "volunteer_context": False,
         "tourism_context": False,
+        "signal_score": 0,
+        "signal_confidence": 0.0,
     }
 def test_portuguese_child_and_volunteer_signals():
     signals = extract_signals(
@@ -149,3 +151,21 @@ def test_unaccented_text_matches_accented_terms():
     assert signals["contains_child"] is True
     assert signals["volunteer_context"] is True
     assert signals["location_detected"] is True
+
+def test_signal_score_and_confidence():
+    signals = extract_signals(
+        "Volunteer activity with children "
+        "in Praia, Cabo Verde."
+    )
+
+    assert signals["signal_score"] == 3
+    assert signals["signal_confidence"] == 0.8
+
+
+def test_signal_score_zero():
+    signals = extract_signals(
+        "Beautiful sunset over the ocean."
+    )
+
+    assert signals["signal_score"] == 0
+    assert signals["signal_confidence"] == 0.0

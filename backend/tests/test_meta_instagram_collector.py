@@ -31,6 +31,8 @@ def test_meta_item_to_candidate():
     assert candidate.location_detected is True
     assert candidate.volunteer_context is True
     assert candidate.tourism_context is False
+    assert candidate.signal_score == 3
+    assert candidate.signal_confidence == 0.8       
 
 
 def test_collect_returns_empty_when_disabled(
@@ -303,3 +305,4 @@ def test_collect_full_flow_with_fake_client(
     assert second.location_detected is True
     assert second.volunteer_context is False
     assert second.tourism_context is True
+

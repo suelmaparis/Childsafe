@@ -28,7 +28,7 @@ class MockInstagramCollector(BaseCollector):
 
                 url=(
                     "https://example.com/"
-                    "structured-test-002"
+                    "structured-test-004"
                 ),
 
                 description=(
@@ -42,7 +42,7 @@ class MockInstagramCollector(BaseCollector):
                 source_channel=self.channel,
 
                 source_reference=(
-                    "structured-002"
+                    "structured-004"
                 ),
 
                 contains_child=True,

@@ -20,3 +20,5 @@ class MonitoringCandidate:
     metadata: dict = field(
         default_factory=dict
     )
+    signal_score: int = 0
+    signal_confidence: float = 0.0

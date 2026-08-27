@@ -102,7 +102,66 @@ async function login(
         accessToken,
     );
 }
+function applyRoleNavigation(user) {
+    const select =
+        document.getElementById(
+            "dashboard-section-select"
+        );
 
+    const options = Array.from(
+        select.options
+    );
+
+    const isAdmin =
+        user.role === "admin";
+
+    const isReviewer = (
+        user.role === "reviewer"
+        || user.role === "senior_reviewer"
+    );
+
+    options.forEach(option => {
+        const requiredRole =
+            option.dataset.role;
+
+        if (!requiredRole) {
+            option.hidden = false;
+            option.disabled = false;
+            return;
+        }
+
+        if (
+            requiredRole === "admin"
+            && !isAdmin
+        ) {
+            option.hidden = true;
+            option.disabled = true;
+            return;
+        }
+
+        if (
+            requiredRole === "review"
+            && (
+                isAdmin
+                || isReviewer
+            )
+        ) {
+            option.hidden = false;
+            option.disabled = false;
+            return;
+        }
+
+        option.hidden = false;
+        option.disabled = false;
+    });
+
+
+    if (isAdmin) {
+        select.value = "overview";
+    } else {
+        select.value = "urgent-queue";
+    }
+}
 
 async function loadCurrentUser() {
     const response = await apiFetch(
@@ -117,6 +176,10 @@ async function loadCurrentUser() {
 
     currentUser = await response.json();
 
+    applyRoleNavigation(
+        currentUser
+    );
+
     document.getElementById(
         "current-user"
     ).textContent = (
@@ -126,7 +189,24 @@ async function loadCurrentUser() {
     const isAdmin = (
         currentUser.role === "admin"
     );
-
+    document.querySelectorAll(
+        ".admin-only"
+    ).forEach(element => {
+        element.classList.toggle(
+            "hidden",
+            !isAdmin
+        );
+    });
+    
+    
+    document.querySelectorAll(
+        ".reviewer-only"
+    ).forEach(element => {
+        element.classList.toggle(
+            "hidden",
+            isAdmin
+        );
+    });
     document.getElementById(
         "reviewers-panel"
     ).classList.toggle(
@@ -141,8 +221,6 @@ async function loadCurrentUser() {
         !isAdmin,
     );
 }
-
-
 async function loadMetrics() {
     const days = periodFilter.value;
 
@@ -163,7 +241,39 @@ async function loadMetrics() {
     document.getElementById(
         "metric-pending"
     ).textContent = data.pending;
+    const underReviewCount =
+    cachedReports.filter(
+        report =>
+            report.review_status
+            === "under_review"
+    ).length;
 
+    const reviewedCount =
+        cachedReports.filter(
+            report =>
+                report.review_status
+                === "reviewed"
+        ).length;
+
+    const underReviewElement =
+        document.getElementById(
+            "metric-under-review"
+        );
+
+    if (underReviewElement) {
+        underReviewElement.textContent =
+            underReviewCount;
+    }
+
+    const reviewedElement =
+        document.getElementById(
+            "metric-reviewed"
+        );
+
+    if (reviewedElement) {
+        reviewedElement.textContent =
+            reviewedCount;
+    }
     document.getElementById(
         "metric-urgent"
     ).textContent = data.urgent_pending;
@@ -537,7 +647,7 @@ async function openReport(reportId) {
             ?.replaceAll("_", " ")
             || "Unknown"
     );
-    
+
     document.getElementById(
         "review-source-channel"
     ).textContent = (
@@ -556,6 +666,15 @@ async function openReport(reportId) {
     );
     
     const detection = data.detection || {};
+    const signalScore = (
+        detection.signal_score
+        ?? data.report?.detection_signal_score
+        ?? "—"
+    );
+    
+    document.getElementById(
+        "report-detection-signal-score"
+    ).textContent = signalScore;
     
     if (
         data.report?.source_type === "automated_monitoring"
@@ -579,7 +698,18 @@ async function openReport(reportId) {
         ).textContent = (
             detection.source || "—"
         );
-    
+        const signalScoreElement =
+    document.getElementById(
+        "review-detection-signal-score"
+    );
+
+    if (signalScoreElement) {
+        signalScoreElement.textContent = (
+            detection.signal_score
+            ?? data.report?.detection_signal_score
+            ?? "—"
+        );
+    }
         const signalsContainer =
             document.getElementById(
                 "review-detection-signals"
@@ -1390,6 +1520,19 @@ function applyReportFilter(filter) {
     renderRecentReportsTable(
         reports
     );
+    if (filter === "under_review") {
+        reports = cachedReports.filter(
+            report =>
+                report.review_status === "under_review"
+        );
+    }
+    
+    if (filter === "reviewed") {
+        reports = cachedReports.filter(
+            report =>
+                report.review_status === "reviewed"
+        );
+    }
 }
 logoutButton.addEventListener(
     "click",

@@ -59,134 +59,213 @@
             id="dashboard-view"
             class="view hidden"
         >
-            <header class="topbar">
-                <div>
-                    <h1>ChildSafe Admin</h1>
-                    <p id="current-user"></p>
-                </div>
+        <header class="topbar">
 
-                <div class="topbar-actions">
-
-                    <select id="period-filter">
-                        <option value="7">7 days</option>
-                        <option value="30" selected>
-                            30 days
-                        </option>
-                        <option value="90">90 days</option>
-                    </select>
-                
-                    <select id="dashboard-section-select">
-                        <option value="overview">
-                            Overview
-                        </option>
-                
-                        <option value="monitoring">
-                            Automated monitoring
-                        </option>
-                        
-                        <option value="report-trend">
-                            Report trend
-                        </option>
-                
-                        <option value="review-trend">
-                            Human review trend
-                        </option>
-                
-                        <option value="urgent-queue">
-                            Urgent review queue
-                        </option>
-                
-                        <option value="recent-reports">
-                            Recent reports
-                        </option>
-                
-                        <option value="reviewers">
-                            Reviewers
-                        </option>
-                
-                        <option value="audit">
-                            Administrative audit log
-                        </option>
-                    </select>
-                
-                </div>
-
-                    <button
-                        id="logout-button"
-                        type="button"
-                        class="secondary-button"
+            <div>
+                <h1 id="portal-title">
+                    ChildSafe
+                </h1>
+        
+                <p id="current-user"></p>
+            </div>
+        
+        
+            <div class="topbar-actions">
+        
+                <select id="period-filter">
+                    <option value="7">
+                        7 days
+                    </option>
+        
+                    <option value="30" selected>
+                        30 days
+                    </option>
+        
+                    <option value="90">
+                        90 days
+                    </option>
+                </select>
+        
+        
+                <select id="dashboard-section-select">
+        
+                    <!-- ADMIN -->
+                    <option
+                        value="overview"
+                        data-role="admin"
                     >
-                        Logout
-                    </button>
-               
-            </header>
+                        Overview
+                    </option>
+        
+                    <option
+                        value="monitoring"
+                        data-role="admin"
+                    >
+                        Automated monitoring
+                    </option>
+        
+                    <option
+                        value="report-trend"
+                        data-role="admin"
+                    >
+                        Report trend
+                    </option>
+        
+                    <!-- ADMIN + REVIEWERS -->
+                    <option
+                        value="review-trend"
+                        data-role="review"
+                    >
+                        Human review trend
+                    </option>
+        
+                    <option
+                        value="urgent-queue"
+                        data-role="review"
+                    >
+                        Urgent review queue
+                    </option>
+        
+                    <option
+                        value="recent-reports"
+                        data-role="review"
+                    >
+                        Recent reports
+                    </option>
+        
+                    <!-- ADMIN -->
+                    <option
+                        value="reviewers"
+                        data-role="admin"
+                    >
+                        Reviewers
+                    </option>
+        
+                    <option
+                        value="audit"
+                        data-role="admin"
+                    >
+                        Administrative audit log
+                    </option>
+        
+                </select>
+        
+            </div>
+        
+        
+            <button
+                id="logout-button"
+                type="button"
+                class="secondary-button"
+            >
+                Logout
+            </button>
+        
+        </header>
 
            
                 
             <main class="dashboard">
-             
-                        <!-- SEMPRE VISÍVEL -->
-                     <section class="metrics-grid">
-                    
-                            <article
-                                class="metric-card metric-filter"
-                                data-report-filter="all"
-                            >
-                                <span>Total reports</span>
-                                <strong id="metric-total">0</strong>
-                            </article>
-                    
-                            <article
-                                class="metric-card metric-filter"
-                                data-report-filter="pending"
-                            >
-                                <span>Pending</span>
-                                <strong id="metric-pending">0</strong>
-                            </article>
-                    
-                            <article
-                                class="metric-card metric-filter"
-                                data-report-filter="urgent"
-                            >
-                                <span>Urgent pending</span>
-                                <strong id="metric-urgent">0</strong>
-                            </article>
-                    
-                            <article
-                                class="metric-card metric-filter"
-                                data-report-filter="confirmed"
-                            >
-                                <span>Confirmed</span>
-                                <strong id="metric-confirmed">0</strong>
-                            </article>
-                    
-                            <article
-                                class="metric-card metric-filter"
-                                data-report-filter="escalated"
-                            >
-                                <span>Escalated</span>
-                                <strong id="metric-escalated">0</strong>
-                            </article>
-                    
-                            <article class="metric-card">
-                                <span>Confirmation rate</span>
-                                <strong id="metric-confirmation-rate">0%</strong>
-                            </article>
-                            <article class="monitoring-stat">
-                                <span>Monitoring enabled</span>
-                                <strong id="monitoring-enabled">
-                                    —
-                                </strong>
-                            </article>
-                            
-                            <article class="monitoring-stat">
-                                <span>Interval</span>
-                                <strong id="monitoring-interval">
-                                    —
-                                </strong>
-                            </article>
-                    
-                        </section>
+                    <!-- METRICS -->
+            <section class="metrics-grid">
+
+                <!-- ADMIN ONLY -->
+                <article
+                    class="metric-card metric-filter admin-only"
+                    data-report-filter="all"
+                >
+                    <span>Total reports</span>
+                    <strong id="metric-total">0</strong>
+                </article>
+
+
+                <!-- ADMIN + REVIEWER -->
+                <article
+                    class="metric-card metric-filter"
+                    data-report-filter="pending"
+                >
+                    <span>Pending</span>
+                    <strong id="metric-pending">0</strong>
+                </article>
+
+
+                <!-- ADMIN + REVIEWER -->
+                <article
+                    class="metric-card metric-filter"
+                    data-report-filter="urgent"
+                >
+                    <span>Urgent pending</span>
+                    <strong id="metric-urgent">0</strong>
+                </article>
+
+
+                <!-- REVIEWER ONLY -->
+                <article
+                    class="metric-card metric-filter reviewer-only hidden"
+                    data-report-filter="under_review"
+                >
+                    <span>Under review</span>
+                    <strong id="metric-under-review">0</strong>
+                </article>
+
+
+                <!-- REVIEWER ONLY -->
+                <article
+                    class="metric-card metric-filter reviewer-only hidden"
+                    data-report-filter="reviewed"
+                >
+                    <span>Reviewed</span>
+                    <strong id="metric-reviewed">0</strong>
+                </article>
+
+
+                <!-- ADMIN ONLY -->
+                <article
+                    class="metric-card metric-filter admin-only"
+                    data-report-filter="confirmed"
+                >
+                    <span>Confirmed</span>
+                    <strong id="metric-confirmed">0</strong>
+                </article>
+
+
+                <!-- ADMIN ONLY -->
+                <article
+                    class="metric-card metric-filter admin-only"
+                    data-report-filter="escalated"
+                >
+                    <span>Escalated</span>
+                    <strong id="metric-escalated">0</strong>
+                </article>
+
+
+                <!-- ADMIN ONLY -->
+                <article class="metric-card admin-only">
+                    <span>Confirmation rate</span>
+                    <strong id="metric-confirmation-rate">
+                        0%
+                    </strong>
+                </article>
+
+
+                <!-- ADMIN ONLY -->
+                <article class="monitoring-stat admin-only">
+                    <span>Monitoring enabled</span>
+                    <strong id="monitoring-enabled">
+                        —
+                    </strong>
+                </article>
+
+
+                <!-- ADMIN ONLY -->
+                <article class="monitoring-stat admin-only">
+                    <span>Interval</span>
+                    <strong id="monitoring-interval">
+                        —
+                    </strong>
+                </article>
+
+            </section>
                 <div id="overview-section">
                 <section class="panel">
                     <div class="panel-header">
@@ -458,6 +537,12 @@
             
                     <div id="review-detection-signals"></div>
                     </div>
+                </div>
+                <div class="detail-item">
+                    <span>Signal score</span>
+                    <strong id="report-detection-signal-score">
+                        —
+                    </strong>
                 </div>
                 <div class="review-field">
                     <span>AI assessment</span>

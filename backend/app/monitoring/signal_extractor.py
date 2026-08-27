@@ -205,21 +205,49 @@ def extract_signals(
                 return True
 
         return False
+    
+    contains_child = contains_any(
+        CHILD_TERMS
+    )
+
+    location_detected = contains_any(
+        LOCATION_TERMS
+    )
+
+    volunteer_context = contains_any(
+        VOLUNTEER_TERMS
+    )
+
+    tourism_context = contains_any(
+        TOURISM_TERMS
+    )
+
+    signal_score = sum(
+        [
+            contains_child,
+            location_detected,
+            volunteer_context,
+            tourism_context,
+        ]
+    )
+
+    confidence_map = {
+        0: 0.0,
+        1: 0.25,
+        2: 0.55,
+        3: 0.8,
+        4: 0.95,
+    }
+
+    signal_confidence = confidence_map[
+        signal_score
+    ]
 
     return {
-        "contains_child": contains_any(
-            CHILD_TERMS
-        ),
-
-        "location_detected": contains_any(
-            LOCATION_TERMS
-        ),
-
-        "volunteer_context": contains_any(
-            VOLUNTEER_TERMS
-        ),
-
-        "tourism_context": contains_any(
-            TOURISM_TERMS
-        ),
+        "contains_child": contains_child,
+        "location_detected": location_detected,
+        "volunteer_context": volunteer_context,
+        "tourism_context": tourism_context,
+        "signal_score": signal_score,
+        "signal_confidence": signal_confidence,
     }
