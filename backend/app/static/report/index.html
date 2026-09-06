@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
 
@@ -8,7 +8,9 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Report Child Safety Concern | ChildSafe</title>
+    <title>
+        ChildSafe | Proteção Digital Infantil
+    </title>
 
     <link
         rel="stylesheet"
@@ -18,305 +20,640 @@
 
 <body>
 
-    <main class="public-report-page">
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
 
-        <section class="report-card">
+    <header class="public-header">
 
-            <header class="report-hero">
-                <div class="language-switcher">
-                    <label
-                        for="language-select"
-                        data-i18n="languageLabel"
-                    >
-                        Language
-                    </label>
-                
-                    <select id="language-select">
-                        <option value="en">English</option>
-                        <option value="pt">Português</option>
-                        <option value="fr">Français</option>
-                        <option value="es">Español</option>
-                    </select>
-                </div>
+        <nav class="public-nav">
 
-                <div class="brand">
+            <div class="nav-left">
+                <a
+                    href="#parents"
+                    data-i18n="navParents"
+                >
+                    Para pais
+                </a>
 
-                    <div
-                        class="brand-logo"
-                        aria-hidden="true"
-                    >
-                        <svg
-                            viewBox="0 0 64 64"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path
-                                d="M32 5L52 13V28C52 42 43.5 53 32 59C20.5 53 12 42 12 28V13L32 5Z"
-                                fill="currentColor"
-                            />
+                <a
+                    href="#help"
+                    data-i18n="navHelp"
+                >
+                    Ajuda
+                </a>
+            </div>
 
-                            <path
-                                d="M24 31L29 36L40 24"
-                                fill="none"
-                                stroke="white"
-                                stroke-width="5"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            />
-                        </svg>
-                    </div>
 
-                    <div>
-                        <h1>ChildSafe</h1>
-                        <p class="brand-subtitle">
-                            Digital Child Protection
-                        </p>
-                    </div>
+            <a
+                href="#"
+                class="nav-brand"
+            >
+                ChildSafe
+            </a>
 
-                </div>
 
-                <div class="hero-content">
-                    <span class="eyebrow">
-                        Public Reporting
+            <div class="nav-right">
+
+                <button
+                    id="header-report-button"
+                    type="button"
+                    class="nav-report-button"
+                    data-i18n="navReport"
+                >
+                    Denunciar
+                </button>
+
+                <select
+                    id="language-select"
+                    aria-label="Idioma"
+                >
+                    <option value="pt" selected>
+                        PT
+                    </option>
+
+                    <option value="es">
+                        ES
+                    </option>
+
+                    <option value="en">
+                        EN
+                    </option>
+
+                    <option value="fr">
+                        FR
+                    </option>
+                </select>
+
+            </div>
+
+        </nav>
+
+    </header>
+
+
+    <main>
+
+        <!-- =================================================
+             HERO
+             ================================================= -->
+
+        <section class="public-hero">
+
+            <div class="hero-inner">
+
+                <span
+                    class="hero-kicker"
+                    data-i18n="publicReporting"
+                >
+                    Proteção infantil online
+                </span>
+
+                <h1 data-i18n="heroTitle">
+                    Ajude a proteger as crianças no mundo digital
+                </h1>
+
+                <p data-i18n="heroText">
+                    Informação, prevenção e denúncia de
+                    conteúdos online que possam expor,
+                    identificar ou colocar uma criança em risco.
+                </p>
+
+                <button
+                    id="hero-report-button"
+                    type="button"
+                    class="main-report-button"
+                    data-i18n="openReportButton"
+                >
+                    Fazer uma denúncia
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             PARENTS INFORMATION
+             ================================================= -->
+
+             <section
+             id="parents"
+             class="parents-section"
+         >
+             <div class="section-intro">
+                 <span
+                     class="section-kicker"
+                     data-i18n="parents.kicker"
+                 >
+                     Informação e prevenção
+                 </span>
+         
+                 <h2 data-i18n="parents.title">
+                     Proteja as crianças dentro e fora da internet
+                 </h2>
+             </div>
+         
+             <div class="parents-grid">
+                 <article class="parent-info-card">
+                     <div class="info-icon">○</div>
+         
+                     <h3 data-i18n="parents.card1.title">
+                         Proteja a privacidade das crianças
+                     </h3>
+         
+                     <p data-i18n="parents.card1.text">
+                         Uma fotografia pode revelar muito mais do que parece.
+                         Imagens, uniformes, escolas, locais frequentados e hábitos
+                         podem ajudar desconhecidos a identificar ou localizar uma criança.
+                     </p>
+                 </article>
+         
+                 <article class="parent-info-card">
+                     <div class="info-icon">✦</div>
+         
+                     <h3 data-i18n="parents.card2.title">
+                         Ensine a criança a usar a internet com segurança
+                     </h3>
+         
+                     <p data-i18n="parents.card2.text">
+                         Fale desde cedo sobre mensagens privadas, pedidos de segredo,
+                         partilha de fotografias, localização e contacto com desconhecidos.
+                         A educação digital começa em casa.
+                     </p>
+                 </article>
+         
+                 <article class="parent-info-card">
+                     <div class="info-icon">1·2·3</div>
+         
+                     <h3 data-i18n="parents.card3.title">
+                         Crianças não são atrações turísticas
+                     </h3>
+         
+                     <p data-i18n="parents.card3.text">
+                         Ser turista, voluntário, visitante ou membro de uma organização
+                         não dá automaticamente o direito de fotografar, filmar ou publicar
+                         imagens de crianças.
+                     </p>
+                 </article>
+             </div>
+         </section>
+
+
+
+        <!-- =================================================
+             REPORT CTA
+             ================================================= -->
+
+        <section class="report-cta">
+
+            <div>
+
+                <h2 data-i18n="reportTitle">
+                    Viu conteúdo que pode colocar
+                    uma criança em risco?
+                </h2>
+
+                <p data-i18n="anonymousText">
+                    Pode denunciar anonimamente.
+                    Não pedimos o seu nome nem email.
+                </p>
+
+            </div>
+
+            <button
+                id="cta-report-button"
+                type="button"
+                class="cta-button"
+                data-i18n="openReportButton"
+            >
+                Fazer uma denúncia
+            </button>
+
+        </section>
+
+
+
+        <!-- =================================================
+             HELP
+             ================================================= -->
+
+        <section
+            id="help"
+            class="quick-help-section"
+        >
+
+            <h2 data-i18n="helpTitle">
+                Precisa de ajuda agora?
+            </h2>
+
+            <div class="quick-help-grid">
+
+                <article>
+                    <strong>
+                        ICCA
+                    </strong>
+
+                    <span data-i18n="complaintLine">
+                        Disque Denúncia
                     </span>
 
-                    <h2>
-                        Help protect a child online
+                    <a href="tel:8001010">
+                        800 10 10
+                    </a>
+                </article>
+
+
+                <article>
+                    <strong data-i18n="pjTitle">
+                        Polícia Judiciária
+                    </strong>
+
+                    <span data-i18n="emergencyPraia">
+                        Emergência
+                    </span>
+
+                    <a href="tel:134">
+                        134
+                    </a>
+                </article>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =====================================================
+         FOOTER
+         ===================================================== -->
+
+    <footer class="site-footer">
+
+        <div class="footer-grid">
+
+            <div>
+
+                <h3>
+                    ChildSafe
+                </h3>
+
+                <p data-i18n="footerDescription">
+                    Proteção digital infantil
+                    e segurança online.
+                </p>
+
+            </div>
+
+
+            <div>
+
+                <h4 data-i18n="footerInfo">
+                    Informação
+                </h4>
+
+                <a
+                    href="#parents"
+                    data-i18n="navParents"
+                >
+                    Para pais
+                </a>
+
+                <a
+                    href="#help"
+                    data-i18n="navHelp"
+                >
+                    Ajuda
+                </a>
+
+            </div>
+
+
+            <div>
+
+                <h4 data-i18n="footerProtection">
+                    Proteção
+                </h4>
+
+                <button
+                    id="footer-report-button"
+                    type="button"
+                    class="footer-report-link"
+                    data-i18n="openReportButton"
+                >
+                    Fazer uma denúncia
+                </button>
+
+                <span>
+                    ICCA · 800 10 10
+                </span>
+
+                <span>
+                    Polícia Judiciária · 134
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="footer-bottom">
+            ChildSafe · Cabo Verde
+        </div>
+
+    </footer>
+
+
+
+    <!-- =====================================================
+         REPORT MODAL
+         ===================================================== -->
+
+    <div
+        id="report-modal"
+        class="report-modal hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-modal-title"
+    >
+
+        <div class="modal-backdrop"></div>
+
+
+        <div class="report-modal-card">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span
+                        class="modal-kicker"
+                        data-i18n="reportEyebrow"
+                    >
+                        Fazer uma denúncia
+                    </span>
+
+                    <h2
+                        id="report-modal-title"
+                        data-i18n="reportTitle"
+                    >
+                        Denuncie conteúdo online preocupante
                     </h2>
 
-                    <p>
-                        Report public online content that may expose,
-                        identify or endanger a child.
-                    </p>
-                </div>
-
-            </header>
-
-
-            <section class="report-content">
-
-                <div class="privacy-banner">
-                    <div class="privacy-icon">
-                        ✓
-                    </div>
-
-                    <div>
-                        <strong>
-                            You can report anonymously
-                        </strong>
-
-                        <p>
-                            We do not ask for your name or email.
-                            Submit only the link to the public content
-                            and information needed to explain your concern.
-                        </p>
-                    </div>
                 </div>
 
 
-                <div class="warning-box">
+                <button
+                    id="close-report-modal"
+                    type="button"
+                    class="modal-close"
+                    aria-label="Fechar"
+                >
+                    ×
+                </button>
 
-                    <strong>
-                        Protect the child while reporting
+            </div>
+
+
+
+            <div class="privacy-banner">
+
+                <div class="privacy-icon">
+                    ✓
+                </div>
+
+                <div>
+
+                    <strong data-i18n="anonymousTitle">
+                        Pode denunciar anonimamente
                     </strong>
 
-                    <p>
-                        Do not download, screenshot, copy or upload
-                        images or videos of the child to ChildSafe.
-                        Please submit the original public link instead.
+                    <p data-i18n="anonymousText">
+                        Não pedimos o seu nome nem email.
                     </p>
 
                 </div>
 
-
-                <div class="emergency-note">
-
-                    <strong>
-                        Immediate danger?
-                    </strong>
-
-                    <p>
-                        If you believe a child is in immediate physical
-                        danger, contact the appropriate emergency or
-                        child-protection authorities in addition to
-                        submitting this report.
-                    </p>
-
-                </div>
+            </div>
 
 
-                <form id="public-report-form">
 
-                    <div class="form-section-heading">
-                        <span>Report details</span>
+            <div class="warning-box">
 
-                        <p>
-                            Tell us where you found the content and why
-                            you believe it may place a child at risk.
-                        </p>
-                    </div>
+                <strong
+                    data-i18n="protectWhileReportingTitle"
+                >
+                    Proteja a criança durante a denúncia
+                </strong>
 
+                <p
+                    data-i18n="protectWhileReportingText"
+                >
+                    Não descarregue nem volte a publicar
+                    imagens ou vídeos. Envie apenas
+                    o link original.
+                </p>
 
-                    <div class="form-grid">
-
-                        <label>
-                            <span class="field-label">
-                                Platform
-                            </span>
-
-                            <select
-                                id="platform"
-                                required
-                            >
-                                <option value="">
-                                    Select platform
-                                </option>
-
-                                <option value="Instagram">
-                                    Instagram
-                                </option>
-
-                                <option value="Facebook">
-                                    Facebook
-                                </option>
-
-                                <option value="TikTok">
-                                    TikTok
-                                </option>
-
-                                <option value="YouTube">
-                                    YouTube
-                                </option>
-
-                                <option value="X">
-                                    X
-                                </option>
-
-                                <option value="Other">
-                                    Other
-                                </option>
-                            </select>
-                        </label>
+            </div>
 
 
-                        <label>
-                            <span class="field-label">
-                                Why are you concerned?
-                            </span>
 
-                            <select
-                                id="reason"
-                                required
-                            >
-                                <option value="">
-                                    Select a reason
-                                </option>
+            <form id="public-report-form">
 
-                                <option value="potential_child_exposure">
-                                    Child shown or exposed publicly
-                                </option>
-
-                                <option value="location_exposure">
-                                    Location, school or routine revealed
-                                </option>
-
-                                <option value="privacy_concern">
-                                    Child's personal information exposed
-                                </option>
-
-                                <option value="suspected_exploitation">
-                                    Possible exploitation or abuse
-                                </option>
-
-                                <option value="sexualized_content">
-                                    Sexualized or inappropriate content
-                                </option>
-
-                                <option value="other">
-                                    Other child-safety concern
-                                </option>
-                            </select>
-                        </label>
-
-                    </div>
-
+                <div class="form-grid">
 
                     <label>
-                        <span class="field-label">
-                            Link to the public content
+
+                        <span
+                            class="field-label"
+                            data-i18n="platformLabel"
+                        >
+                            Plataforma
                         </span>
 
-                        <span class="field-help">
-                            Paste the original post, photo or video URL.
-                        </span>
-
-                        <input
-                            id="url"
-                            type="url"
-                            placeholder="https://..."
+                        <select
+                            id="platform"
                             required
                         >
+
+                            <option
+                                value=""
+                                data-i18n="selectPlatform"
+                            >
+                                Selecione a plataforma
+                            </option>
+
+                            <option value="Instagram">
+                                Instagram
+                            </option>
+
+                            <option value="Facebook">
+                                Facebook
+                            </option>
+
+                            <option value="TikTok">
+                                TikTok
+                            </option>
+
+                            <option value="YouTube">
+                                YouTube
+                            </option>
+
+                            <option value="X">
+                                X
+                            </option>
+
+                            <option
+                                value="Other"
+                                data-i18n="otherPlatform"
+                            >
+                                Outra
+                            </option>
+
+                        </select>
+
                     </label>
 
 
+
                     <label>
-                        <span class="field-label">
-                            What did you notice?
+
+                        <span
+                            class="field-label"
+                            data-i18n="reasonLabel"
+                        >
+                            Por que está preocupado?
                         </span>
 
-                        <span class="field-help">
-                            Describe what concerns you. Do not include
-                            unnecessary personal information about the child.
-                        </span>
+                        <select
+                            id="reason"
+                            required
+                        >
 
-                        <textarea
+                            <option
+                                value=""
+                                data-i18n="selectReason"
+                            >
+                                Selecione um motivo
+                            </option>
+
+                            <option
+                                value="potential_child_exposure"
+                                data-i18n="reasonExposure"
+                            >
+                                Criança exposta publicamente
+                            </option>
+
+                            <option
+                                value="location_exposure"
+                                data-i18n="reasonLocation"
+                            >
+                                Localização, escola ou rotina revelada
+                            </option>
+
+                            <option
+                                value="privacy_concern"
+                                data-i18n="reasonPrivacy"
+                            >
+                                Informação pessoal exposta
+                            </option>
+
+                            <option
+                                value="suspected_exploitation"
+                                data-i18n="reasonExploitation"
+                            >
+                                Possível exploração ou abuso
+                            </option>
+
+                            <option
+                                value="sexualized_content"
+                                data-i18n="reasonSexualized"
+                            >
+                                Conteúdo sexualizado ou inadequado
+                            </option>
+
+                            <option
+                                value="other"
+                                data-i18n="reasonOther"
+                            >
+                                Outra preocupação
+                            </option>
+
+                        </select>
+
+                    </label>
+
+                </div>
+
+
+
+                <label>
+
+                    <span
+                        class="field-label"
+                        data-i18n="urlLabel"
+                    >
+                        Link para o conteúdo público
+                    </span>
+
+                    <input
+                        id="url"
+                        type="url"
+                        placeholder="https://..."
+                        required
+                    >
+
+                </label>
+
+
+
+                <label>
+
+                    <span
+                        class="field-label"
+                        data-i18n="descriptionLabel"
+                    >
+                        O que observou?
+                    </span>
+
+                    <textarea
                         id="description"
                         rows="6"
                         minlength="10"
                         maxlength="2000"
-                        placeholder="Describe what you saw and why you are concerned."
+                        data-i18n-placeholder="descriptionPlaceholder"
+                        placeholder="Descreva o que viu e por que considera preocupante."
                         required
                     ></textarea>
 
-                        <span class="character-note">
-                            Maximum 2,000 characters
-                        </span>
-                    </label>
+                </label>
 
 
-                    <div class="submission-note">
-                        <p>
-                            ChildSafe will assess the report and may
-                            prioritise it for human review based on
-                            child-safety risk indicators.
-                        </p>
-                    </div>
+                <button
+                    id="submit-button"
+                    type="submit"
+                    data-i18n="submitButton"
+                >
+                    Enviar denúncia
+                </button>
 
 
-                    <button
-                        id="submit-button"
-                        type="submit"
-                    >
-                        Submit child safety report
-                    </button>
+                <p
+                    id="form-message"
+                    class="form-message"
+                    aria-live="polite"
+                ></p>
 
-                    <p
-                        id="form-message"
-                        class="form-message"
-                        aria-live="polite"
-                    ></p>
+            </form>
 
-                </form>
+        </div>
 
-            </section>
+    </div>
 
-        </section>
-
-        <footer class="public-footer">
-            ChildSafe · Digital child protection and online safety
-        </footer>
-
-    </main>
 
     <script src="/static/report/report.js"></script>
+
 </body>
 </html>

@@ -195,6 +195,22 @@ async function loadCurrentUser() {
     const isAdmin = (
         currentUser.role === "admin"
     );
+    const canAssign = (
+        currentUser.role === "admin"
+        || currentUser.role === "senior_reviewer"
+    );
+    
+    const assignmentControls =
+        document.getElementById(
+            "admin-assignment-controls"
+        );
+    
+    if (assignmentControls) {
+        assignmentControls.classList.toggle(
+            "hidden",
+            !canAssign
+        );
+    }
     document.getElementById(
         "risk-distribution-section"
     ).classList.toggle(
@@ -297,6 +313,30 @@ async function loadMetrics() {
         ).textContent = (
             `${data.confirmation_rate}%`
         );
+
+        document.getElementById(
+                "risk-low"
+            ).textContent = (
+                data.risk_distribution?.low ?? 0
+            );
+
+            document.getElementById(
+                "risk-medium"
+            ).textContent = (
+                data.risk_distribution?.medium ?? 0
+            );
+
+            document.getElementById(
+                "risk-high"
+            ).textContent = (
+                data.risk_distribution?.high ?? 0
+            );
+
+            document.getElementById(
+                "risk-critical"
+            ).textContent = (
+                data.risk_distribution?.critical ?? 0
+            );
 
         return;
     }
@@ -783,9 +823,10 @@ if (
         !== currentUser.id
     )
 ) {
-    assignmentText =
-        `Reviewer #${assignedReviewerId}`;
-}
+    assignmentText = (
+        data.report?.assigned_reviewer_username
+        || `Reviewer #${assignedReviewerId}`
+    );
 
 document.getElementById(
     "review-assignment"
@@ -1027,7 +1068,7 @@ if (!aiReasons.length) {
         block: "start",
     });
 }
-
+}
 async function submitReview(
     reportId,
     newStatus,
@@ -1172,7 +1213,8 @@ async function loadReviewQueue() {
             )
         ) {
             assignmentLabel = (
-                `Reviewer #${row.assigned_reviewer_id}`
+                row.assigned_reviewer_username
+                || `Reviewer #${row.assigned_reviewer_id}`
             );
         }
 
@@ -1370,6 +1412,7 @@ async function loadAuditLog() {
 
 async function loadDashboard() {
     await loadCurrentUser();
+    await loadAssignmentReviewers();
 
     // Primeiro carrega os reports,
     // porque os cards do reviewer dependem deles.
@@ -1584,7 +1627,19 @@ function renderRecentReportsTable(reports) {
                     assignmentLabel =
                         "Assigned to me";
                 }
-
+                else if (
+                    report.assigned_reviewer_id
+                    && (
+                        !currentUser
+                        || report.assigned_reviewer_id
+                            !== currentUser.id
+                    )
+                ) {
+                    assignmentLabel = (
+                        report.assigned_reviewer_username
+                        || `Reviewer #${report.assigned_reviewer_id}`
+                    );
+                }
                 return `
                     <tr>
                         <td>
@@ -2329,3 +2384,161 @@ function renderReviewerReportTable(
         </table>
     `;
 }
+
+async function loadAssignmentReviewers() {
+    if (
+        !currentUser
+        || (
+            currentUser.role !== "admin"
+            && currentUser.role
+                !== "senior_reviewer"
+        )
+    ) {
+        return;
+    }
+
+    const response = await apiFetch(
+        "/auth/reviewers"
+    );
+
+    if (!response.ok) {
+        return;
+    }
+
+    const reviewers =
+        await response.json();
+
+    const select =
+        document.getElementById(
+            "assignment-reviewer-select"
+        );
+
+    select.innerHTML = `
+        <option value="">
+            Select reviewer
+        </option>
+    `;
+
+    reviewers
+        .filter(
+            reviewer =>
+                reviewer.is_active
+                && (
+                    reviewer.role === "reviewer"
+                    || reviewer.role
+                        === "senior_reviewer"
+                )
+        )
+        .forEach(reviewer => {
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                reviewer.id;
+
+            option.textContent = (
+                `${reviewer.username} · `
+                + reviewer.role
+            );
+
+            select.appendChild(
+                option
+            );
+        });
+}
+
+async function assignReport(
+    reportId,
+    reviewerId,
+) {
+    const numericReportId =
+        getNumericReportId(
+            reportId
+        );
+
+    const response = await apiFetch(
+        `/reports/${numericReportId}/assign`,
+        {
+            method: "PATCH",
+            headers: {
+                "Content-Type":
+                    "application/json",
+            },
+            body: JSON.stringify({
+                reviewer_id: Number(
+                    reviewerId
+                ),
+            }),
+        },
+    );
+
+    if (!response.ok) {
+        const error =
+            await response.json();
+
+        throw new Error(
+            typeof error.detail === "string"
+                ? error.detail
+                : "Unable to assign report."
+        );
+    }
+
+    return response.json();
+}
+
+document.getElementById(
+    "assign-reviewer-button"
+).addEventListener(
+    "click",
+    async () => {
+        const message =
+            document.getElementById(
+                "assignment-message"
+            );
+
+        const reviewerId =
+            document.getElementById(
+                "assignment-reviewer-select"
+            ).value;
+
+        message.textContent = "";
+
+        if (!selectedReportId) {
+            message.textContent =
+                "No report selected.";
+
+            return;
+        }
+
+        if (!reviewerId) {
+            message.textContent =
+                "Select a reviewer.";
+
+            return;
+        }
+
+        try {
+            await assignReport(
+                selectedReportId,
+                reviewerId
+            );
+
+            message.textContent =
+                "Report assigned successfully.";
+
+            await Promise.all([
+                openReport(
+                    selectedReportId
+                ),
+                loadRecentReports(),
+                loadReviewQueue(),
+            ]);
+
+        } catch (error) {
+            message.textContent =
+                error.message;
+        }
+    }
+);

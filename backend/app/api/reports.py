@@ -343,10 +343,6 @@ def create_report_record(
             report.detection_confidence
         ),
 
-        detection_signal_score=(
-            report.detection_signal_score
-        ),
-
         detection_signals=(
             json.dumps(
                 report.detection_signals
@@ -624,7 +620,11 @@ def list_reports(
             "assigned_reviewer_id": (
                 report.assigned_reviewer_id
             ),
-
+             "assigned_reviewer_username": (
+                report.assigned_reviewer.username
+                if report.assigned_reviewer is not None
+                else None
+            ),
             "status": report.status,
             "risk_level": report.risk_level,
             "risk_score": report.risk_score,
@@ -734,63 +734,70 @@ def review_queue(
             ) from exc
 
         item = {
-            "report_id": (
-                f"CV-{report.id:06d}"
-            ),
+    "report_id": (
+        f"CV-{report.id:06d}"
+    ),
 
-            "platform": report.platform,
-            "url": report.url,
-            "reason": report.reason,
-            "description": (
-                report.description
-            ),
+    "platform": report.platform,
+    "url": report.url,
+    "reason": report.reason,
 
-            "source_type": (
-                report.source_type
-            ),
+    "description": (
+        report.description
+    ),
 
-            "source_channel": (
-                report.source_channel
-            ),
+    "source_type": (
+        report.source_type
+    ),
 
-            "source_reference": (
-                report.source_reference
-            ),
+    "source_channel": (
+        report.source_channel
+    ),
 
-            "assigned_reviewer_id": (
-                report.assigned_reviewer_id
-            ),
+    "source_reference": (
+        report.source_reference
+    ),
 
-            "status": report.status,
+    "assigned_reviewer_id": (
+        report.assigned_reviewer_id
+    ),
 
-            "risk_level": (
-                report.risk_level
-            ),
+    "assigned_reviewer_username": (
+        report.assigned_reviewer.username
+        if report.assigned_reviewer is not None
+        else None
+    ),
 
-            "risk_score": (
-                report.risk_score
-            ),
+    "status": report.status,
 
-            "review_status": (
-                report.review_status
-            ),
+    "risk_level": (
+        report.risk_level
+    ),
 
-            "queue_priority": (
-                queue_priority.priority
-            ),
+    "risk_score": (
+        report.risk_score
+    ),
 
-            "queue_priority_score": (
-                queue_priority.priority_score
-            ),
+    "review_status": (
+        report.review_status
+    ),
 
-            "queue_priority_reason": (
-                queue_priority.reason
-            ),
+    "queue_priority": (
+        queue_priority.priority
+    ),
 
-            "created_at": (
-                report.created_at
-            ),
-        }
+    "queue_priority_score": (
+        queue_priority.priority_score
+    ),
+
+    "queue_priority_reason": (
+        queue_priority.reason
+    ),
+
+    "created_at": (
+        report.created_at
+    ),
+}
 
         if ai_analysis is not None:
             item["ai_assessment"] = {
@@ -1319,92 +1326,120 @@ def get_report_audit(
     ]
 
     return {
-        "report_id": (
-            f"CV-{report.id:06d}"
-        ),
-
-        "report": {
-            "id": report.id,
-            "platform": report.platform,
-            "url": report.url,
-            "reason": report.reason,
-            "description": (
-                report.description
+            "report_id": (
+                f"CV-{report.id:06d}"
             ),
 
-            "source_type": report.source_type,
-            "source_channel": report.source_channel,
-            "source_reference": report.source_reference,
+            "report": {
+                "id": report.id,
+                "platform": report.platform,
+                "url": report.url,
+                "reason": report.reason,
 
-            "status": report.status,
-            "created_at": (
-                report.created_at
-            ),
-            "assigned_reviewer_id": (
-                report.assigned_reviewer_id
-            ),
-        },
-        "detection": {
-            "confidence": (
-                report.detection_confidence
-            ),
-            "signals": (
-                json.loads(report.detection_signals)
-                if report.detection_signals
-                else []
-            ),
-            "source": (
-                report.detection_source
-            ),
-        },
+                "description": (
+                    report.description
+                ),
 
-        "deterministic_assessment": {
-            # Historical stored value is preserved.
-            "level": report.risk_level,
-            "score": report.risk_score,
-        },
+                "source_type": (
+                    report.source_type
+                ),
 
-        "ai_assessment": (
-            ai_assessment
-        ),
+                "source_channel": (
+                    report.source_channel
+                ),
 
-        "ai_analysis_history": (
-            ai_history
-        ),
+                "source_reference": (
+                    report.source_reference
+                ),
 
-        "risk_comparison": (
-            comparison_data
-        ),
+                "assigned_reviewer_id": (
+                    report.assigned_reviewer_id
+                ),
 
-        "review": {
-            "current_status": (
-                report.review_status
-            ),
-            "review_count": len(
-                review_history
-            ),
-            "history": (
-                review_history
-            ),
-        },
+                "assigned_reviewer_username": (
+                    report.assigned_reviewer.username
+                    if report.assigned_reviewer is not None
+                    else None
+                ),
 
-        "queue_priority": {
-            # A finalized report is no longer actually
-            # present in the pending review queue.
-            "active": (
-                report.review_status
-                == "pending"
+                "status": report.status,
+
+                "created_at": (
+                    report.created_at
+                ),
+            },
+
+            "detection": {
+                "confidence": (
+                    report.detection_confidence
+                ),
+
+                "signal_score": (
+                    report.detection_signal_score
+                ),
+
+                "signals": (
+                    json.loads(
+                        report.detection_signals
+                    )
+                    if report.detection_signals
+                    else []
+                ),
+
+                "source": (
+                    report.detection_source
+                ),
+            },
+
+            "deterministic_assessment": {
+                "level": report.risk_level,
+                "score": report.risk_score,
+            },
+
+            "ai_assessment": (
+                ai_assessment
             ),
-            "priority": (
-                queue_priority.priority
+
+            "ai_analysis_history": (
+                ai_history
             ),
-            "priority_score": (
-                queue_priority.priority_score
+
+            "risk_comparison": (
+                comparison_data
             ),
-            "reason": (
-                queue_priority.reason
-            ),
-        },
+
+            "review": {
+                "current_status": (
+                    report.review_status
+                ),
+
+                "review_count": len(
+                    review_history
+                ),
+
+                "history": (
+                    review_history
+                ),
+            },
+
+            "queue_priority": {
+                "active": (
+                    report.review_status
+                    == "pending"
+                ),
+
+                "priority": (
+                    queue_priority.priority
+                ),
+
+                "priority_score": (
+                    queue_priority.priority_score
+                ),
+
+                "reason": (
+                    queue_priority.reason
+                ),
+            },
     }
 # ============================================================
 # ADMIN METRICS
