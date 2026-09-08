@@ -194,13 +194,14 @@ button {
     color: #ffffff;
 }
 .hero-image {
+   
     position: absolute;
     inset: 0;
 
-    background-image: url("/static/report/hero-childsafe.png");
+    background-image: url("/static/report/hero-childsafe.png") ;
     background-repeat: no-repeat;
     background-size: cover;
-    background-position: right top;
+    background-position: center;
     
 }
 
