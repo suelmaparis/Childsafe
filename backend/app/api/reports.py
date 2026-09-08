@@ -541,12 +541,10 @@ def create_public_report(
     )
 
     result = create_report_record(
-        report=internal_report,
-        db=db,
-        detection_signal_score=(
-        report.detection_signal_score       
-       ),
-    )
+    report=internal_report,
+    db=db,
+      )
+    
 
     return {
         "report_id": result["report_id"],

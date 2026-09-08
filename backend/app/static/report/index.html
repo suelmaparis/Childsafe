@@ -29,6 +29,7 @@
         <nav class="public-nav">
 
             <div class="nav-left">
+
                 <a
                     href="#parents"
                     data-i18n="navParents"
@@ -42,14 +43,19 @@
                 >
                     Ajuda
                 </a>
+
             </div>
 
 
             <a
-                href="#"
+                href="#top"
                 class="nav-brand"
             >
-                ChildSafe
+                <img
+                    src="/static/brand/childsafe-logo-public.png"
+                    alt="ChildSafe"
+                    class="brand-logo-img"
+                >
             </a>
 
 
@@ -64,10 +70,12 @@
                     Denunciar
                 </button>
 
+
                 <select
                     id="language-select"
                     aria-label="Idioma"
                 >
+
                     <option value="pt" selected>
                         PT
                     </option>
@@ -83,6 +91,7 @@
                     <option value="fr">
                         FR
                     </option>
+
                 </select>
 
             </div>
@@ -92,7 +101,8 @@
     </header>
 
 
-    <main>
+
+    <main id="top">
 
         <!-- =================================================
              HERO
@@ -100,33 +110,62 @@
 
         <section class="public-hero">
 
+            <div class="hero-image"></div>
+
+            <div class="hero-shade"></div>
+
+
             <div class="hero-inner">
 
-                <span
-                    class="hero-kicker"
-                    data-i18n="publicReporting"
-                >
-                    Proteção infantil online
-                </span>
+                <div class="hero-copy">
 
-                <h1 data-i18n="heroTitle">
-                    Ajude a proteger as crianças no mundo digital
-                </h1>
+                    <span
+                        class="hero-kicker"
+                        data-i18n="publicReporting"
+                    >
+                        Proteção infantil online
+                    </span>
 
-                <p data-i18n="heroText">
-                    Informação, prevenção e denúncia de
-                    conteúdos online que possam expor,
-                    identificar ou colocar uma criança em risco.
-                </p>
 
-                <button
-                    id="hero-report-button"
-                    type="button"
-                    class="main-report-button"
-                    data-i18n="openReportButton"
-                >
-                    Fazer uma denúncia
-                </button>
+                    <h1 data-i18n="heroTitle">
+                        Ajude a proteger uma criança online
+                    </h1>
+
+
+                    <p data-i18n="heroText">
+                        Denuncie conteúdo público na internet
+                        que possa expor, identificar ou colocar
+                        uma criança em risco.
+                    </p>
+
+
+                    <button
+                        id="hero-report-button"
+                        type="button"
+                        class="yellow-button"
+                        data-i18n="openReportButton"
+                    >
+                        Fazer uma denúncia
+                    </button>
+
+                </div>
+
+
+                <div class="hero-handwriting">
+
+                    <span data-i18n="heroSafeChildren">
+                        Crianças seguras.
+                    </span>
+
+                    <span data-i18n="heroBrightFuture">
+                        Futuros mais brilhantes.
+                    </span>
+
+                    <strong aria-hidden="true">
+                        ♡
+                    </strong>
+
+                </div>
 
             </div>
 
@@ -135,101 +174,343 @@
 
 
         <!-- =================================================
-             PARENTS INFORMATION
+             INFORMATION FOR PARENTS
              ================================================= -->
 
-             <section
-             id="parents"
-             class="parents-section"
-         >
-             <div class="section-intro">
-                 <span
-                     class="section-kicker"
-                     data-i18n="parents.kicker"
-                 >
-                     Informação e prevenção
-                 </span>
-         
-                 <h2 data-i18n="parents.title">
-                     Proteja as crianças dentro e fora da internet
-                 </h2>
-             </div>
-         
-             <div class="parents-grid">
-                 <article class="parent-info-card">
-                     <div class="info-icon">○</div>
-         
-                     <h3 data-i18n="parents.card1.title">
-                         Proteja a privacidade das crianças
-                     </h3>
-         
-                     <p data-i18n="parents.card1.text">
-                         Uma fotografia pode revelar muito mais do que parece.
-                         Imagens, uniformes, escolas, locais frequentados e hábitos
-                         podem ajudar desconhecidos a identificar ou localizar uma criança.
-                     </p>
-                 </article>
-         
-                 <article class="parent-info-card">
-                     <div class="info-icon">✦</div>
-         
-                     <h3 data-i18n="parents.card2.title">
-                         Ensine a criança a usar a internet com segurança
-                     </h3>
-         
-                     <p data-i18n="parents.card2.text">
-                         Fale desde cedo sobre mensagens privadas, pedidos de segredo,
-                         partilha de fotografias, localização e contacto com desconhecidos.
-                         A educação digital começa em casa.
-                     </p>
-                 </article>
-         
-                 <article class="parent-info-card">
-                     <div class="info-icon">1·2·3</div>
-         
-                     <h3 data-i18n="parents.card3.title">
-                         Crianças não são atrações turísticas
-                     </h3>
-         
-                     <p data-i18n="parents.card3.text">
-                         Ser turista, voluntário, visitante ou membro de uma organização
-                         não dá automaticamente o direito de fotografar, filmar ou publicar
-                         imagens de crianças.
-                     </p>
-                 </article>
-             </div>
-         </section>
+        <section
+            id="parents"
+            class="parents-section"
+        >
+
+            <div class="section-heading centered">
+
+                <span
+                    class="section-kicker"
+                    data-i18n="learnEyebrow"
+                >
+                    Informação e prevenção
+                </span>
+
+
+                <h2 data-i18n="learnTitle">
+                    Proteja as crianças dentro e fora da internet
+                </h2>
+
+            </div>
+
+
+            <div class="parents-grid">
+
+                <!-- PRIVACY -->
+
+                <article class="parent-card">
+
+                    <div
+                        class="parent-icon"
+                        aria-hidden="true"
+                    >
+                        ♢
+                    </div>
+
+                    <h3 data-i18n="parentsTitle">
+                        Proteja a privacidade das crianças
+                    </h3>
+
+                    <p data-i18n="parentsIntro">
+                        Uma fotografia pode revelar muito mais
+                        do que parece. Imagens, uniformes,
+                        escolas, locais frequentados e hábitos
+                        podem ajudar desconhecidos a identificar
+                        ou localizar uma criança.
+                    </p>
+
+                </article>
+
+
+
+                <!-- ONLINE SAFETY -->
+
+                <article class="parent-card">
+
+                    <div
+                        class="parent-icon"
+                        aria-hidden="true"
+                    >
+                        ♟
+                    </div>
+
+                    <h3 data-i18n="childrenInternetTitle">
+                        Ensine a criança a usar a internet
+                        com segurança
+                    </h3>
+
+                    <p data-i18n="childrenInternetIntro">
+                        Fale desde cedo sobre mensagens privadas,
+                        pedidos de segredo, partilha de fotografias,
+                        localização e contacto com desconhecidos.
+                        A educação digital começa em casa.
+                    </p>
+
+                </article>
+
+
+
+                <!-- TOURISTS -->
+
+                <article class="parent-card">
+
+                    <div
+                        class="parent-icon camera-icon"
+                        aria-hidden="true"
+                    >
+                        ▣
+                    </div>
+
+                    <h3 data-i18n="visitorsTitle">
+                        Crianças não são atrações turísticas
+                    </h3>
+
+                    <p data-i18n="visitorsIntro">
+                        Ser turista, voluntário, visitante ou
+                        membro de uma organização não dá
+                        automaticamente o direito de fotografar,
+                        filmar ou publicar imagens de crianças.
+                    </p>
+
+                </article>
+
+            </div>
+
+        </section>
 
 
 
         <!-- =================================================
-             REPORT CTA
+             REPORT FEATURE
              ================================================= -->
 
-        <section class="report-cta">
+        <section class="report-feature">
 
-            <div>
+            <div class="report-feature-inner">
 
-                <h2 data-i18n="reportTitle">
-                    Viu conteúdo que pode colocar
-                    uma criança em risco?
-                </h2>
+                <!-- LEFT -->
 
-                <p data-i18n="anonymousText">
-                    Pode denunciar anonimamente.
-                    Não pedimos o seu nome nem email.
-                </p>
+                <div class="report-feature-copy">
+
+                    <span
+                        class="section-kicker"
+                        data-i18n="reportEyebrow"
+                    >
+                        Denúncia
+                    </span>
+
+
+                    <h2 data-i18n="reportTitle">
+                        Denuncie conteúdo online preocupante
+                    </h2>
+
+
+                    <p data-i18n="anonymousText">
+                        Não pedimos o seu nome nem email.
+                        Envie apenas o link público e a
+                        informação necessária para explicar
+                        a sua preocupação.
+                    </p>
+
+
+                    <button
+                        id="cta-report-button"
+                        type="button"
+                        class="black-button"
+                        data-i18n="openReportButton"
+                    >
+                        Fazer uma denúncia
+                    </button>
+
+
+                    <div class="mini-benefits">
+
+                        <div>
+
+                            <span
+                                class="mini-icon"
+                                aria-hidden="true"
+                            >
+                                ♙
+                            </span>
+
+                            <small data-i18n="benefitAnonymous">
+                                Pode denunciar anonimamente
+                            </small>
+
+                        </div>
+
+
+                        <div>
+
+                            <span
+                                class="mini-icon"
+                                aria-hidden="true"
+                            >
+                                ◉
+                            </span>
+
+                            <small data-i18n="benefitNoDownload">
+                                Não descarregue nem partilhe imagens
+                            </small>
+
+                        </div>
+
+
+                        <div>
+
+                            <span
+                                class="mini-icon"
+                                aria-hidden="true"
+                            >
+                                ♢
+                            </span>
+
+                            <small data-i18n="benefitTogether">
+                                Juntos por crianças mais seguras
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- RIGHT -->
+
+                <div class="impact-card">
+
+                    <div class="impact-copy">
+
+                        <h3 data-i18n="impactTitle">
+                            A sua denúncia faz a diferença
+                        </h3>
+
+
+                        <p data-i18n="impactText">
+                            Ao denunciar conteúdos preocupantes,
+                            contribui para um ambiente online
+                            mais seguro e ajuda a proteger crianças.
+                        </p>
+
+
+                        <ul class="impact-list">
+
+                            <li>
+
+                                <span
+                                    class="impact-icon green"
+                                    aria-hidden="true"
+                                >
+                                    ♢
+                                </span>
+
+                                <div>
+
+                                    <strong
+                                        data-i18n="impactAnalyzedTitle"
+                                    >
+                                        Conteúdos analisados
+                                    </strong>
+
+                                    <span
+                                        data-i18n="impactAnalyzedText"
+                                    >
+                                        por equipas especializadas
+                                    </span>
+
+                                </div>
+
+                            </li>
+
+
+                            <li>
+
+                                <span
+                                    class="impact-icon blue"
+                                    aria-hidden="true"
+                                >
+                                    ♟
+                                </span>
+
+                                <div>
+
+                                    <strong
+                                        data-i18n="impactRemovalTitle"
+                                    >
+                                        Ajuda a remover conteúdos
+                                    </strong>
+
+                                    <span
+                                        data-i18n="impactRemovalText"
+                                    >
+                                        nocivos da internet
+                                    </span>
+
+                                </div>
+
+                            </li>
+
+
+                            <li>
+
+                                <span
+                                    class="impact-icon yellow"
+                                    aria-hidden="true"
+                                >
+                                    ♥
+                                </span>
+
+                                <div>
+
+                                    <strong
+                                        data-i18n="impactProtectTitle"
+                                    >
+                                        Protege crianças
+                                    </strong>
+
+                                    <span
+                                        data-i18n="impactProtectText"
+                                    >
+                                        e constrói um futuro mais seguro
+                                    </span>
+
+                                </div>
+
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+
+                    <div class="impact-illustration">
+
+                        <div
+                            class="impact-note"
+                            data-i18n="impactNote"
+                        >
+                            Mais segurança para um amanhã melhor.
+                        </div>
+
+
+                        <img
+                            src="/static/report/report-illustration.png"
+                            alt=""
+                        >
+
+                    </div>
+
+                </div>
 
             </div>
-
-            <button
-                id="cta-report-button"
-                type="button"
-                class="cta-button"
-                data-i18n="openReportButton"
-            >
-                Fazer uma denúncia
-            </button>
 
         </section>
 
@@ -241,43 +522,79 @@
 
         <section
             id="help"
-            class="quick-help-section"
+            class="help-section"
         >
 
-            <h2 data-i18n="helpTitle">
-                Precisa de ajuda agora?
-            </h2>
+            <div class="help-inner">
 
-            <div class="quick-help-grid">
-
-                <article>
-                    <strong>
-                        ICCA
-                    </strong>
-
-                    <span data-i18n="complaintLine">
-                        Disque Denúncia
-                    </span>
-
-                    <a href="tel:8001010">
-                        800 10 10
-                    </a>
-                </article>
+                <h2 data-i18n="helpTitle">
+                    Precisa de ajuda agora?
+                </h2>
 
 
-                <article>
-                    <strong data-i18n="pjTitle">
-                        Polícia Judiciária
-                    </strong>
+                <div class="help-grid">
 
-                    <span data-i18n="emergencyPraia">
-                        Emergência
-                    </span>
+                    <!-- ICCA -->
 
-                    <a href="tel:134">
-                        134
-                    </a>
-                </article>
+                    <article class="contact-card">
+
+                        <div
+                            class="contact-icon"
+                            aria-hidden="true"
+                        >
+                            ☎
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                ICCA
+                            </strong>
+
+                            <span data-i18n="complaintLine">
+                                Disque Denúncia
+                            </span>
+
+                            <a href="tel:8001010">
+                                800 10 10
+                            </a>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <!-- POLÍCIA JUDICIÁRIA -->
+
+                    <article class="contact-card">
+
+                        <div
+                            class="contact-icon"
+                            aria-hidden="true"
+                        >
+                            ♧
+                        </div>
+
+                        <div>
+
+                            <strong data-i18n="pjTitle">
+                                Polícia Judiciária
+                            </strong>
+
+                            <span data-i18n="emergencyPraia">
+                                Emergência
+                            </span>
+
+                            <a href="tel:134">
+                                134
+                            </a>
+
+                        </div>
+
+                    </article>
+
+                </div>
 
             </div>
 
@@ -293,74 +610,96 @@
 
     <footer class="site-footer">
 
-        <div class="footer-grid">
+        <div class="footer-inner">
 
-            <div>
+            <div class="footer-grid">
 
-                <h3>
-                    ChildSafe
-                </h3>
+                <!-- BRAND -->
 
-                <p data-i18n="footerDescription">
-                    Proteção digital infantil
-                    e segurança online.
-                </p>
+                <div>
+
+                    <h3>
+                        ChildSafe
+                    </h3>
+
+                    <p data-i18n="footerDescription">
+                        Proteção digital infantil
+                        e segurança online.
+                    </p>
+
+                </div>
+
+
+
+                <!-- INFORMATION -->
+
+                <div>
+
+                    <h4 data-i18n="footerInfo">
+                        Informação
+                    </h4>
+
+                    <a
+                        href="#parents"
+                        data-i18n="navParents"
+                    >
+                        Para pais
+                    </a>
+
+                    <a
+                        href="#help"
+                        data-i18n="navHelp"
+                    >
+                        Ajuda
+                    </a>
+
+                </div>
+
+
+
+                <!-- PROTECTION -->
+
+                <div>
+
+                    <h4 data-i18n="footerProtection">
+                        Proteção
+                    </h4>
+
+                    <button
+                        id="footer-report-button"
+                        type="button"
+                        class="footer-report-button"
+                        data-i18n="openReportButton"
+                    >
+                        Fazer uma denúncia
+                    </button>
+
+                    <span>
+                        ICCA · 800 10 10
+                    </span>
+
+                    <span data-i18n="footerPolice">
+                        Polícia Judiciária · 134
+                    </span>
+
+                </div>
 
             </div>
 
 
-            <div>
+            <div class="footer-bottom">
 
-                <h4 data-i18n="footerInfo">
-                    Informação
-                </h4>
-
-                <a
-                    href="#parents"
-                    data-i18n="navParents"
-                >
-                    Para pais
-                </a>
-
-                <a
-                    href="#help"
-                    data-i18n="navHelp"
-                >
-                    Ajuda
-                </a>
-
-            </div>
-
-
-            <div>
-
-                <h4 data-i18n="footerProtection">
-                    Proteção
-                </h4>
-
-                <button
-                    id="footer-report-button"
-                    type="button"
-                    class="footer-report-link"
-                    data-i18n="openReportButton"
-                >
-                    Fazer uma denúncia
-                </button>
-
-                <span>
-                    ICCA · 800 10 10
+                <span data-i18n="footerCountry">
+                    ChildSafe · Cabo Verde
                 </span>
 
-                <span>
-                    Polícia Judiciária · 134
+                <span data-i18n="footerSlogan">
+                    Crianças seguras.
+                    Futuros mais brilhantes. ♡
                 </span>
 
             </div>
 
-        </div>
-
-        <div class="footer-bottom">
-            ChildSafe · Cabo Verde
         </div>
 
     </footer>
@@ -369,6 +708,9 @@
 
     <!-- =====================================================
          REPORT MODAL
+
+         IMPORTANTE:
+         manter IDs e values porque estão ligados ao backend.
          ===================================================== -->
 
     <div
@@ -392,7 +734,7 @@
                         class="modal-kicker"
                         data-i18n="reportEyebrow"
                     >
-                        Fazer uma denúncia
+                        Denúncia
                     </span>
 
                     <h2
@@ -418,6 +760,8 @@
 
 
 
+            <!-- PRIVACY -->
+
             <div class="privacy-banner">
 
                 <div class="privacy-icon">
@@ -432,6 +776,8 @@
 
                     <p data-i18n="anonymousText">
                         Não pedimos o seu nome nem email.
+                        Envie apenas o link público e a informação
+                        necessária para explicar a sua preocupação.
                     </p>
 
                 </div>
@@ -439,6 +785,8 @@
             </div>
 
 
+
+            <!-- WARNING -->
 
             <div class="warning-box">
 
@@ -451,18 +799,24 @@
                 <p
                     data-i18n="protectWhileReportingText"
                 >
-                    Não descarregue nem volte a publicar
-                    imagens ou vídeos. Envie apenas
-                    o link original.
+                    Não descarregue, copie ou volte a publicar
+                    imagens ou vídeos da criança.
+                    Envie apenas o link original.
                 </p>
 
             </div>
 
 
 
+            <!-- =================================================
+                 FORMULÁRIO LIGADO AO BACKEND
+                 ================================================= -->
+
             <form id="public-report-form">
 
                 <div class="form-grid">
+
+                    <!-- PLATFORM -->
 
                     <label>
 
@@ -518,6 +872,8 @@
 
 
 
+                    <!-- REASON -->
+
                     <label>
 
                         <span
@@ -539,12 +895,14 @@
                                 Selecione um motivo
                             </option>
 
+
                             <option
                                 value="potential_child_exposure"
                                 data-i18n="reasonExposure"
                             >
                                 Criança exposta publicamente
                             </option>
+
 
                             <option
                                 value="location_exposure"
@@ -553,12 +911,14 @@
                                 Localização, escola ou rotina revelada
                             </option>
 
+
                             <option
                                 value="privacy_concern"
                                 data-i18n="reasonPrivacy"
                             >
-                                Informação pessoal exposta
+                                Informação pessoal da criança exposta
                             </option>
+
 
                             <option
                                 value="suspected_exploitation"
@@ -567,12 +927,14 @@
                                 Possível exploração ou abuso
                             </option>
 
+
                             <option
                                 value="sexualized_content"
                                 data-i18n="reasonSexualized"
                             >
                                 Conteúdo sexualizado ou inadequado
                             </option>
+
 
                             <option
                                 value="other"
@@ -588,6 +950,8 @@
                 </div>
 
 
+
+                <!-- URL -->
 
                 <label>
 
@@ -608,6 +972,8 @@
                 </label>
 
 
+
+                <!-- DESCRIPTION -->
 
                 <label>
 
@@ -630,6 +996,9 @@
 
                 </label>
 
+
+
+                <!-- SUBMIT -->
 
                 <button
                     id="submit-button"

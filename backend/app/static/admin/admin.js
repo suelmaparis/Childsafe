@@ -820,13 +820,14 @@ if (
     && (
         !currentUser
         || assignedReviewerId
-        !== currentUser.id
+            !== currentUser.id
     )
 ) {
     assignmentText = (
         data.report?.assigned_reviewer_username
         || `Reviewer #${assignedReviewerId}`
     );
+}
 
 document.getElementById(
     "review-assignment"
@@ -1068,7 +1069,7 @@ if (!aiReasons.length) {
         block: "start",
     });
 }
-}
+
 async function submitReview(
     reportId,
     newStatus,
@@ -1880,71 +1881,46 @@ document.getElementById(
 );
 
 
-document
-    .getElementById("review-queue")
-    .addEventListener(
-        "click",
-        async event => {
-            const button = event.target.closest(
+document.addEventListener(
+    "click",
+    async event => {
+        const button =
+            event.target.closest(
                 ".report-link"
             );
 
-            if (!button) {
-                return;
-            }
+        if (!button) {
+            return;
+        }
 
-            const reportId =
-                button.dataset.reportId;
+        const reportId =
+            button.dataset.reportId;
 
-            console.log(
-                "Report clicked:",
+        if (!reportId) {
+            console.error(
+                "Report button has no report ID."
+            );
+
+            return;
+        }
+
+        console.log(
+            "REPORT CLICKED:",
+            reportId
+        );
+
+        try {
+            await openReport(
                 reportId
             );
-
-            try {
-                await openReport(reportId);
-            } catch (error) {
-                console.error(
-                    "Unable to open report:",
-                    error
-                );
-            }
-        },
-    );
-    document
-    .getElementById("recent-reports")
-    .addEventListener(
-        "click",
-        async event => {
-            const button = event.target.closest(
-                ".recent-report-link"
+        } catch (error) {
+            console.error(
+                "Unable to open report:",
+                error
             );
-
-            if (!button) {
-                return;
-            }
-
-            const reportId =
-                button.dataset.reportId;
-
-            console.log(
-                "Recent report clicked:",
-                reportId
-            );
-
-            try {
-                await openReport(
-                    reportId
-                );
-            } catch (error) {
-                console.error(
-                    "Unable to open recent report:",
-                    error
-                );
-            }
-        },
-    );
-   
+        }
+    }
+);
     function showDashboardSection(section) {
         const sections = {
            
