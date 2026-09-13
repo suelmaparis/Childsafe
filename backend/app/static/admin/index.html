@@ -473,7 +473,7 @@
                     <h2>Report review</h2>
                     <p id="selected-report-id"></p>
                 </div>
-                  
+                
                 <button
                     id="close-report-button"
                     type="button"
@@ -720,8 +720,304 @@
                     class="table-wrapper"
                 ></div>
             </div>
-            </section>
+            
+            <section class="panel report-actions-section">
 
+                <div class="panel-header report-actions-header">
+            
+                    <div>
+                        <h3>Case actions</h3>
+            
+                        <p>
+                            Actions taken after review,
+                            escalation or confirmation.
+                        </p>
+                    </div>
+            
+                    <button
+                        id="add-report-action-button"
+                        type="button"
+                        class="secondary-button"
+                    >
+                        Add action
+                    </button>
+            
+                </div>
+            
+                <div class="panel-body">
+            
+                    <div
+                        id="report-actions-empty"
+                        class="empty-state"
+                    >
+                        No actions have been recorded
+                        for this report.
+                    </div>
+            
+                    <div
+                        id="report-actions-list"
+                        class="hidden"
+                    ></div>
+            
+                </div>
+            
+            </section>
+       
+        </section>
+        <div
+    id="report-action-modal"
+    class="report-action-modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="report-action-modal-title"
+>
+    <div
+        id="report-action-backdrop"
+        class="modal-backdrop"
+    ></div>
+
+    <div class="report-action-modal-card">
+
+        <div class="modal-header">
+        <button
+            id="close-report-action-modal"
+            type="button"
+            class="modal-close"
+            aria-label="Close"
+                            
+            >
+                            ×
+        </button>
+            <div>
+                <h3 id="report-action-modal-title">
+                    Add case action
+                </h3>
+              
+                <p>
+                    Record an action taken for
+                    this report.
+                </p>
+            </div>
+
+            
+
+        </div>
+
+
+        <form id="report-action-form">
+
+            <label>
+                <span class="field-label">
+                    Action type
+                </span>
+
+                <select
+                    id="report-action-type"
+                    required
+                >
+                    <option value="">
+                        Select action
+                    </option>
+
+                    <option value="internal_escalation">
+                        Internal escalation
+                    </option>
+
+                    <option value="evidence_preservation">
+                        Evidence preservation
+                    </option>
+
+                    <option value="platform_report">
+                        Platform report
+                    </option>
+
+                    <option value="takedown_request">
+                        Takedown request
+                    </option>
+
+                    <option value="icca_referral">
+                        ICCA referral
+                    </option>
+
+                    <option value="police_referral">
+                        Police referral
+                    </option>
+
+                    <option value="other">
+                        Other
+                    </option>
+                </select>
+            </label>
+
+
+            <label>
+                <span class="field-label">
+                    Notes
+                </span>
+
+                <textarea
+                    id="report-action-notes"
+                    rows="5"
+                    maxlength="5000"
+                    placeholder="Describe the action..."
+                ></textarea>
+            </label>
+
+
+            <label>
+                <span class="field-label">
+                    External reference
+                </span>
+
+                <input
+                    id="report-action-reference"
+                    type="text"
+                    maxlength="255"
+                    placeholder="Optional reference"
+                >
+            </label>
+
+
+            <p
+                id="report-action-message"
+                class="form-message"
+            ></p>
+
+
+            <button
+                id="submit-report-action-button"
+                type="submit"
+                class="primary-button"
+            >
+                Save action
+            </button>
+
+        </form>
+
+    </div>
+</div>
+<div
+    id="update-action-modal"
+    class="report-action-modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="update-action-modal-title"
+>
+    <div
+        id="update-action-backdrop"
+        class="modal-backdrop"
+    ></div>
+
+    <div class="report-action-modal-card">
+
+        <div class="modal-header">
+
+            <div>
+                <h3 id="update-action-modal-title">
+                    Update case action
+                </h3>
+
+                <p>
+                    Update the status and details
+                    of this action.
+                </p>
+            </div>
+
+            <button
+                id="close-update-action-modal"
+                type="button"
+                class="modal-close"
+                aria-label="Close"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="update-action-form">
+
+            <input
+                id="update-action-id"
+                type="hidden"
+            >
+
+
+            <label>
+                <span class="field-label">
+                    Status
+                </span>
+
+                <select
+                    id="update-action-status"
+                    required
+                >
+                    <option value="pending">
+                        Pending
+                    </option>
+
+                    <option value="in_progress">
+                        In progress
+                    </option>
+
+                    <option value="completed">
+                        Completed
+                    </option>
+
+                    <option value="failed">
+                        Failed
+                    </option>
+
+                    <option value="cancelled">
+                        Cancelled
+                    </option>
+                </select>
+            </label>
+
+
+            <label>
+                <span class="field-label">
+                    Notes
+                </span>
+
+                <textarea
+                    id="update-action-notes"
+                    rows="5"
+                    maxlength="5000"
+                ></textarea>
+            </label>
+
+
+            <label>
+                <span class="field-label">
+                    External reference
+                </span>
+
+                <input
+                    id="update-action-reference"
+                    type="text"
+                    maxlength="255"
+                >
+            </label>
+
+
+            <p
+                id="update-action-message"
+                class="form-message"
+            ></p>
+
+
+            <button
+                type="submit"
+                class="primary-button"
+            >
+                Save changes
+            </button>
+
+        </form>
+
+    </div>
+</div>
                 <section
                     id="reviewers-panel"
                     class="panel"
@@ -769,6 +1065,7 @@
                         class="table-wrapper"
                     ></div>
                 </section>
+                
 
             </main>
         </section>

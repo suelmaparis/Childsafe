@@ -1,6 +1,7 @@
 from app.core.database import Base, engine
 from app.models.report import Report
 from app.models.monitoring_run import MonitoringRun
+from app.models.report_action import ReportAction
 
 
 def init_db():

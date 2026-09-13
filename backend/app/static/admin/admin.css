@@ -1346,3 +1346,93 @@ td {
     object-fit: contain;
     object-position: center;
 }
+
+.report-action-modal {
+    position: fixed;
+    inset: 0;
+
+    z-index: 1000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+}
+
+.report-action-modal.hidden {
+    display: none;
+}
+
+.report-action-modal .modal-backdrop {
+    position: absolute;
+    inset: 0;
+
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.report-action-modal-card {
+    position: relative;
+    z-index: 1;
+
+    width: 100%;
+    max-width: 520px;
+
+    padding: 24px;
+
+    background: #ffffff;
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 24px 60px
+        rgba(15, 23, 42, 0.2);
+}
+
+.report-action-modal-card label {
+    display: block;
+    margin-top: 18px;
+}
+
+.report-action-modal-card select,
+.report-action-modal-card input,
+.report-action-modal-card textarea {
+    width: 100%;
+
+    margin-top: 7px;
+    padding: 11px 12px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+
+    font: inherit;
+}
+.report-actions-section table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.report-actions-section th,
+.report-actions-section td {
+    vertical-align: middle;
+}
+
+.report-actions-section th:last-child,
+.report-actions-section td:last-child {
+    width: 120px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.update-action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 82px;
+    min-height: 38px;
+
+    margin: 0;
+
+    white-space: nowrap;
+}

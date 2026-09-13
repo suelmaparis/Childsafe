@@ -43,7 +43,52 @@ from app.services.risk_comparison import (
 )
 from app.api.auth import get_current_reviewer
 from app.models.reviewer import Reviewer
+from app.models.report_action import ReportAction
 
+from app.schemas.report_action import (
+    ReportActionCreate,
+    ReportActionUpdate,
+    ReportActionResponse,
+)
+ALLOWED_ACTION_TYPES = {
+    "platform_report",
+    "icca_referral",
+    "police_referral",
+    "takedown_request",
+    "evidence_preservation",
+    "internal_escalation",
+    "other",
+}
+
+ALLOWED_ACTION_STATUSES = {
+    "pending",
+    "in_progress",
+    "completed",
+    "failed",
+    "cancelled",
+}
+ACTION_STATUS_TRANSITIONS = {
+    "pending": {
+        "in_progress",
+        "cancelled",
+    },
+
+    "in_progress": {
+        "completed",
+        "failed",
+        "cancelled",
+    },
+
+    "completed": set(),
+    "failed": set(),
+    "cancelled": set(),
+}
+EXTERNAL_ACTION_TYPES = {
+    "platform_report",
+    "icca_referral",
+    "police_referral",
+    "takedown_request",
+}
 router = APIRouter(
     prefix="/reports",
     tags=["Reports"],
@@ -1322,7 +1367,46 @@ def get_report_audit(
         }
         for review in reviews
     ]
+    actions = (
+    db.query(ReportAction)
+    .filter(
+        ReportAction.report_id
+        == report_id
+    )
+    .order_by(
+        ReportAction.created_at.asc()
+    )
+    .all()
+)
 
+    action_history = [
+    {
+        "id": action.id,
+        "action_type": (
+            action.action_type
+        ),
+        "status": action.status,
+        "notes": action.notes,
+        "external_reference": (
+            action.external_reference
+        ),
+        "created_by_reviewer_id": (
+            action.created_by_reviewer_id
+        ),
+        "created_by_username": (
+            action.created_by.username
+            if action.created_by is not None
+            else None
+        ),
+        "created_at": (
+            action.created_at
+        ),
+        "updated_at": (
+            action.updated_at
+        ),
+    }
+    for action in actions
+]
     return {
             "report_id": (
                 f"CV-{report.id:06d}"
@@ -1365,6 +1449,7 @@ def get_report_audit(
                 "created_at": (
                     report.created_at
                 ),
+                
             },
 
             "detection": {
@@ -1418,8 +1503,9 @@ def get_report_audit(
                 "history": (
                     review_history
                 ),
+                
             },
-
+              
             "queue_priority": {
                 "active": (
                     report.review_status
@@ -1438,7 +1524,237 @@ def get_report_audit(
                     queue_priority.reason
                 ),
             },
+            "actions": {
+            "count": len(
+                action_history
+            ),
+            "history": (
+                action_history
+            ),
+        },
+            
     }
+
+@router.post(
+    "/{report_id}/actions",
+    response_model=ReportActionResponse,
+    status_code=201,
+)
+def create_report_action(
+    report_id: int,
+    action_data: ReportActionCreate,
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "reviewer",
+            "senior_reviewer",
+            "admin",
+        )
+    ),
+    db: Session = Depends(get_db),
+):
+    report = (
+        db.query(Report)
+        .filter(
+            Report.id == report_id
+        )
+        .first()
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found.",
+        )
+
+    if (
+        action_data.action_type
+        not in ALLOWED_ACTION_TYPES
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid action type.",
+        )
+
+    if (
+        action_data.action_type
+        in EXTERNAL_ACTION_TYPES
+        and report.review_status
+        not in {
+            "confirmed",
+            "escalated",
+        }
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "External actions require "
+                "a confirmed or escalated report."
+            ),
+        )
+
+    if (
+        action_data.action_type
+        in EXTERNAL_ACTION_TYPES
+        and current_reviewer.role
+        not in {
+            "senior_reviewer",
+            "admin",
+        }
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Only senior reviewers or "
+                "administrators may create "
+                "external actions."
+            ),
+        )
+
+    action = ReportAction(
+        report_id=report.id,
+        action_type=(
+            action_data.action_type
+        ),
+        status="pending",
+        notes=action_data.notes,
+        external_reference=(
+            action_data.external_reference
+        ),
+        created_by_reviewer_id=(
+            current_reviewer.id
+        ),
+    )
+
+    db.add(action)
+    db.commit()
+    db.refresh(action)
+
+    return action
+@router.get(
+    "/{report_id}/actions",
+    response_model=list[
+        ReportActionResponse
+    ],
+)
+def list_report_actions(
+    report_id: int,
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "reviewer",
+            "senior_reviewer",
+            "admin",
+        )
+    ),
+    db: Session = Depends(get_db),
+):
+    report = (
+        db.query(Report)
+        .filter(
+            Report.id == report_id
+        )
+        .first()
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found.",
+        )
+
+    return (
+        db.query(ReportAction)
+        .filter(
+            ReportAction.report_id
+            == report_id
+        )
+        .order_by(
+            ReportAction.created_at.asc()
+        )
+        .all()
+    )
+@router.patch(
+    "/{report_id}/actions/{action_id}",
+    response_model=ReportActionResponse,
+)
+def update_report_action(
+    report_id: int,
+    action_id: int,
+    action_data: ReportActionUpdate,
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "senior_reviewer",
+            "admin",
+        )
+    ),
+    db: Session = Depends(get_db),
+):
+    action = (
+        db.query(ReportAction)
+        .filter(
+            ReportAction.id == action_id,
+            ReportAction.report_id
+            == report_id,
+        )
+        .first()
+    )
+
+    if action is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report action not found.",
+        )
+
+    if (
+        action_data.status
+        not in ALLOWED_ACTION_STATUSES
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid action status.",
+        )
+    current_status = (
+    action.status
+)
+
+    new_status = (
+        action_data.status
+    )
+
+    allowed_next_statuses = (
+        ACTION_STATUS_TRANSITIONS.get(
+            current_status,
+            set(),
+        )
+    )
+
+    if (
+        new_status != current_status
+        and new_status
+        not in allowed_next_statuses
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Invalid action status transition: "
+                f"{current_status} -> {new_status}."
+            ),
+        )
+    action.status = (
+        action_data.status
+    )
+
+    action.notes = (
+        action_data.notes
+    )
+
+    action.external_reference = (
+        action_data.external_reference
+    )
+
+    db.commit()
+    db.refresh(action)
+
+    return action
 # ============================================================
 # ADMIN METRICS
 # ============================================================

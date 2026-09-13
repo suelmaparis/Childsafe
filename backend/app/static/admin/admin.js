@@ -8,14 +8,164 @@ const logoutButton = document.getElementById("logout-button");
 const periodFilter = document.getElementById("period-filter");
 const dashboardSectionSelect =document.getElementById("dashboard-section-select");
 
+
+const reportActionModal =
+    document.getElementById(
+        "report-action-modal"
+    );
+
+const reportActionForm =
+    document.getElementById(
+        "report-action-form"
+    );
+
+const addReportActionButton =
+    document.getElementById(
+        "add-report-action-button"
+    );
+
+const closeReportActionModalButton =
+    document.getElementById(
+        "close-report-action-modal"
+    );
+
+const reportActionBackdrop =
+    document.getElementById(
+        "report-action-backdrop"
+    );
+    const updateActionModal =
+    document.getElementById(
+        "update-action-modal"
+    );
+
+const updateActionForm =
+    document.getElementById(
+        "update-action-form"
+    );
+
+const closeUpdateActionModalButton =
+    document.getElementById(
+        "close-update-action-modal"
+    );
+
+const updateActionBackdrop =
+    document.getElementById(
+        "update-action-backdrop"
+    );
 let accessToken = sessionStorage.getItem("childsafe_access_token");
 let currentUser = null;
 let selectedReportId = null;
 let cachedReports = [];
 let activeReportFilter = "all";
+function closeUpdateActionModal() {
+    if (!updateActionModal) {
+        return;
+    }
 
+    updateActionModal.classList.add(
+        "hidden"
+    );
 
+    if (updateActionForm) {
+        updateActionForm.reset();
+    }
+}
+function openReportActionModal() {
+    if (!selectedReportId) {
+        console.error(
+            "No report selected."
+        );
 
+        return;
+    }
+
+    if (!reportActionModal) {
+        console.error(
+            "Report action modal not found."
+        );
+
+        return;
+    }
+
+    const message =
+        document.getElementById(
+            "report-action-message"
+        );
+
+    if (message) {
+        message.textContent = "";
+    }
+
+    reportActionModal.classList.remove(
+        "hidden"
+    );
+
+    document.body.classList.add(
+        "modal-open"
+    );
+}
+
+function closeReportActionModal() {
+    const modal =
+        document.getElementById(
+            "report-action-modal"
+        );
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.add(
+        "hidden"
+    );
+
+    document.body.classList.remove(
+        "modal-open"
+    );
+
+    const form =
+        document.getElementById(
+            "report-action-form"
+        );
+
+    if (form) {
+        form.reset();
+    }
+}
+if (addReportActionButton) {
+    addReportActionButton.addEventListener(
+        "click",
+        openReportActionModal
+    );
+}
+
+if (closeReportActionModalButton) {
+    closeReportActionModalButton.addEventListener(
+        "click",
+        closeReportActionModal
+    );
+}
+
+if (reportActionBackdrop) {
+    reportActionBackdrop.addEventListener(
+        "click",
+        closeReportActionModal
+    );
+}
+
+if (closeReportActionModalButton) {
+    closeReportActionModalButton.addEventListener(
+        "click",
+        closeReportActionModal
+    );
+}
+
+if (reportActionBackdrop) {
+    reportActionBackdrop.addEventListener(
+        "click",
+        closeReportActionModal
+    );
+}
 function authHeaders() {
     return {
         "Authorization": `Bearer ${accessToken}`,
@@ -704,6 +854,186 @@ function updateStatusOptions(currentStatus) {
         select.appendChild(option);
     });
 }
+function renderReportActions(actionsData) {
+    const container =
+        document.getElementById(
+            "report-actions-list"
+        );
+
+    const emptyState =
+        document.getElementById(
+            "report-actions-empty"
+        );
+
+    if (!container || !emptyState) {
+        return;
+    }
+
+    const actions = (
+        actionsData?.history || []
+    );
+
+    if (!actions.length) {
+        container.innerHTML = "";
+
+        container.classList.add(
+            "hidden"
+        );
+
+        emptyState.classList.remove(
+            "hidden"
+        );
+
+        return;
+    }
+
+    emptyState.classList.add(
+        "hidden"
+    );
+
+    container.classList.remove(
+        "hidden"
+    );
+
+    container.innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>Status</th>
+                    <th>Created by</th>
+                    <th>Reference</th>
+                    <th>Created</th>
+                    <th>Manage</th>
+
+                </tr>
+            </thead>
+
+            <tbody>
+                ${actions.map(action => `
+
+                    ${
+                        action.notes
+                            ? `
+                            <tr>
+                            <td>
+                                ${escapeHtml(
+                                    (
+                                        action.action_type
+                                        || "unknown"
+                                    )
+                                    .replaceAll(
+                                        "_",
+                                        " "
+                                    )
+                                    .replace(
+                                        /\b\w/g,
+                                        letter =>
+                                            letter.toUpperCase()
+                                    )
+                                )}
+                            </td>
+                        
+                            <td>
+                                <span
+                                    class="
+                                        status-badge
+                                        action-status-${escapeHtml(
+                                            action.status
+                                            || "unknown"
+                                        )}
+                                    "
+                                >
+                                    ${escapeHtml(
+                                        (
+                                            action.status
+                                            || "unknown"
+                                        ).replaceAll(
+                                            "_",
+                                            " "
+                                        )
+                                    )}
+                                </span>
+                            </td>
+                        
+                            <td>
+                                ${escapeHtml(
+                                    action.created_by_username
+                                    || (
+                                        `Reviewer #${
+                                            action.created_by_reviewer_id
+                                            ?? "—"
+                                        }`
+                                    )
+                                )}
+                            </td>
+                        
+                            <td>
+                                ${escapeHtml(
+                                    action.external_reference
+                                    || "—"
+                                )}
+                            </td>
+                        
+                            <td>
+                                ${escapeHtml(
+                                    action.created_at
+                                    ? formatDateTime(
+                                        action.created_at
+                                    )
+                                    : "—"
+                                )}
+                            </td>
+                        
+                            <td>
+                                <button
+                                    type="button"
+                                    class="secondary-button update-action-button"
+                                    data-action-id="${escapeHtml(
+                                        action.id
+                                    )}"
+                                    data-action-status="${escapeHtml(
+                                        action.status || "pending"
+                                    )}"
+                                    data-action-notes="${escapeHtml(
+                                        action.notes || ""
+                                    )}"
+                                    data-action-reference="${escapeHtml(
+                                        action.external_reference || ""
+                                    )}"
+                                >
+                                    Update
+                                </button>
+                            </td>
+                        </tr>
+                        ${
+                            action.notes
+                                ? `
+                                    <tr
+                                        class="action-notes-row"
+                                    >
+                                        <td colspan="6">
+                                            <strong>
+                                                Notes:
+                                            </strong>
+                        
+                                            ${escapeHtml(
+                                                action.notes
+                                            )}
+                                        </td>
+                                    </tr>
+                                `
+                                : ""
+                        }
+                            `
+                            : ""
+                    }
+                `).join("")}
+            </tbody>
+        </table>
+    `;
+}
+
 async function openReport(reportId) {
     selectedReportId = reportId;
     const numericReportId =
@@ -737,6 +1067,9 @@ async function openReport(reportId) {
     }
 
     const data = await response.json();
+    renderReportActions(
+        data.actions
+    );
 
     console.log(
         "Report audit loaded:",
@@ -2518,3 +2851,382 @@ document.getElementById(
         }
     }
 );
+async function createReportAction(
+    reportId,
+    actionType,
+    notes,
+    externalReference,
+) {
+    const numericReportId =
+        getNumericReportId(
+            reportId
+        );
+
+    const response = await apiFetch(
+        `/reports/${numericReportId}/actions`,
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type":
+                    "application/json",
+            },
+
+            body: JSON.stringify({
+                action_type: actionType,
+
+                notes:
+                    notes || null,
+
+                external_reference:
+                    externalReference || null,
+            }),
+        },
+    );
+
+    if (!response.ok) {
+        const data =
+            await response.json();
+
+        const detail =
+            data.detail;
+
+        throw new Error(
+            typeof detail === "string"
+                ? detail
+                : "Unable to create action."
+        );
+    }
+
+    return response.json();
+}
+if (reportActionForm) {
+    reportActionForm.addEventListener(
+        "submit",
+        async event => {
+            event.preventDefault();
+
+            if (!selectedReportId) {
+                return;
+            }
+
+            const message =
+                document.getElementById(
+                    "report-action-message"
+                );
+
+            const actionType =
+                document.getElementById(
+                    "report-action-type"
+                ).value;
+
+            const notes =
+                document.getElementById(
+                    "report-action-notes"
+                ).value.trim();
+
+            const externalReference =
+                document.getElementById(
+                    "report-action-reference"
+                ).value.trim();
+
+            if (message) {
+                message.textContent = "";
+            }
+
+            try {
+                await createReportAction(
+                    selectedReportId,
+                    actionType,
+                    notes,
+                    externalReference,
+                );
+
+                closeReportActionModal();
+
+                await openReport(
+                    selectedReportId
+                );
+
+            } catch (error) {
+                if (message) {
+                    message.textContent =
+                        error.message;
+                }
+            }
+        }
+    );
+}
+
+document.addEventListener(
+    "click",
+    event => {
+        const button =
+            event.target.closest(
+                ".update-action-button"
+            );
+
+        if (!button) {
+            return;
+        }
+
+        document.getElementById(
+            "update-action-id"
+        ).value = (
+            button.dataset.actionId
+        );
+
+        const currentStatus =
+        button.dataset.actionStatus
+        || "pending";
+    
+        updateActionStatusOptions(
+            currentStatus
+        );
+
+        document.getElementById(
+            "update-action-notes"
+        ).value = (
+            button.dataset.actionNotes
+            || ""
+        );
+
+        document.getElementById(
+            "update-action-reference"
+        ).value = (
+            button.dataset.actionReference
+            || ""
+        );
+
+        document.getElementById(
+            "update-action-message"
+        ).textContent = "";
+
+        updateActionModal.classList.remove(
+            "hidden"
+        );
+    }
+);
+if (closeUpdateActionModalButton) {
+    closeUpdateActionModalButton.addEventListener(
+        "click",
+        closeUpdateActionModal
+    );
+}
+
+if (updateActionBackdrop) {
+    updateActionBackdrop.addEventListener(
+        "click",
+        closeUpdateActionModal
+    );
+}
+async function updateReportAction(
+    reportId,
+    actionId,
+    status,
+    notes,
+    externalReference,
+) {
+    const numericReportId =
+        getNumericReportId(
+            reportId
+        );
+
+    const response = await apiFetch(
+        `/reports/${numericReportId}/actions/${actionId}`,
+        {
+            method: "PATCH",
+
+            headers: {
+                "Content-Type":
+                    "application/json",
+            },
+
+            body: JSON.stringify({
+                status,
+                notes:
+                    notes || null,
+                external_reference:
+                    externalReference || null,
+            }),
+        },
+    );
+
+    if (!response.ok) {
+        const data =
+            await response.json();
+
+        throw new Error(
+            typeof data.detail === "string"
+                ? data.detail
+                : "Unable to update action."
+        );
+    }
+
+    return response.json();
+}
+if (updateActionForm) {
+    updateActionForm.addEventListener(
+        "submit",
+        async event => {
+            event.preventDefault();
+
+            if (!selectedReportId) {
+                return;
+            }
+
+            const actionId =
+                document.getElementById(
+                    "update-action-id"
+                ).value;
+
+            const status =
+                document.getElementById(
+                    "update-action-status"
+                ).value;
+
+            const notes =
+                document.getElementById(
+                    "update-action-notes"
+                ).value.trim();
+
+            const externalReference =
+                document.getElementById(
+                    "update-action-reference"
+                ).value.trim();
+
+            const message =
+                document.getElementById(
+                    "update-action-message"
+                );
+
+            message.textContent = "";
+
+            try {
+                await updateReportAction(
+                    selectedReportId,
+                    actionId,
+                    status,
+                    notes,
+                    externalReference,
+                );
+
+                closeUpdateActionModal();
+
+                await openReport(
+                    selectedReportId
+                );
+
+            } catch (error) {
+                message.textContent =
+                    error.message;
+            }
+        }
+    );
+}
+function getAllowedActionStatuses(
+    currentStatus
+) {
+    const transitions = {
+        pending: [
+            "in_progress",
+            "cancelled",
+        ],
+
+        in_progress: [
+            "completed",
+            "failed",
+            "cancelled",
+        ],
+
+        completed: [],
+        failed: [],
+        cancelled: [],
+    };
+
+    return (
+        transitions[currentStatus]
+        || []
+    );
+}
+function updateActionStatusOptions(
+    currentStatus
+) {
+    const select =
+        document.getElementById(
+            "update-action-status"
+        );
+
+    if (!select) {
+        return;
+    }
+
+    const allowedStatuses =
+        getAllowedActionStatuses(
+            currentStatus
+        );
+
+    select.innerHTML = "";
+
+    if (!allowedStatuses.length) {
+        const option =
+            document.createElement(
+                "option"
+            );
+
+        option.value = "";
+        option.textContent =
+            "No further action";
+
+        select.appendChild(option);
+        select.disabled = true;
+
+        return;
+    }
+
+    select.disabled = false;
+
+    const placeholder =
+        document.createElement(
+            "option"
+        );
+
+    placeholder.value = "";
+    placeholder.textContent =
+        "Select status";
+
+    placeholder.disabled = true;
+    placeholder.selected = true;
+
+    select.appendChild(
+        placeholder
+    );
+
+    allowedStatuses.forEach(
+        status => {
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                status;
+
+            option.textContent =
+                status
+                    .replaceAll(
+                        "_",
+                        " "
+                    )
+                    .replace(
+                        /\b\w/g,
+                        letter =>
+                            letter.toUpperCase()
+                    );
+
+            select.appendChild(
+                option
+            );
+        }
+    );
+}
