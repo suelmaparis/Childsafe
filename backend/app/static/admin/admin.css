@@ -1436,3 +1436,37 @@ td {
 
     white-space: nowrap;
 }
+.alert-critical {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.alert-high {
+    background: #ffedd5;
+    color: #9a3412;
+}
+
+.alert-medium {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.alert-low {
+    background: #ecfdf5;
+    color: #047857;
+}
+.review-alert-metrics {
+    padding: 20px;
+}
+
+.review-alert-card {
+    cursor: pointer;
+}
+
+.review-alert-card:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 6px 18px
+        rgba(15, 23, 42, 0.08);
+}

@@ -156,6 +156,12 @@
                     >
                         Administrative audit log
                     </option>
+                    <option
+                            value="review-alerts"
+                            data-role="review"
+                        >
+                            Review alerts
+                        </option>
         
                 </select>
         
@@ -256,7 +262,7 @@
                     </strong>
                 </article>
 
-
+                 
                 <!-- ADMIN ONLY -->
                 <article class="monitoring-stat admin-only">
                     <span>Monitoring enabled</span>
@@ -273,7 +279,53 @@
                         —
                     </strong>
                 </article>
-
+   
+            </section>
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Review alerts summary</h2>
+                        <p>
+                            Reports that currently require attention.
+                        </p>
+                    </div>
+                </div>
+            
+                <div class="metrics-grid review-alert-metrics">
+            
+                    <article
+                        class="metric-card review-alert-card"
+                        data-alert-filter="critical"
+                    >
+                        <span>Critical alerts</span>
+                        <strong id="alert-critical-count">0</strong>
+                    </article>
+            
+                    <article
+                        class="metric-card review-alert-card"
+                        data-alert-filter="high"
+                    >
+                        <span>High alerts</span>
+                        <strong id="alert-high-count">0</strong>
+                    </article>
+            
+                    <article
+                        class="metric-card review-alert-card"
+                        data-alert-filter="review_overdue"
+                    >
+                        <span>Overdue reviews</span>
+                        <strong id="alert-overdue-count">0</strong>
+                    </article>
+            
+                    <article
+                        class="metric-card review-alert-card"
+                        data-alert-filter="escalated_without_action"
+                    >
+                        <span>Escalated without action</span>
+                        <strong id="alert-escalated-count">0</strong>
+                    </article>
+            
+                </div>
             </section>
                 <div id="overview-section">
                 <section class="panel"  id="risk-distribution-section">
@@ -302,7 +354,9 @@
                             <strong id="risk-critical">0</strong>
                         </div>
                     </div>
+                    
                 </section>
+               
                 </div>
                 <section id="monitoring-section" class="panel">
 
@@ -424,6 +478,33 @@
                     </div>
                 
                 </section>
+                <section
+    id="review-alerts-section"
+    class="panel"
+>
+    <div class="panel-header">
+        <div>
+            <h2>Review alerts</h2>
+
+            <p>
+                Reports and case actions that
+                need attention.
+            </p>
+        </div>
+
+        <span
+            id="review-alerts-count"
+            class="status-badge"
+        >
+            0
+        </span>
+    </div>
+
+    <div
+        id="review-alerts-list"
+        class="table-wrapper"
+    ></div>
+</section>
                 <section id="report-trend-section" class="panel">
                     <div class="panel-header">
                         <h2>Report trend</h2>

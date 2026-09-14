@@ -1761,6 +1761,7 @@ async function loadDashboard() {
         loadReviewers(),
         loadAuditLog(),
         loadMonitoringRuns(),
+        loadReviewAlerts(),
     ]);
 }
 
@@ -2291,6 +2292,10 @@ document.addEventListener(
                 document.getElementById(
                     "audit-panel"
                 ),
+            "review-alerts":
+                document.getElementById(
+                    "review-alerts-section"
+                ),
         };
     
         Object.values(sections).forEach(
@@ -2534,7 +2539,9 @@ dashboardSectionSelect.addEventListener(
         if (section === "audit") {
             await loadAuditLog();
         }
-
+        if (section === "review-alerts") {
+            await loadReviewAlerts();
+        }
         showDashboardSection(section);
     }
 );
@@ -3230,3 +3237,219 @@ function updateActionStatusOptions(
         }
     );
 }
+
+async function loadReviewAlerts() {
+    const response = await apiFetch(
+        "/reports/review-alerts"
+    );
+
+    if (!response.ok) {
+        console.error(
+            "Unable to load review alerts:",
+            response.status
+        );
+
+        return;
+    }
+
+    const data = await response.json();
+
+    const alerts =
+        data.alerts || [];
+        const criticalCount =
+        alerts.filter(
+            alert =>
+                alert.severity === "critical"
+        ).length;
+    
+    const highCount =
+        alerts.filter(
+            alert =>
+                alert.severity === "high"
+        ).length;
+    
+    const overdueCount =
+        alerts.filter(
+            alert =>
+                alert.type === "review_overdue"
+        ).length;
+    
+    const escalatedCount =
+        alerts.filter(
+            alert =>
+                alert.type
+                === "escalated_without_action"
+        ).length;
+    
+    
+    const criticalElement =
+        document.getElementById(
+            "alert-critical-count"
+        );
+    
+    const highElement =
+        document.getElementById(
+            "alert-high-count"
+        );
+    
+    const overdueElement =
+        document.getElementById(
+            "alert-overdue-count"
+        );
+    
+    const escalatedElement =
+        document.getElementById(
+            "alert-escalated-count"
+        );
+    
+    
+    if (criticalElement) {
+        criticalElement.textContent =
+            criticalCount;
+    }
+    
+    if (highElement) {
+        highElement.textContent =
+            highCount;
+    }
+    
+    if (overdueElement) {
+        overdueElement.textContent =
+            overdueCount;
+    }
+    
+    if (escalatedElement) {
+        escalatedElement.textContent =
+            escalatedCount;
+    }
+
+    const countElement =
+        document.getElementById(
+            "review-alerts-count"
+        );
+
+    if (countElement) {
+        countElement.textContent =
+            data.count ?? alerts.length;
+    }
+
+    const container =
+        document.getElementById(
+            "review-alerts-list"
+        );
+
+    if (!container) {
+        return;
+    }
+
+    if (!alerts.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                No review alerts.
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Severity</th>
+                    <th>Report</th>
+                    <th>Type</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                ${alerts.map(alert => `
+                    <tr>
+                        <td>
+                            <span
+                                class="
+                                    status-badge
+                                    alert-${escapeHtml(
+                                        alert.severity
+                                    )}
+                                "
+                            >
+                                ${escapeHtml(
+                                    (
+                                        alert.severity
+                                        || "unknown"
+                                    ).toUpperCase()
+                                )}
+                            </span>
+                        </td>
+
+                        <td>
+                            <button
+                                type="button"
+                                class="report-link"
+                                data-report-id="${escapeHtml(
+                                    alert.report_id
+                                )}"
+                            >
+                                ${escapeHtml(
+                                    alert.report_id
+                                )}
+                            </button>
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                (
+                                    alert.type
+                                    || "unknown"
+                                )
+                                .replaceAll(
+                                    "_",
+                                    " "
+                                )
+                                .replace(
+                                    /\b\w/g,
+                                    letter =>
+                                        letter.toUpperCase()
+                                )
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                alert.message
+                                || "—"
+                            )}
+                        </td>
+                    </tr>
+                `).join("")}
+            </tbody>
+        </table>
+    `;
+}
+document.addEventListener(
+    "click",
+    event => {
+        const card =
+            event.target.closest(
+                ".review-alert-card"
+            );
+
+        if (!card) {
+            return;
+        }
+
+        dashboardSectionSelect.value =
+            "review-alerts";
+
+        dashboardSectionSelect.dispatchEvent(
+            new Event(
+                "change",
+                {
+                    bubbles: true,
+                }
+            )
+        );
+    }
+);

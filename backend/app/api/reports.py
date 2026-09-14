@@ -50,6 +50,9 @@ from app.schemas.report_action import (
     ReportActionUpdate,
     ReportActionResponse,
 )
+from app.services.review_alerts import (
+    get_review_alerts,
+)
 ALLOWED_ACTION_TYPES = {
     "platform_report",
     "icca_referral",
@@ -1126,7 +1129,29 @@ def get_report_reviews(
         for review in reviews
     ]
 
+@router.get(
+    "/review-alerts",
+)
+def list_review_alerts(
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "reviewer",
+            "senior_reviewer",
+            "admin",
+        )
+    ),
+    db: Session = Depends(get_db),
+):
+    alerts = get_review_alerts(
+        db
+    )
 
+    return {
+        "count": len(
+            alerts
+        ),
+        "alerts": alerts,
+    }
 # ============================================================
 # AUDIT
 # ============================================================
