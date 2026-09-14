@@ -53,6 +53,20 @@ from app.schemas.report_action import (
 from app.services.review_alerts import (
     get_review_alerts,
 )
+from app.models.report_evidence import ReportEvidence
+
+from app.schemas.report_evidence import (
+    ReportEvidenceCreate,
+    ReportEvidenceResponse,
+)
+ALLOWED_EVIDENCE_TYPES = {
+    "url_snapshot",
+    "platform_reference",
+    "content_hash",
+    "reviewer_note",
+    "external_case_reference",
+    "other",
+}
 ALLOWED_ACTION_TYPES = {
     "platform_report",
     "icca_referral",
@@ -1432,6 +1446,56 @@ def get_report_audit(
     }
     for action in actions
 ]
+    evidence_items = (
+    db.query(ReportEvidence)
+    .filter(
+        ReportEvidence.report_id
+        == report_id
+    )
+    .order_by(
+        ReportEvidence.created_at.asc()
+    )
+    .all()
+)
+
+    evidence_history = [
+        {
+            "id": evidence.id,
+            "evidence_type": (
+                evidence.evidence_type
+            ),
+            "source_url": (
+                evidence.source_url
+            ),
+            "platform": (
+                evidence.platform
+            ),
+            "external_reference": (
+                evidence.external_reference
+            ),
+            "content_hash": (
+                evidence.content_hash
+            ),
+            "notes": (
+                evidence.notes
+            ),
+            "captured_by_reviewer_id": (
+                evidence.captured_by_reviewer_id
+            ),
+            "captured_by_username": (
+                evidence.captured_by.username
+                if evidence.captured_by is not None
+                else None
+            ),
+            "captured_at": (
+                evidence.captured_at
+            ),
+            "created_at": (
+                evidence.created_at
+            ),
+        }
+        for evidence in evidence_items
+    ]
     return {
             "report_id": (
                 f"CV-{report.id:06d}"
@@ -1555,6 +1619,14 @@ def get_report_audit(
             ),
             "history": (
                 action_history
+            ),
+        },
+         "evidence": {
+            "count": len(
+                evidence_history
+            ),
+            "history": (
+                evidence_history
             ),
         },
             
@@ -2408,3 +2480,116 @@ def assign_report(
             "role": reviewer.role,
         },
     }
+@router.post(
+    "/{report_id}/evidence",
+    response_model=ReportEvidenceResponse,
+    status_code=201,
+)
+def create_report_evidence(
+    report_id: int,
+    evidence_data: ReportEvidenceCreate,
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "reviewer",
+            "senior_reviewer",
+            "admin",
+        )
+    ),
+    db: Session = Depends(get_db),
+):
+    report = (
+        db.query(Report)
+        .filter(
+            Report.id == report_id
+        )
+        .first()
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found.",
+        )
+
+    if (
+        evidence_data.evidence_type
+        not in ALLOWED_EVIDENCE_TYPES
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid evidence type.",
+        )
+
+    evidence = ReportEvidence(
+        report_id=report.id,
+        evidence_type=(
+            evidence_data.evidence_type
+        ),
+        source_url=(
+            evidence_data.source_url
+        ),
+        platform=(
+            evidence_data.platform
+        ),
+        external_reference=(
+            evidence_data.external_reference
+        ),
+        content_hash=(
+            evidence_data.content_hash
+        ),
+        notes=(
+            evidence_data.notes
+        ),
+        captured_by_reviewer_id=(
+            current_reviewer.id
+        ),
+    )
+
+    db.add(evidence)
+    db.commit()
+    db.refresh(evidence)
+
+    return evidence
+
+@router.get(
+    "/{report_id}/evidence",
+    response_model=list[
+        ReportEvidenceResponse
+    ],
+)
+def list_report_evidence(
+    report_id: int,
+    current_reviewer: Reviewer = Depends(
+        require_role(
+            "reviewer",
+            "senior_reviewer",
+            "admin",
+        )
+    ),
+    db: Session = Depends(get_db),
+):
+    report = (
+        db.query(Report)
+        .filter(
+            Report.id == report_id
+        )
+        .first()
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found.",
+        )
+
+    return (
+        db.query(ReportEvidence)
+        .filter(
+            ReportEvidence.report_id
+            == report_id
+        )
+        .order_by(
+            ReportEvidence.created_at.asc()
+        )
+        .all()
+    )

@@ -843,8 +843,214 @@
                 </div>
             
             </section>
-       
+            <section class="panel report-evidence-section">
+
+                <div class="panel-header report-evidence-header">
+            
+                    <div>
+                        <h3>Evidence</h3>
+            
+                        <p>
+                            Preserved metadata and references
+                            related to this report.
+                        </p>
+                    </div>
+            
+                    <button
+                        id="add-report-evidence-button"
+                        type="button"
+                        class="secondary-button"
+                    >
+                        Add evidence
+                    </button>
+            
+                </div>
+            
+            
+                <div class="panel-body">
+            
+                    <div
+                        id="report-evidence-empty"
+                        class="empty-state"
+                    >
+                        No evidence has been recorded
+                        for this report.
+                    </div>
+            
+                    <div
+                        id="report-evidence-list"
+                        class="hidden"
+                    ></div>
+            
+                </div>
+            
+            </section>
         </section>
+        <div
+    id="report-evidence-modal"
+    class="report-action-modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="report-evidence-modal-title"
+>
+    <div
+        id="report-evidence-backdrop"
+        class="modal-backdrop"
+    ></div>
+
+    <div class="report-action-modal-card">
+
+        <div class="modal-header">
+
+            <div>
+                <h3 id="report-evidence-modal-title">
+                    Add evidence
+                </h3>
+
+                <p>
+                    Record metadata or an external
+                    reference related to this report.
+                </p>
+            </div>
+
+            <button
+                id="close-report-evidence-modal"
+                type="button"
+                class="modal-close"
+                aria-label="Close"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="report-evidence-form">
+
+            <label>
+                <span class="field-label">
+                    Evidence type
+                </span>
+
+                <select
+                    id="report-evidence-type"
+                    required
+                >
+                    <option value="">
+                        Select evidence type
+                    </option>
+
+                    <option value="url_snapshot">
+                        URL snapshot
+                    </option>
+
+                    <option value="platform_reference">
+                        Platform reference
+                    </option>
+
+                    <option value="content_hash">
+                        Content hash
+                    </option>
+
+                    <option value="reviewer_note">
+                        Reviewer note
+                    </option>
+
+                    <option value="external_case_reference">
+                        External case reference
+                    </option>
+
+                    <option value="other">
+                        Other
+                    </option>
+                </select>
+            </label>
+
+
+            <label>
+                <span class="field-label">
+                    Source URL
+                </span>
+
+                <input
+                    id="report-evidence-source-url"
+                    type="url"
+                    maxlength="2048"
+                    placeholder="https://..."
+                >
+            </label>
+
+
+            <label>
+                <span class="field-label">
+                    Platform
+                </span>
+
+                <input
+                    id="report-evidence-platform"
+                    type="text"
+                    maxlength="50"
+                    placeholder="Instagram, Facebook..."
+                >
+            </label>
+
+
+            <label>
+                <span class="field-label">
+                    External reference
+                </span>
+
+                <input
+                    id="report-evidence-reference"
+                    type="text"
+                    maxlength="255"
+                >
+            </label>
+
+
+            <label>
+                <span class="field-label">
+                    Content hash
+                </span>
+
+                <input
+                    id="report-evidence-hash"
+                    type="text"
+                    maxlength="128"
+                >
+            </label>
+
+
+            <label>
+                <span class="field-label">
+                    Notes
+                </span>
+
+                <textarea
+                    id="report-evidence-notes"
+                    rows="5"
+                    maxlength="5000"
+                ></textarea>
+            </label>
+
+
+            <p
+                id="report-evidence-message"
+                class="form-message"
+            ></p>
+
+
+            <button
+                type="submit"
+                class="primary-button"
+            >
+                Save evidence
+            </button>
+
+        </form>
+
+    </div>
+</div>
         <div
     id="report-action-modal"
     class="report-action-modal hidden"

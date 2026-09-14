@@ -13,6 +13,7 @@ from app.models.reviewer_audit_log import ReviewerAuditLog
 from app.models.report_action import ReportAction
 from app.models.monitoring_run import MonitoringRun
 from app.models.monitoring_worker_status import MonitoringWorkerStatus
+from app.models.report_evidence import ReportEvidence
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

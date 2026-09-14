@@ -52,6 +52,30 @@ const updateActionBackdrop =
     document.getElementById(
         "update-action-backdrop"
     );
+    const reportEvidenceModal =
+    document.getElementById(
+        "report-evidence-modal"
+    );
+
+const reportEvidenceForm =
+    document.getElementById(
+        "report-evidence-form"
+    );
+
+const addReportEvidenceButton =
+    document.getElementById(
+        "add-report-evidence-button"
+    );
+
+const closeReportEvidenceModalButton =
+    document.getElementById(
+        "close-report-evidence-modal"
+    );
+
+const reportEvidenceBackdrop =
+    document.getElementById(
+        "report-evidence-backdrop"
+    );
 let accessToken = sessionStorage.getItem("childsafe_access_token");
 let currentUser = null;
 let selectedReportId = null;
@@ -68,6 +92,59 @@ function closeUpdateActionModal() {
 
     if (updateActionForm) {
         updateActionForm.reset();
+    }
+}
+function openReportEvidenceModal() {
+    if (!selectedReportId) {
+        console.error(
+            "No report selected."
+        );
+
+        return;
+    }
+
+    if (!reportEvidenceModal) {
+        console.error(
+            "Report evidence modal not found."
+        );
+
+        return;
+    }
+
+    const message =
+        document.getElementById(
+            "report-evidence-message"
+        );
+
+    if (message) {
+        message.textContent = "";
+    }
+
+    reportEvidenceModal.classList.remove(
+        "hidden"
+    );
+
+    document.body.classList.add(
+        "modal-open"
+    );
+}
+
+
+function closeReportEvidenceModal() {
+    if (!reportEvidenceModal) {
+        return;
+    }
+
+    reportEvidenceModal.classList.add(
+        "hidden"
+    );
+
+    document.body.classList.remove(
+        "modal-open"
+    );
+
+    if (reportEvidenceForm) {
+        reportEvidenceForm.reset();
     }
 }
 function openReportActionModal() {
@@ -166,13 +243,91 @@ if (reportActionBackdrop) {
         closeReportActionModal
     );
 }
+if (addReportEvidenceButton) {
+    addReportEvidenceButton.addEventListener(
+        "click",
+        openReportEvidenceModal
+    );
+}
+
+if (closeReportEvidenceModalButton) {
+    closeReportEvidenceModalButton.addEventListener(
+        "click",
+        closeReportEvidenceModal
+    );
+}
+
+if (reportEvidenceBackdrop) {
+    reportEvidenceBackdrop.addEventListener(
+        "click",
+        closeReportEvidenceModal
+    );
+}
 function authHeaders() {
     return {
         "Authorization": `Bearer ${accessToken}`,
     };
 }
 
+async function createReportEvidence(
+    reportId,
+    evidenceType,
+    sourceUrl,
+    platform,
+    externalReference,
+    contentHash,
+    notes,
+) {
+    const numericReportId =
+        getNumericReportId(
+            reportId
+        );
 
+    const response = await apiFetch(
+        `/reports/${numericReportId}/evidence`,
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type":
+                    "application/json",
+            },
+
+            body: JSON.stringify({
+                evidence_type:
+                    evidenceType,
+
+                source_url:
+                    sourceUrl || null,
+
+                platform:
+                    platform || null,
+
+                external_reference:
+                    externalReference || null,
+
+                content_hash:
+                    contentHash || null,
+
+                notes:
+                    notes || null,
+            }),
+        },
+    );
+
+    if (!response.ok) {
+        const data =
+            await response.json();
+
+        throw new Error(
+            typeof data.detail === "string"
+                ? data.detail
+                : "Unable to save evidence."
+        );
+    }
+
+    return response.json();
+}
 async function apiFetch(
     url,
     options = {},
@@ -1069,6 +1224,9 @@ async function openReport(reportId) {
     const data = await response.json();
     renderReportActions(
         data.actions
+    );
+    renderReportEvidence(
+        data.evidence
     );
 
     console.log(
@@ -3453,3 +3611,214 @@ document.addEventListener(
         );
     }
 );
+function renderReportEvidence(
+    evidenceData
+) {
+    const container =
+        document.getElementById(
+            "report-evidence-list"
+        );
+
+    const emptyState =
+        document.getElementById(
+            "report-evidence-empty"
+        );
+
+    if (!container || !emptyState) {
+        return;
+    }
+
+    const evidenceItems = (
+        evidenceData?.history || []
+    );
+
+    if (!evidenceItems.length) {
+        container.innerHTML = "";
+
+        container.classList.add(
+            "hidden"
+        );
+
+        emptyState.classList.remove(
+            "hidden"
+        );
+
+        return;
+    }
+
+    emptyState.classList.add(
+        "hidden"
+    );
+
+    container.classList.remove(
+        "hidden"
+    );
+
+    container.innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Platform</th>
+                    <th>Reference</th>
+                    <th>Captured by</th>
+                    <th>Captured</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                ${evidenceItems.map(
+                    evidence => `
+                        <tr>
+                            <td>
+                                ${escapeHtml(
+                                    (
+                                        evidence.evidence_type
+                                        || "unknown"
+                                    )
+                                    .replaceAll(
+                                        "_",
+                                        " "
+                                    )
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    evidence.platform
+                                    || "—"
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    evidence.external_reference
+                                    || evidence.content_hash
+                                    || "—"
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    evidence.captured_by_username
+                                    || (
+                                        `Reviewer #${
+                                            evidence.captured_by_reviewer_id
+                                            ?? "—"
+                                        }`
+                                    )
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    evidence.captured_at
+                                    ? formatDateTime(
+                                        evidence.captured_at
+                                    )
+                                    : "—"
+                                )}
+                            </td>
+                        </tr>
+
+                        ${
+                            evidence.notes
+                                ? `
+                                    <tr
+                                        class="evidence-notes-row"
+                                    >
+                                        <td colspan="5">
+                                            <strong>
+                                                Notes:
+                                            </strong>
+
+                                            ${escapeHtml(
+                                                evidence.notes
+                                            )}
+                                        </td>
+                                    </tr>
+                                `
+                                : ""
+                        }
+                    `
+                ).join("")}
+            </tbody>
+        </table>
+    `;
+}
+
+if (reportEvidenceForm) {
+    reportEvidenceForm.addEventListener(
+        "submit",
+        async event => {
+            event.preventDefault();
+
+            if (!selectedReportId) {
+                return;
+            }
+
+            const evidenceType =
+                document.getElementById(
+                    "report-evidence-type"
+                ).value;
+
+            const sourceUrl =
+                document.getElementById(
+                    "report-evidence-source-url"
+                ).value.trim();
+
+            const platform =
+                document.getElementById(
+                    "report-evidence-platform"
+                ).value.trim();
+
+            const externalReference =
+                document.getElementById(
+                    "report-evidence-reference"
+                ).value.trim();
+
+            const contentHash =
+                document.getElementById(
+                    "report-evidence-hash"
+                ).value.trim();
+
+            const notes =
+                document.getElementById(
+                    "report-evidence-notes"
+                ).value.trim();
+
+            const message =
+                document.getElementById(
+                    "report-evidence-message"
+                );
+
+            if (message) {
+                message.textContent = "";
+            }
+
+            try {
+                await createReportEvidence(
+                    selectedReportId,
+                    evidenceType,
+                    sourceUrl,
+                    platform,
+                    externalReference,
+                    contentHash,
+                    notes,
+                );
+
+                closeReportEvidenceModal();
+
+                await openReport(
+                    selectedReportId
+                );
+
+            } catch (error) {
+                if (message) {
+                    message.textContent =
+                        error.message;
+                }
+            }
+        }
+    );
+}
