@@ -1156,6 +1156,18 @@ function renderReportActions(actionsData) {
                                     data-action-reference="${escapeHtml(
                                         action.external_reference || ""
                                     )}"
+                                    data-action-platform="${escapeHtml(
+                                        action.platform || ""
+                                    )}"
+                                    
+                                    data-action-destination="${escapeHtml(
+                                        action.destination || ""
+                                    )}"
+                                    
+                                    data-action-result="${escapeHtml(
+                                        action.external_result || ""
+                                    )}"
+
                                 >
                                     Update
                                 </button>
@@ -1176,7 +1188,80 @@ function renderReportActions(actionsData) {
                                                 action.notes
                                             )}
                                         </td>
+                                        
                                     </tr>
+                                    ${
+                                        (
+                                            action.platform
+                                            || action.destination
+                                            || action.external_reference
+                                            || action.external_result
+                                            || action.submitted_at
+                                            || action.responded_at
+                                        )
+                                            ? `
+                                                <tr class="action-external-details-row">
+                                                    <td colspan="6">
+                                    
+                                                        <div class="action-external-details">
+                                    
+                                                            <div>
+                                                                <strong>Platform:</strong>
+                                                                ${escapeHtml(
+                                                                    action.platform || "—"
+                                                                )}
+                                                            </div>
+                                    
+                                                            <div>
+                                                                <strong>Destination:</strong>
+                                                                ${escapeHtml(
+                                                                    action.destination || "—"
+                                                                )}
+                                                            </div>
+                                    
+                                                            <div>
+                                                                <strong>External reference:</strong>
+                                                                ${escapeHtml(
+                                                                    action.external_reference || "—"
+                                                                )}
+                                                            </div>
+                                    
+                                                            <div>
+                                                                <strong>Result:</strong>
+                                                                ${escapeHtml(
+                                                                    action.external_result || "—"
+                                                                )}
+                                                            </div>
+                                    
+                                                            <div>
+                                                                <strong>Submitted:</strong>
+                                                                ${escapeHtml(
+                                                                    action.submitted_at
+                                                                        ? formatDateTime(
+                                                                            action.submitted_at
+                                                                        )
+                                                                        : "—"
+                                                                )}
+                                                            </div>
+                                    
+                                                            <div>
+                                                                <strong>Responded:</strong>
+                                                                ${escapeHtml(
+                                                                    action.responded_at
+                                                                        ? formatDateTime(
+                                                                            action.responded_at
+                                                                        )
+                                                                        : "—"
+                                                                )}
+                                                            </div>
+                                    
+                                                        </div>
+                                    
+                                                    </td>
+                                                </tr>
+                                            `
+                                            : ""
+                                    }
                                 `
                                 : ""
                         }
@@ -3021,6 +3106,9 @@ async function createReportAction(
     actionType,
     notes,
     externalReference,
+    platform,
+    destination,
+    externalResult,
 ) {
     const numericReportId =
         getNumericReportId(
@@ -3038,13 +3126,23 @@ async function createReportAction(
             },
 
             body: JSON.stringify({
-                action_type: actionType,
+                action_type:
+                    actionType,
 
                 notes:
                     notes || null,
 
                 external_reference:
                     externalReference || null,
+
+                platform:
+                    platform || null,
+
+                destination:
+                    destination || null,
+
+                external_result:
+                    externalResult || null,
             }),
         },
     );
@@ -3070,49 +3168,67 @@ if (reportActionForm) {
         "submit",
         async event => {
             event.preventDefault();
-
+    
             if (!selectedReportId) {
                 return;
             }
-
+    
             const message =
                 document.getElementById(
                     "report-action-message"
                 );
-
+    
             const actionType =
                 document.getElementById(
                     "report-action-type"
                 ).value;
-
+    
             const notes =
                 document.getElementById(
                     "report-action-notes"
                 ).value.trim();
-
+    
             const externalReference =
                 document.getElementById(
                     "report-action-reference"
                 ).value.trim();
-
+    
+            const platform =
+                document.getElementById(
+                    "report-action-platform"
+                ).value.trim();
+    
+            const destination =
+                document.getElementById(
+                    "report-action-destination"
+                ).value.trim();
+    
+            const externalResult =
+                document.getElementById(
+                    "report-action-result"
+                ).value.trim();
+    
             if (message) {
                 message.textContent = "";
             }
-
+    
             try {
                 await createReportAction(
                     selectedReportId,
                     actionType,
                     notes,
                     externalReference,
+                    platform,
+                    destination,
+                    externalResult,
                 );
-
+    
                 closeReportActionModal();
-
+    
                 await openReport(
                     selectedReportId
                 );
-
+    
             } catch (error) {
                 if (message) {
                     message.textContent =
@@ -3135,6 +3251,28 @@ document.addEventListener(
             return;
         }
 
+        document.getElementById(
+            "update-action-platform"
+        ).value = (
+            button.dataset.actionPlatform
+            || ""
+        );
+
+        document.getElementById(
+            "update-action-destination"
+        ).value = (
+            button.dataset.actionDestination
+            || ""
+        );
+
+        document.getElementById(
+            "update-action-result"
+        ).value = (
+            button.dataset.actionResult
+            || ""
+        );
+
+    
         document.getElementById(
             "update-action-id"
         ).value = (
@@ -3185,13 +3323,17 @@ if (updateActionBackdrop) {
         closeUpdateActionModal
     );
 }
-async function updateReportAction(
-    reportId,
-    actionId,
-    status,
-    notes,
-    externalReference,
-) {
+    async function updateReportAction(
+        reportId,
+        actionId,
+        status,
+        notes,
+        externalReference,
+        platform,
+        destination,
+        externalResult,
+    ) 
+{
     const numericReportId =
         getNumericReportId(
             reportId
@@ -3209,10 +3351,21 @@ async function updateReportAction(
 
             body: JSON.stringify({
                 status,
+            
                 notes:
                     notes || null,
+            
                 external_reference:
                     externalReference || null,
+            
+                platform:
+                    platform || null,
+            
+                destination:
+                    destination || null,
+            
+                external_result:
+                    externalResult || null,
             }),
         },
     );
@@ -3264,8 +3417,23 @@ if (updateActionForm) {
                 document.getElementById(
                     "update-action-message"
                 );
+                const platform =
+                document.getElementById(
+                    "update-action-platform"
+                ).value.trim();
+            
+            const destination =
+                document.getElementById(
+                    "update-action-destination"
+                ).value.trim();
+            
+            const externalResult =
+                document.getElementById(
+                    "update-action-result"
+                ).value.trim();
 
             message.textContent = "";
+
 
             try {
                 await updateReportAction(
@@ -3274,6 +3442,9 @@ if (updateActionForm) {
                     status,
                     notes,
                     externalReference,
+                    platform,
+                    destination,
+                    externalResult,
                 );
 
                 closeUpdateActionModal();

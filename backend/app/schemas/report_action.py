@@ -18,6 +18,20 @@ class ReportActionCreate(BaseModel):
         default=None,
         max_length=255,
     )
+    platform: str | None = Field(
+    default=None,
+    max_length=50,
+    )
+
+    destination: str | None = Field(
+        default=None,
+        max_length=255,
+    )
+
+    external_result: str | None = Field(
+        default=None,
+        max_length=5000,
+    )
 
 
 class ReportActionUpdate(BaseModel):
@@ -34,6 +48,20 @@ class ReportActionUpdate(BaseModel):
     external_reference: str | None = Field(
         default=None,
         max_length=255,
+    )
+    platform: str | None = Field(
+    default=None,
+    max_length=50,
+    )
+
+    destination: str | None = Field(
+        default=None,
+        max_length=255,
+    )
+
+    external_result: str | None = Field(
+        default=None,
+        max_length=5000,
     )
 
 
@@ -55,3 +83,9 @@ class ReportActionResponse(BaseModel):
     model_config = {
         "from_attributes": True,
     }
+    platform: str | None
+    destination: str | None
+    external_result: str | None
+
+    submitted_at: datetime | None
+    responded_at: datetime | None

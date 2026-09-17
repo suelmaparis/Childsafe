@@ -1470,3 +1470,26 @@ td {
         0 6px 18px
         rgba(15, 23, 42, 0.08);
 }
+.action-external-details-row td {
+    background: #f8fafc;
+}
+
+.action-external-details {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(180px, 1fr)
+        );
+
+    gap: 10px 20px;
+
+    padding: 12px 0;
+
+    font-size: 0.86rem;
+}
+
+.action-external-details strong {
+    color: #475569;
+}

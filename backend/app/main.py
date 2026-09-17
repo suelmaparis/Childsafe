@@ -1,23 +1,26 @@
 from fastapi import FastAPI
-
 from fastapi.responses import FileResponse
-
 from fastapi.staticfiles import StaticFiles
 
+from slowapi import (
+    _rate_limit_exceeded_handler,
+)
 from slowapi.errors import RateLimitExceeded
-from slowapi import _rate_limit_exceeded_handler
 
-from app.api.auth import router as auth_router
+from app.api.auth import (
+    router as auth_router,
+)
 
 from app.api.reports import (
     router as reports_router,
     limiter,
 )
 
-from app.core.init_db import init_db
 from app.api.monitoring import (
     router as monitoring_router,
 )
+
+from app.core.init_db import init_db
 
 
 init_db()
@@ -26,17 +29,25 @@ init_db()
 app = FastAPI(
     title="ChildSafe",
     description=(
-        "Digital child protection and online safety platform."
+        "Digital child protection "
+        "and online safety platform."
     ),
     version="0.1.0",
 )
 
 
-app.include_router(auth_router)
+app.include_router(
+    auth_router
+)
 
-app.include_router(reports_router)
+app.include_router(
+    reports_router
+)
 
-app.include_router(monitoring_router)
+app.include_router(
+    monitoring_router
+)
+
 
 app.state.limiter = limiter
 
@@ -48,22 +59,18 @@ app.add_exception_handler(
 
 app.mount(
     "/static",
-    StaticFiles(directory="app/static"),
+    StaticFiles(
+        directory="app/static"
+    ),
     name="static",
 )
 
 
-app.include_router(auth_router)
-
-app.include_router(reports_router)
-
-
 @app.get("/")
-def root():
-    return {
-        "message": "ChildSafe API",
-        "status": "online",
-    }
+def public_home():
+    return FileResponse(
+        "app/static/report/index.html"
+    )
 
 
 @app.get("/admin")

@@ -575,3 +575,228 @@ def test_cancelled_action_cannot_be_completed(
     )
 
     assert response.status_code == 409
+def test_external_action_sets_submitted_at_when_started(
+    client,
+    admin_auth_headers,
+):
+    report = _create_report(
+        client,
+        admin_auth_headers,
+    )
+
+    report_id = int(
+        report["report_id"].replace(
+            "CV-",
+            "",
+        )
+    )
+
+    # O report precisa estar num estado que permita ação externa.
+    client.patch(
+        f"/reports/{report_id}/review",
+        headers=admin_auth_headers,
+        json={
+            "new_status": "under_review",
+            "decision": "Start review.",
+            "notes": "Testing external action.",
+        },
+    )
+
+    client.patch(
+        f"/reports/{report_id}/review",
+        headers=admin_auth_headers,
+        json={
+            "new_status": "reviewed",
+            "decision": "Reviewed.",
+            "notes": "Ready for decision.",
+        },
+    )
+
+    client.patch(
+        f"/reports/{report_id}/review",
+        headers=admin_auth_headers,
+        json={
+            "new_status": "confirmed",
+            "decision": "Confirmed.",
+            "notes": "External action allowed.",
+        },
+    )
+
+    create_response = client.post(
+        f"/reports/{report_id}/actions",
+        headers=admin_auth_headers,
+        json={
+            "action_type":
+                "platform_report",
+            "platform":
+                "Instagram",
+            "destination":
+                "Meta reporting channel",
+            "notes":
+                "Submit to platform.",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    action = create_response.json()
+
+    assert action["submitted_at"] is None
+    assert action["responded_at"] is None
+
+    action_id = action["id"]
+
+    response = client.patch(
+        (
+            f"/reports/{report_id}"
+            f"/actions/{action_id}"
+        ),
+        headers=admin_auth_headers,
+        json={
+            "status":
+                "in_progress",
+            "notes":
+                "Submitted to Meta.",
+            "external_reference":
+                "META-TEST-001",
+            "platform":
+                "Instagram",
+            "destination":
+                "Meta reporting channel",
+            "external_result":
+                None,
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "in_progress"
+    assert data["submitted_at"] is not None
+    assert data["responded_at"] is None
+
+    assert (
+        data["external_reference"]
+        == "META-TEST-001"
+    )
+
+
+def test_external_action_sets_responded_at_when_completed(
+    client,
+    admin_auth_headers,
+):
+    report = _create_report(
+        client,
+        admin_auth_headers,
+    )
+
+    report_id = int(
+        report["report_id"].replace(
+            "CV-",
+            "",
+        )
+    )
+
+    for new_status in [
+        "under_review",
+        "reviewed",
+        "confirmed",
+    ]:
+        response = client.patch(
+            f"/reports/{report_id}/review",
+            headers=admin_auth_headers,
+            json={
+                "new_status":
+                    new_status,
+                "decision":
+                    f"Move to {new_status}.",
+                "notes":
+                    "External workflow test.",
+            },
+        )
+
+        assert response.status_code == 200
+
+    create_response = client.post(
+        f"/reports/{report_id}/actions",
+        headers=admin_auth_headers,
+        json={
+            "action_type":
+                "takedown_request",
+            "platform":
+                "Instagram",
+            "destination":
+                "Meta",
+            "notes":
+                "Request removal.",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    action_id = (
+        create_response.json()["id"]
+    )
+
+    start_response = client.patch(
+        (
+            f"/reports/{report_id}"
+            f"/actions/{action_id}"
+        ),
+        headers=admin_auth_headers,
+        json={
+            "status":
+                "in_progress",
+            "notes":
+                "Request submitted.",
+            "external_reference":
+                "META-TAKEDOWN-001",
+            "platform":
+                "Instagram",
+            "destination":
+                "Meta",
+            "external_result":
+                None,
+        },
+    )
+
+    assert start_response.status_code == 200
+    assert (
+        start_response.json()["submitted_at"]
+        is not None
+    )
+
+    response = client.patch(
+        (
+            f"/reports/{report_id}"
+            f"/actions/{action_id}"
+        ),
+        headers=admin_auth_headers,
+        json={
+            "status":
+                "completed",
+            "notes":
+                "Platform responded.",
+            "external_reference":
+                "META-TAKEDOWN-001",
+            "platform":
+                "Instagram",
+            "destination":
+                "Meta",
+            "external_result":
+                "Content removed.",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "completed"
+    assert data["submitted_at"] is not None
+    assert data["responded_at"] is not None
+    assert (
+        data["external_result"]
+        == "Content removed."
+    )

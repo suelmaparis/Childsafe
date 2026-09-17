@@ -208,10 +208,19 @@ def test_root_endpoint(client):
 
     assert response.status_code == 200
 
-    assert response.json() == {
-        "message": "ChildSafe API",
-        "status": "online",
-    }
+    assert (
+        "text/html"
+        in response.headers[
+            "content-type"
+        ]
+    )
+
+    assert "ChildSafe" in response.text
+
+    assert (
+        "/static/report/report.js"
+        in response.text
+    )
 
 def test_complete_report_review_workflow(
     client,

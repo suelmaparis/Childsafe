@@ -50,11 +50,35 @@ class ReportAction(Base):
         nullable=True,
     )
 
+    platform: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
+    destination: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    external_result: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    submitted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    responded_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
     created_by_reviewer_id: Mapped[int] = mapped_column(
         ForeignKey("reviewers.id"),
         nullable=False,
     )
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(

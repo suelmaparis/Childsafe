@@ -59,6 +59,7 @@ from app.schemas.report_evidence import (
     ReportEvidenceCreate,
     ReportEvidenceResponse,
 )
+from datetime import datetime, timezone
 ALLOWED_EVIDENCE_TYPES = {
     "url_snapshot",
     "platform_reference",
@@ -1443,6 +1444,25 @@ def get_report_audit(
         "updated_at": (
             action.updated_at
         ),
+        "platform": (
+            action.platform
+        ),
+
+        "destination": (
+            action.destination
+        ),
+
+        "external_result": (
+            action.external_result
+        ),
+
+        "submitted_at": (
+            action.submitted_at
+        ),
+
+        "responded_at": (
+            action.responded_at
+        ),
     }
     for action in actions
 ]
@@ -1708,19 +1728,33 @@ def create_report_action(
         )
 
     action = ReportAction(
-        report_id=report.id,
-        action_type=(
-            action_data.action_type
-        ),
-        status="pending",
-        notes=action_data.notes,
-        external_reference=(
-            action_data.external_reference
-        ),
-        created_by_reviewer_id=(
-            current_reviewer.id
-        ),
-    )
+    report_id=report.id,
+    action_type=(
+        action_data.action_type
+    ),
+    status="pending",
+    notes=action_data.notes,
+    external_reference=(
+        action_data.external_reference
+    ),
+
+    platform=(
+        action_data.platform
+    ),
+
+    destination=(
+        action_data.destination
+    ),
+
+    external_result=(
+        action_data.external_result
+    ),
+
+    created_by_reviewer_id=(
+        current_reviewer.id
+    ),
+)
+
 
     db.add(action)
     db.commit()
@@ -1836,9 +1870,16 @@ def update_report_action(
                 f"{current_status} -> {new_status}."
             ),
         )
-    action.status = (
+    previous_status = (
+    action.status
+)
+
+    new_status = (
         action_data.status
     )
+
+
+    action.status = new_status
 
     action.notes = (
         action_data.notes
@@ -1847,6 +1888,47 @@ def update_report_action(
     action.external_reference = (
         action_data.external_reference
     )
+
+    action.platform = (
+        action_data.platform
+    )
+
+    action.destination = (
+        action_data.destination
+    )
+
+    action.external_result = (
+        action_data.external_result
+    )
+    if (
+    action.action_type
+    in EXTERNAL_ACTION_TYPES
+    and previous_status == "pending"
+    and new_status == "in_progress"
+    and action.submitted_at is None
+):
+      action.submitted_at = (
+        datetime.now(
+            timezone.utc
+        )
+    )
+
+
+    if (
+        action.action_type
+        in EXTERNAL_ACTION_TYPES
+        and new_status
+        in {
+            "completed",
+            "failed",
+        }
+        and action.responded_at is None
+    ):
+        action.responded_at = (
+            datetime.now(
+                timezone.utc
+            )
+        )
 
     db.commit()
     db.refresh(action)
