@@ -83,5 +83,5 @@ def admin_dashboard():
 @app.get("/privacy", include_in_schema=False)
 def privacy_policy():
     return FileResponse(
-        "app/static/privacy/privacy.html"
+        "app/static/legal/privacy.html"
     )
