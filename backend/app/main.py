@@ -79,3 +79,9 @@ def admin_dashboard():
     return FileResponse(
         "app/static/admin/index.html"
     )
+
+@app.get("/privacy", include_in_schema=False)
+def privacy_policy():
+    return FileResponse(
+        "app/static/privacy/privacy.html"
+    )
