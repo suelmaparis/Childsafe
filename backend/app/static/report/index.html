@@ -1090,8 +1090,31 @@ style="display:none; position:fixed; bottom:16px;
 </button>
 </div>
 
-
-    <script src="/static/report/report.js"></script>
+<script>
+    (function () {
+        const banner = document.getElementById('analytics-consent');
+        const accept = document.getElementById('analytics-accept');
+        const reject = document.getElementById('analytics-reject');
+    
+        const choice = localStorage.getItem('childsafe_analytics');
+    
+        if (choice !== 'accepted' && choice !== 'rejected') {
+            banner.style.display = 'block';
+        }
+    
+        accept.addEventListener('click', function () {
+            localStorage.setItem('childsafe_analytics', 'accepted');
+            banner.style.display = 'none';
+            window.location.reload();
+        });
+    
+        reject.addEventListener('click', function () {
+            localStorage.setItem('childsafe_analytics', 'rejected');
+            banner.style.display = 'none';
+        });
+    })();
+    </script>
+<script src="/static/report/report.js"></script>
 
 </body>
 </html>
