@@ -211,3 +211,34 @@ class MetaClient:
             "limit": limit,
         },
     )
+    def search_instagram_hashtag(
+        self,
+        instagram_user_id: str,
+        hashtag: str,
+    ) -> list[dict]:
+        hashtag_data = self.get(
+            "ig_hashtag_search",
+            params={
+                "user_id": instagram_user_id,
+                "q": hashtag.lstrip("#"),
+            },
+        )
+
+        hashtags = hashtag_data.get("data", [])
+        if not hashtags:
+            return []
+
+        hashtag_id = hashtags[0]["id"]
+
+        return self.get_all_pages(
+            f"{hashtag_id}/recent_media",
+            params={
+                "user_id": instagram_user_id,
+                "fields": (
+                    "id,caption,media_type,"
+                    "permalink,timestamp"
+                ),
+                "limit": 25,
+            },
+            max_pages=1,
+        )

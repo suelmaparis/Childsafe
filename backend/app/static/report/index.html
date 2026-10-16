@@ -1,6 +1,49 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
+    <!-- Google tag (gtag.js) -->
+      
+<!-- Google Analytics 4 — Consentimento -->
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+  
+    gtag('consent', 'default', {
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied'
+    });
+  </script>
+  
+  <script>
+    (function () {
+      const consent = localStorage.getItem('childsafe_analytics');
+  
+      if (consent !== 'accepted') return;
+  
+      const script = document.createElement('script');
+      script.async = true;
+      script.src =
+        'https://www.googletagmanager.com/gtag/js?id=G-C8VYQ6ED34';
+      document.head.appendChild(script);
+  
+      gtag('consent', 'update', {
+        analytics_storage: 'granted'
+      });
+      gtag('js', new Date());
+      gtag('config', 'G-C8VYQ6ED34', {
+        send_page_view: false
+      });
+      gtag('event', 'page_view', {
+        page_title: 'ChildSafe | Proteção Digital Infantil',
+        page_location: 'https://childsafe-cv.org/',
+        page_path: '/'
+      });
+    })();
+  </script>
+  
+        
     <meta charset="UTF-8">
 
     <meta
@@ -1020,6 +1063,32 @@
         </div>
 
     </div>
+    
+<!-- Consentimento para estatísticas -->
+<div id="analytics-consent" role="region"
+aria-label="Preferências de privacidade"
+style="display:none; position:fixed; bottom:16px;
+       left:16px; right:16px; z-index:9999;
+       max-width:520px; margin:auto; padding:18px;
+       background:#fff; color:#222;
+       border:1px solid #ddd; border-radius:12px;
+       box-shadow:0 4px 20px #0002;">
+
+<p style="margin:0 0 12px;">
+   Utilizamos cookies opcionais para compreender
+   as visitas ao ChildSafe. Podes aceitar ou
+   recusar sem afetar a utilização do site.
+   <a href="/privacy">Política de Privacidade</a>
+</p>
+
+<button type="button" id="analytics-accept">
+   Aceitar
+</button>
+
+<button type="button" id="analytics-reject">
+   Recusar
+</button>
+</div>
 
 
     <script src="/static/report/report.js"></script>
