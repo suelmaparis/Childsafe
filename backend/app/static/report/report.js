@@ -269,6 +269,8 @@ const translations = {
 
         chatOpenLabel:
             "Abrir assistente ChildSafe",
+            chatHelpReply:
+            "Podes utilizar o formulário público para denunciar conteúdos online. Para denunciar uma situação fora da internet, explica o que aconteceu neste chat e seleciona «Quero fazer uma denúncia». Poderás rever as informações antes de confirmar o envio.",
     },
 
 
@@ -522,6 +524,8 @@ const translations = {
 
         chatOpenLabel:
             "Abrir asistente de ChildSafe",
+            chatHelpReply:
+            "Puedes utilizar el formulario público para denunciar contenidos en internet. Para denunciar una situación fuera de internet, explica lo ocurrido en este chat y selecciona «Quiero presentar una denuncia». Podrás revisar la información antes de confirmar el envío.",
     },
 
 
@@ -775,6 +779,8 @@ const translations = {
 
         chatOpenLabel:
             "Open ChildSafe assistant",
+            chatHelpReply:
+            "You can use the public form to report online content. To report an offline situation, explain what happened in this chat and select «I want to submit a report». You can review the information before confirming submission.",
     },
 
 
@@ -1028,6 +1034,9 @@ const translations = {
 
         chatOpenLabel:
             "Ouvrir l'assistant ChildSafe",
+            chatHelpReply:
+            "Tu peux utiliser le formulaire public pour signaler du contenu en ligne. Pour signaler une situation hors ligne, explique ce qui s'est passé dans ce chat et sélectionne « Je souhaite faire un signalement ». Tu pourras vérifier les informations avant de confirmer l'envoi.",
+        
     },
 };
 
@@ -1517,14 +1526,13 @@ form.addEventListener(
             );
 
             const reply = document.createElement("p");
-            reply.className = "childsafe-chat-message";
             reply.textContent =
-                "Atualmente, podes utilizar o formulário público " +
-                "para denunciar conteúdos online. Estamos a preparar " +
-                "um canal para situações fora da internet.";
+            (translations[currentLanguage] || translations.pt).chatHelpReply;
 
             messages.appendChild(reply);
             messages.scrollTop = messages.scrollHeight;
+
+           
         });
         const chatForm = document.getElementById("childsafe-chat-form");
     const chatInput = document.getElementById("childsafe-chat-input");
