@@ -359,20 +359,17 @@ def create_report_record(
             report.description,
         )
 
-    except Exception as exc:
-        # AI is an optional secondary layer.
-        # A failure here must not prevent report creation.
-        print(
-            f"AI risk assessment unavailable: {exc}"
+    except Exception:
+    # AI is an optional secondary layer.
+    # A failure here must not prevent report creation.
+        print("AI risk assessment unavailable.")
+        # --------------------------------------------------------
+        # 3. Initial deterministic triage
+        # --------------------------------------------------------
+
+        triage = determine_review_priority(
+            assessment.level
         )
-
-    # --------------------------------------------------------
-    # 3. Initial deterministic triage
-    # --------------------------------------------------------
-
-    triage = determine_review_priority(
-        assessment.level
-    )
 
     # --------------------------------------------------------
     # 4. Compare deterministic and AI assessments

@@ -234,6 +234,41 @@ const translations = {
 
         unableSubmit:
             "Não foi possível enviar a denúncia.",
+            chatTitle:
+            "Assistente Virtual",
+
+        chatOpen:
+            "💬 Assistente Virtual",
+
+        chatHelp:
+            "Como posso denunciar?",
+
+        chatReportIntent:
+            "Quero fazer uma denúncia",
+
+        chatReportSend:
+            "Enviar denúncia ao ChildSafe",
+
+        chatPlaceholder:
+            "Escreve a tua mensagem...",
+
+        chatSend:
+            "Enviar",
+
+        chatWelcome:
+            "Olá! 👋 Em que podemos ajudar-te hoje?",
+
+        chatIntroduction:
+            "Podes pedir ajuda ou denunciar uma situação, mesmo que não exista um link na internet.",
+
+        chatSafetyNotice:
+            "Bem-vindo ao assistente virtual ChildSafe. Podes conversar connosco sobre situações que coloquem crianças em risco, na internet ou fora dela. Se quiseres apresentar uma denúncia, seleciona «Quero fazer uma denúncia». Poderás rever as informações antes de confirmar o envio. Evita partilhar dados pessoais desnecessários. Este assistente utiliza inteligência artificial e não substitui profissionais de proteção infantil. Se estiveres em perigo imediato, procura ajuda dos serviços de emergência ou de um adulto de confiança. O assistente não é um serviço de emergência nem garante acompanhamento em tempo real.",
+
+        chatMinimize:
+            "Minimizar chat",
+
+        chatOpenLabel:
+            "Abrir assistente ChildSafe",
     },
 
 
@@ -452,6 +487,41 @@ const translations = {
 
         unableSubmit:
             "No se pudo enviar la denuncia.",
+            chatTitle:
+            "Asistente Virtual",
+
+        chatOpen:
+            "💬 Asistente Virtual",
+
+        chatHelp:
+            "¿Cómo puedo denunciar?",
+
+        chatReportIntent:
+            "Quiero presentar una denuncia",
+
+        chatReportSend:
+            "Enviar denuncia a ChildSafe",
+
+        chatPlaceholder:
+            "Escribe tu mensaje...",
+
+        chatSend:
+            "Enviar",
+
+        chatWelcome:
+            "¡Hola! 👋 ¿Cómo podemos ayudarte hoy?",
+
+        chatIntroduction:
+            "Puedes pedir ayuda o denunciar una situación, aunque no exista un enlace en internet.",
+
+        chatSafetyNotice:
+            "Bienvenido al asistente virtual de ChildSafe. Puedes hablar con nosotros sobre situaciones que pongan en riesgo a niños, niñas y adolescentes, tanto en internet como fuera de ella. Si quieres presentar una denuncia, selecciona «Quiero presentar una denuncia». Podrás revisar la información antes de confirmar el envío. Evita compartir datos personales innecesarios. Este asistente utiliza inteligencia artificial y no sustituye a los profesionales de protección infantil. Si estás en peligro inmediato, busca ayuda de los servicios de emergencia o de un adulto de confianza. El asistente no es un servicio de emergencia ni garantiza atención en tiempo real.",
+
+        chatMinimize:
+            "Minimizar chat",
+
+        chatOpenLabel:
+            "Abrir asistente de ChildSafe",
     },
 
 
@@ -670,6 +740,41 @@ const translations = {
 
         unableSubmit:
             "Unable to submit report.",
+            chatTitle:
+            "Virtual Assistant",
+
+        chatOpen:
+            "💬 Virtual Assistant",
+
+        chatHelp:
+            "How can I report a concern?",
+
+        chatReportIntent:
+            "I want to submit a report",
+
+        chatReportSend:
+            "Submit report to ChildSafe",
+
+        chatPlaceholder:
+            "Type your message...",
+
+        chatSend:
+            "Send",
+
+        chatWelcome:
+            "Hello! 👋 How can we help you today?",
+
+        chatIntroduction:
+            "You can ask for help or report a situation, even if there is no link on the internet.",
+
+        chatSafetyNotice:
+            "Welcome to the ChildSafe virtual assistant. You can talk to us about situations that may put children at risk, online or offline. If you want to submit a report, select «I want to submit a report». You will be able to review the information before confirming submission. Avoid sharing unnecessary personal information. This assistant uses artificial intelligence and does not replace child protection professionals. If you are in immediate danger, seek help from emergency services or a trusted adult. This assistant is not an emergency service and does not guarantee real-time assistance.",
+
+        chatMinimize:
+            "Minimize chat",
+
+        chatOpenLabel:
+            "Open ChildSafe assistant",
     },
 
 
@@ -888,6 +993,41 @@ const translations = {
 
         unableSubmit:
             "Impossible d'envoyer le signalement.",
+            chatTitle:
+            "Assistant Virtuel",
+
+        chatOpen:
+            "💬 Assistant Virtuel",
+
+        chatHelp:
+            "Comment puis-je signaler une situation ?",
+
+        chatReportIntent:
+            "Je souhaite faire un signalement",
+
+        chatReportSend:
+            "Envoyer le signalement à ChildSafe",
+
+        chatPlaceholder:
+            "Écris ton message...",
+
+        chatSend:
+            "Envoyer",
+
+        chatWelcome:
+            "Bonjour ! 👋 Comment pouvons-nous t'aider aujourd'hui ?",
+
+        chatIntroduction:
+            "Tu peux demander de l'aide ou signaler une situation, même sans lien internet.",
+
+        chatSafetyNotice:
+            "Bienvenue sur l'assistant virtuel de ChildSafe. Tu peux nous parler de situations susceptibles de mettre des enfants en danger, sur internet ou en dehors. Si tu souhaites faire un signalement, sélectionne « Je souhaite faire un signalement ». Tu pourras vérifier les informations avant de confirmer l'envoi. Évite de partager des données personnelles inutiles. Cet assistant utilise l'intelligence artificielle et ne remplace pas les professionnels de la protection de l'enfance. Si tu es en danger immédiat, demande de l'aide aux services d'urgence ou à un adulte de confiance. Cet assistant n'est pas un service d'urgence et ne garantit pas une assistance en temps réel.",
+
+        chatMinimize:
+            "Réduire le chat",
+
+        chatOpenLabel:
+            "Ouvrir l'assistant ChildSafe",
     },
 };
 
@@ -1054,6 +1194,30 @@ function translatePage(language) {
                 dictionary[key];
         }
     });
+// Traduções do Assistente Virtual
+const chatElements = {
+    "childsafe-chat-help": "chatHelp",
+    "childsafe-chat-report-intent": "chatReportIntent",
+    "childsafe-chat-report": "chatReportSend",
+    "childsafe-chat-send": "chatSend",
+    "childsafe-chat-reopen": "chatOpen"
+};
+
+Object.entries(chatElements).forEach(([id, key]) => {
+    const element = document.getElementById(id);
+
+    if (element && dictionary[key] !== undefined) {
+        element.textContent = dictionary[key];
+    }
+});
+
+const chatInput = document.getElementById(
+    "childsafe-chat-input"
+);
+
+if (chatInput) {
+    chatInput.placeholder = dictionary.chatPlaceholder;
+}
 }
 
 
@@ -1255,3 +1419,316 @@ form.addEventListener(
         }
     },
 );
+
+/* ========================================================
+   CHILDSAFE — ASSISTENTE VIRTUAL
+   ======================================================== */
+
+   (function () {
+    const chat = document.createElement("section");
+    chat.id = "childsafe-chat";
+    chat.setAttribute("aria-label", "Assistente virtual ChildSafe");
+
+    chat.innerHTML = `
+        <div class="childsafe-chat-header">
+            <strong>ChildSafe - Assistente Virtual</strong>
+            <button type="button" id="childsafe-chat-close"
+                    aria-label="Minimizar chat">−</button>
+        </div>
+
+        <div id="childsafe-chat-messages" aria-live="polite">
+        <p
+        class="childsafe-chat-message"
+        data-i18n="chatWelcome"
+        >
+            Olá! 👋 Em que podemos ajudar-te hoje?
+        </p>
+
+        <p
+            class="childsafe-chat-message"
+            data-i18n="chatIntroduction"
+        >
+            Podes pedir ajuda ou denunciar uma situação,
+            mesmo que não exista um link na internet.
+        </p>
+
+        <p
+            class="childsafe-chat-message"
+            data-i18n="chatSafetyNotice"
+        >
+            Bem-vindo ao assistente virtual ChildSafe.
+        </p>
+        </div>
+
+        <div class="childsafe-chat-footer">
+        <button type="button" id="childsafe-chat-help">
+            Como posso denunciar?
+        </button>
+        <button
+            type="button"
+            id="childsafe-chat-report"
+            disabled
+        >
+            Enviar denúncia ao ChildSafe
+        </button>
+        <form id="childsafe-chat-form">
+            <input
+                type="text"
+                id="childsafe-chat-input"
+                placeholder="Escreve a tua mensagem..."
+                aria-label="Mensagem para o assistente ChildSafe"
+                maxlength="2000"
+                autocomplete="off"
+                required
+            >
+
+            <button type="submit" id="childsafe-chat-send">
+                Enviar
+            </button>
+        </form>
+    </div>
+    `;
+
+    const reopen = document.createElement("button");
+    reopen.id = "childsafe-chat-reopen";
+    reopen.type = "button";
+    reopen.textContent = "💬 ChildSafe";
+    reopen.setAttribute("aria-label", "Abrir assistente ChildSafe");
+
+    document.body.appendChild(chat);
+    document.body.appendChild(reopen);
+    translatePage(currentLanguage);
+
+    document.getElementById("childsafe-chat-close")
+        .addEventListener("click", function () {
+            chat.style.display = "none";
+            reopen.style.display = "block";
+        });
+
+    reopen.addEventListener("click", function () {
+        chat.style.display = "flex";
+        reopen.style.display = "none";
+    });
+
+    document.getElementById("childsafe-chat-help")
+        .addEventListener("click", function () {
+            const messages = document.getElementById(
+                "childsafe-chat-messages"
+            );
+
+            const reply = document.createElement("p");
+            reply.className = "childsafe-chat-message";
+            reply.textContent =
+                "Atualmente, podes utilizar o formulário público " +
+                "para denunciar conteúdos online. Estamos a preparar " +
+                "um canal para situações fora da internet.";
+
+            messages.appendChild(reply);
+            messages.scrollTop = messages.scrollHeight;
+        });
+        const chatForm = document.getElementById("childsafe-chat-form");
+    const chatInput = document.getElementById("childsafe-chat-input");
+    const chatMessages = document.getElementById("childsafe-chat-messages");
+    const chatSend = document.getElementById("childsafe-chat-send");
+
+    const chatHistory = [];
+    const chatReportButton = document.getElementById(
+        "childsafe-chat-report"
+    );
+    const chatReportIntentButton = document.createElement("button");
+
+    chatReportIntentButton.type = "button";
+    chatReportIntentButton.id = "childsafe-chat-report-intent";
+    chatReportIntentButton.textContent = "Quero fazer uma denúncia";
+
+    chatReportButton.parentNode.insertBefore(
+        chatReportIntentButton,
+        chatReportButton
+    );
+
+chatReportIntentButton.addEventListener("click", function () {
+    if (chatReportSubmitted) {
+        return;
+    }
+
+    const hasUserMessages = chatHistory.some(
+        item => item.role === "user"
+    );
+
+    if (!hasUserMessages) {
+        addChatMessage(
+            "Antes de enviares uma denúncia, podes contar-me " +
+            "o que aconteceu, sem partilhar dados pessoais desnecessários.",
+            "assistant"
+        );
+        return;
+    }
+
+    chatReportButton.disabled = false;
+
+    addChatMessage(
+        "Podes continuar a explicar a situação no chat. " +
+        "Quando estiveres pronto para enviar as informações " +
+        "para análise humana, clica em «Enviar denúncia ao ChildSafe».",
+        "assistant"
+    );
+});
+    let chatReportSubmitted = false;
+    const chatSubmissionId = crypto.randomUUID();
+
+    chatReportButton.addEventListener("click", async function () {
+        if (chatReportSubmitted || chatHistory.length === 0) {
+            return;
+        }
+
+
+
+        chatReportButton.disabled = true;
+
+        const suggestedDescription = chatHistory
+    .filter(item => item.role === "user")
+    .map(item => item.content)
+    .join("\n\n");
+
+const description = window.prompt(
+    "Revê a tua denúncia antes de a enviar. " +
+    "Podes corrigir ou retirar informações que não queiras partilhar:",
+    suggestedDescription
+);
+
+if (description === null) {
+    chatReportButton.disabled = false;
+    return;
+}
+
+if (description.trim().length < 20) {
+    addChatMessage(
+        "A denúncia precisa de uma descrição um pouco mais detalhada. " +
+        "Podes continuar a explicar a situação antes de a enviar.",
+        "assistant"
+    );
+    chatReportButton.disabled = false;
+    return;
+}
+const confirmed = window.confirm(
+    "Confirmas que queres enviar esta denúncia ao ChildSafe " +
+    "para análise humana?\n\n" +
+    "Só serão enviadas as informações que acabaste de rever."
+);
+
+if (!confirmed) {
+    chatReportButton.disabled = false;
+    return;
+}
+        try {
+            const response = await fetch("/chat/report", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    description,
+                    confirmed: true,
+                    submission_id: chatSubmissionId
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error("Não foi possível registar a denúncia.");
+            }
+
+            const result = await response.json();
+
+            chatReportSubmitted = true;
+
+            addChatMessage(
+                "A tua denúncia foi recebida pelo ChildSafe. " +
+                "Número do relatório: " + result.report_id +
+                ". Será encaminhada para análise humana.",
+                "assistant"
+            );
+
+        } catch (error) {
+            chatReportButton.disabled = false;
+
+            addChatMessage(
+                "Não foi possível confirmar o registo da denúncia. " +
+                "Tenta novamente mais tarde.",
+                "assistant"
+            );
+        }
+    });
+    function addChatMessage(text, sender) {
+        const message = document.createElement("p");
+        message.className = "childsafe-chat-message";
+        message.textContent = text;
+
+        if (sender === "user") {
+            message.style.backgroundColor = "#dcf5e6";
+            message.style.color = "#185a37";
+            message.style.marginLeft = "35px";
+            message.style.marginRight = "0";
+        } else {
+            message.style.backgroundColor = "#e5eef9";
+            message.style.color = "#173a63";
+            message.style.marginLeft = "0";
+            message.style.marginRight = "35px";
+        }
+
+        chatMessages.appendChild(message);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    chatForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const message = chatInput.value.trim();
+
+        if (!message) return;
+
+        chatInput.value = "";
+        chatSend.disabled = true;
+
+        addChatMessage(message, "user");
+        chatHistory.push({
+            role: "user",
+            content: message
+        });
+
+        try {
+            const response = await fetch("/chat/message", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    message: message,
+                    history: chatHistory.slice(-10),
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Erro na comunicação com o assistente.");
+            }
+
+            const data = await response.json();
+
+            addChatMessage(data.reply, "assistant");
+            chatHistory.push({
+                role: "assistant",
+                content: data.reply
+            });
+
+
+        } catch (error) {
+            addChatMessage(
+                "Não foi possível obter uma resposta agora. " +
+                "Tenta novamente mais tarde.",
+                "assistant"
+            );
+        } finally {
+            chatSend.disabled = false;
+            chatInput.focus();
+        }
+    });
+})();

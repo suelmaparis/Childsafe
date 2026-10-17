@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from app.api import chat
 
 from slowapi import (
     _rate_limit_exceeded_handler,
@@ -43,6 +44,9 @@ app.include_router(
 
 app.include_router(
     reports_router
+)
+app.include_router(
+    chat.router
 )
 
 app.include_router(

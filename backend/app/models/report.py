@@ -128,3 +128,25 @@ class Report(Base):
             timezone.utc
         ),
     )
+        # Local onde ocorreu a situação denunciada
+    incident_location: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
+    # Localização fornecida voluntariamente
+    reporter_location: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
+    # Data e hora da ocorrência, se conhecidas
+    incident_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    # Indica se existe possível perigo imediato
+    is_immediate_danger: Mapped[bool | None] = mapped_column(
+        nullable=True,
+    )

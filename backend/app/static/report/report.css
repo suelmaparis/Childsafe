@@ -1422,3 +1422,210 @@ button {
 
     text-decoration: none;
 }
+/* ========================================================
+   CHILDSAFE — ASSISTENTE VIRTUAL
+   ======================================================== */
+
+   #childsafe-chat {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    max-width: calc(100vw - 40px);
+    max-height: min(480px, 75vh);
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    z-index: 9000;
+    font-family: Arial, sans-serif;
+}
+
+.childsafe-chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #123b5d;
+    color: white;
+}
+
+#childsafe-chat-close {
+    border: none;
+    background: transparent;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+#childsafe-chat-messages {
+    padding: 16px;
+    overflow-y: auto;
+    max-height: 300px;
+}
+
+.childsafe-chat-message {
+    padding: 12px;
+    margin: 0 0 12px;
+    border-radius: 12px;
+    background: #edf3f8;
+    color: #222;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.childsafe-chat-footer {
+    padding: 12px;
+    border-top: 1px solid #ddd;
+}
+
+#childsafe-chat-help {
+    width: 100%;
+    padding: 12px;
+    background: #123b5d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#childsafe-chat-reopen {
+    display: none;
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    padding: 14px 18px;
+    background: #123b5d;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    z-index: 9000;
+}
+
+@media (max-width: 480px) {
+    #childsafe-chat {
+        right: 10px;
+        bottom: 10px;
+        width: calc(100vw - 20px);
+        max-height: 65vh;
+    }
+}
+#childsafe-chat-report-intent,
+#childsafe-chat-report {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #1f2937;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+#childsafe-chat-report-intent:hover,
+#childsafe-chat-report:not(:disabled):hover {
+    background: #f3f4f6;
+}
+
+#childsafe-chat-report:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+/* Botões do assistente ChildSafe */
+#childsafe-chat-help,
+#childsafe-chat-report-intent,
+#childsafe-chat-report {
+    width: 100%;
+    padding: 12px;
+    background: #123b5d;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+/* Efeito ao passar o rato */
+#childsafe-chat-help:hover,
+#childsafe-chat-report-intent:hover,
+#childsafe-chat-report:not(:disabled):hover {
+    background: #1b527b;
+}
+
+/* Botão de denúncia desativado */
+#childsafe-chat-report:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Caixa onde a pessoa escreve a mensagem */
+#childsafe-chat input,
+#childsafe-chat textarea {
+    width: 100%;
+    min-height: 55px;
+    padding: 12px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #222222;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    box-sizing: border-box;
+}
+
+/* Destaque quando a pessoa começa a escrever */
+#childsafe-chat input:focus,
+#childsafe-chat textarea:focus {
+    outline: none;
+    border-color: #123b5d;
+    box-shadow: 0 0 0 2px rgba(18, 59, 93, 0.12);
+}
+
+/* Botão Enviar */
+#childsafe-chat button[type="submit"] {
+    background: #123b5d;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+#childsafe-chat button[type="submit"]:hover {
+    background: #1b527b;
+}
+/* Espaçamento entre os botões do chat */
+#childsafe-chat-help,
+#childsafe-chat-report-intent,
+#childsafe-chat-report {
+    display: block;
+    margin-bottom: 8px;
+}
+/* Mensagens do assistente ChildSafe */
+.childsafe-chat-message.assistant {
+    background: #e8f1fa;
+    color: #123b5d;
+    border-radius: 12px 12px 12px 4px;
+}
+
+/* Mensagens da pessoa que pede ajuda */
+.childsafe-chat-message.user {
+    background: #e3f4e8;
+    color: #184b32;
+    border-radius: 12px 12px 4px 12px;
+}
