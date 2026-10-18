@@ -3196,17 +3196,17 @@ if (reportActionForm) {
             const platform =
                 document.getElementById(
                     "report-action-platform"
-                ).value.trim();
-    
+                )?.value.trim() ?? "";
+
             const destination =
                 document.getElementById(
                     "report-action-destination"
-                ).value.trim();
-    
+                )?.value.trim() ?? "";
+
             const externalResult =
                 document.getElementById(
                     "report-action-result"
-                ).value.trim();
+                )?.value.trim() ?? "";
     
             if (message) {
                 message.textContent = "";
