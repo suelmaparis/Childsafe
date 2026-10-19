@@ -356,7 +356,91 @@ async function apiFetch(
     return response;
 }
 
+async function downloadReportPdf() {
+    if (
+        !selectedReportId
+        || !currentUser
+        || !["admin", "senior_reviewer"].includes(
+            currentUser.role
+        )
+    ) {
+        return;
+    }
 
+    const button = document.getElementById(
+        "download-report-pdf-button"
+    );
+
+    const numericReportId = getNumericReportId(
+        selectedReportId
+    );
+
+    if (!Number.isSafeInteger(Number(numericReportId))
+        || Number(numericReportId) <= 0) {
+        alert("Invalid report ID.");
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Preparing PDF...";
+
+    try {
+        const response = await apiFetch(
+            `/reports/${numericReportId}/export/pdf`,
+            {
+                headers: {
+                    "Accept": "application/pdf",
+                },
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                `PDF export failed (HTTP ${response.status}).`
+            );
+        }
+
+        const blob = await response.blob();
+
+        if (
+            !blob.type.includes("pdf")
+            || blob.size === 0
+        ) {
+            throw new Error("Invalid PDF response.");
+        }
+
+        const fileUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = fileUrl;
+        link.download = (
+            `ChildSafe_CV-${String(numericReportId).padStart(6, "0")}.pdf`
+        );
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => {
+            URL.revokeObjectURL(fileUrl);
+        }, 1000);
+
+    } catch (error) {
+        console.error("PDF export error:", error);
+        alert(
+            "Unable to download PDF. Please try again."
+        );
+    } finally {
+        button.disabled = false;
+        button.textContent = "Download PDF";
+    }
+}
+document.getElementById(
+    "download-report-pdf-button"
+)?.addEventListener(
+    "click",
+    downloadReportPdf
+);
 function logout() {
     accessToken = null;
     currentUser = null;
@@ -371,6 +455,7 @@ function logout() {
     dashboardView.classList.add("hidden");
     loginView.classList.remove("hidden");
 }
+
 
 
 async function login(
@@ -401,7 +486,7 @@ async function login(
     }
 
     const data = await response.json();
-    
+
 
     accessToken = data.access_token;
 
@@ -504,12 +589,12 @@ async function loadCurrentUser() {
         currentUser.role === "admin"
         || currentUser.role === "senior_reviewer"
     );
-    
+
     const assignmentControls =
         document.getElementById(
             "admin-assignment-controls"
         );
-    
+
     if (assignmentControls) {
         assignmentControls.classList.toggle(
             "hidden",
@@ -530,8 +615,8 @@ async function loadCurrentUser() {
             !isAdmin
         );
     });
-    
-    
+
+
     document.querySelectorAll(
         ".reviewer-only"
     ).forEach(element => {
@@ -1088,7 +1173,7 @@ function renderReportActions(actionsData) {
                                     )
                                 )}
                             </td>
-                        
+
                             <td>
                                 <span
                                     class="
@@ -1110,7 +1195,7 @@ function renderReportActions(actionsData) {
                                     )}
                                 </span>
                             </td>
-                        
+
                             <td>
                                 ${escapeHtml(
                                     action.created_by_username
@@ -1122,14 +1207,14 @@ function renderReportActions(actionsData) {
                                     )
                                 )}
                             </td>
-                        
+
                             <td>
                                 ${escapeHtml(
                                     action.external_reference
                                     || "—"
                                 )}
                             </td>
-                        
+
                             <td>
                                 ${escapeHtml(
                                     action.created_at
@@ -1139,7 +1224,7 @@ function renderReportActions(actionsData) {
                                     : "—"
                                 )}
                             </td>
-                        
+
                             <td>
                                 <button
                                     type="button"
@@ -1159,11 +1244,11 @@ function renderReportActions(actionsData) {
                                     data-action-platform="${escapeHtml(
                                         action.platform || ""
                                     )}"
-                                    
+
                                     data-action-destination="${escapeHtml(
                                         action.destination || ""
                                     )}"
-                                    
+
                                     data-action-result="${escapeHtml(
                                         action.external_result || ""
                                     )}"
@@ -1183,12 +1268,12 @@ function renderReportActions(actionsData) {
                                             <strong>
                                                 Notes:
                                             </strong>
-                        
+
                                             ${escapeHtml(
                                                 action.notes
                                             )}
                                         </td>
-                                        
+
                                     </tr>
                                     ${
                                         (
@@ -1202,37 +1287,37 @@ function renderReportActions(actionsData) {
                                             ? `
                                                 <tr class="action-external-details-row">
                                                     <td colspan="6">
-                                    
+
                                                         <div class="action-external-details">
-                                    
+
                                                             <div>
                                                                 <strong>Platform:</strong>
                                                                 ${escapeHtml(
                                                                     action.platform || "—"
                                                                 )}
                                                             </div>
-                                    
+
                                                             <div>
                                                                 <strong>Destination:</strong>
                                                                 ${escapeHtml(
                                                                     action.destination || "—"
                                                                 )}
                                                             </div>
-                                    
+
                                                             <div>
                                                                 <strong>External reference:</strong>
                                                                 ${escapeHtml(
                                                                     action.external_reference || "—"
                                                                 )}
                                                             </div>
-                                    
+
                                                             <div>
                                                                 <strong>Result:</strong>
                                                                 ${escapeHtml(
                                                                     action.external_result || "—"
                                                                 )}
                                                             </div>
-                                    
+
                                                             <div>
                                                                 <strong>Submitted:</strong>
                                                                 ${escapeHtml(
@@ -1243,7 +1328,7 @@ function renderReportActions(actionsData) {
                                                                         : "—"
                                                                 )}
                                                             </div>
-                                    
+
                                                             <div>
                                                                 <strong>Responded:</strong>
                                                                 ${escapeHtml(
@@ -1254,9 +1339,9 @@ function renderReportActions(actionsData) {
                                                                         : "—"
                                                                 )}
                                                             </div>
-                                    
+
                                                         </div>
-                                    
+
                                                     </td>
                                                 </tr>
                                             `
@@ -1276,6 +1361,21 @@ function renderReportActions(actionsData) {
 
 async function openReport(reportId) {
     selectedReportId = reportId;
+    const pdfButton = document.getElementById(
+        "download-report-pdf-button"
+    );
+
+    if (pdfButton) {
+        const canExportPdf = (
+            currentUser?.role === "admin"
+            || currentUser?.role === "senior_reviewer"
+        );
+
+        pdfButton.classList.toggle(
+            "hidden",
+            !canExportPdf
+        );
+    }
     const numericReportId =
     getNumericReportId(reportId);
 
@@ -1328,7 +1428,7 @@ async function openReport(reportId) {
     ).textContent = (
         data.report?.platform || "—"
     );
-   
+
     document.getElementById(
         "review-risk-level"
     ).textContent = (
@@ -1339,40 +1439,40 @@ async function openReport(reportId) {
         data.deterministic_assessment?.level
         || "unknown"
     );
-    
+
     const riskElement = document.getElementById(
         "review-risk-level"
     );
-    
+
     riskElement.textContent = riskLevel
         .replaceAll("_", " ")
         .toUpperCase();
-    
+
     riskElement.className = (
         `status-badge risk-${riskLevel}`
     );
-    
+
     document.getElementById(
         "review-risk-score"
     ).textContent = (
         data.deterministic_assessment?.score
         ?? "—"
     );
-   
-    
+
+
     const currentStatus = (
         data.review?.current_status || "unknown"
     );
-   
+
 
     const statusElement = document.getElementById(
         "review-current-status"
     );
-    
+
     statusElement.textContent = currentStatus
         .replaceAll("_", " ")
         .toUpperCase();
-    
+
     statusElement.className = (
         `status-badge status-${currentStatus}`
     );
@@ -1432,18 +1532,18 @@ document.getElementById(
     const detectionSection = document.getElementById(
         "automated-detection-section"
     );
-    
+
     const detection = data.detection || {};
     const signalScore = (
         detection.signal_score
         ?? data.report?.detection_signal_score
         ?? "—"
     );
-    
+
     document.getElementById(
         "report-detection-signal-score"
     ).textContent = signalScore;
-    
+
     if (
         data.report?.source_type === "automated_monitoring"
         && detection.confidence !== null
@@ -1452,7 +1552,7 @@ document.getElementById(
         detectionSection.classList.remove(
             "hidden"
         );
-    
+
         document.getElementById(
             "review-detection-confidence"
         ).textContent = (
@@ -1460,7 +1560,7 @@ document.getElementById(
                 detection.confidence * 100
             )}%`
         );
-    
+
         document.getElementById(
             "review-detection-source"
         ).textContent = (
@@ -1482,13 +1582,13 @@ document.getElementById(
             document.getElementById(
                 "review-detection-signals"
             );
-    
+
         const signals = Array.isArray(
             detection.signals
         )
             ? detection.signals
             : [];
-    
+
         if (!signals.length) {
             signalsContainer.innerHTML = `
                 <span class="detection-empty">
@@ -1509,7 +1609,7 @@ document.getElementById(
                 `)
                 .join("");
         }
-    
+
     } else {
         detectionSection.classList.add(
             "hidden"
@@ -1633,7 +1733,7 @@ if (!aiReasons.length) {
     ).reset();
 
     updateStatusOptions(currentStatus);
-    
+
     document.getElementById(
         "review-message"
     ).textContent = "";
@@ -1882,7 +1982,7 @@ async function loadReviewQueue() {
                     <th>Created</th>
                 </tr>
             </thead>
-    
+
             <tbody>
                 ${rowsHtml}
             </tbody>
@@ -2140,9 +2240,9 @@ async function loadMonitoringRuns() {
             {
                 key: "started_display",
                 label: "Started",
-               
+
             },
-            
+
         ],
         monitoringRows,
     );
@@ -2151,7 +2251,7 @@ function renderRecentReportsTable(reports) {
     const container = document.getElementById(
         "recent-reports"
     );
-   
+
     const rows = reports.slice(0, 100);
 
     if (!rows.length) {
@@ -2164,7 +2264,7 @@ function renderRecentReportsTable(reports) {
         return;
     }
 
-   
+
     container.innerHTML = `
     <table>
         <thead>
@@ -2177,7 +2277,7 @@ function renderRecentReportsTable(reports) {
                 <th>Review status</th>
                 <th>Assignment</th>
                 <th>Created</th>
-                
+
             </tr>
         </thead>
 
@@ -2500,37 +2600,37 @@ document.addEventListener(
 );
     function showDashboardSection(section) {
         const sections = {
-           
+
             monitoring:
                 document.getElementById(
                     "monitoring-section"
                 ),
-    
+
             "report-trend":
                 document.getElementById(
                     "report-trend-section"
                 ),
-    
+
             "review-trend":
                 document.getElementById(
                     "review-trend-section"
                 ),
-    
+
             "urgent-queue":
                 document.getElementById(
                     "urgent-queue-section"
                 ),
-    
+
             "recent-reports":
                 document.getElementById(
                     "recent-reports-section"
                 ),
-    
+
             reviewers:
                 document.getElementById(
                     "reviewers-panel"
                 ),
-    
+
             audit:
                 document.getElementById(
                     "audit-panel"
@@ -2540,7 +2640,7 @@ document.addEventListener(
                     "review-alerts-section"
                 ),
         };
-    
+
         Object.values(sections).forEach(
             element => {
                 if (element) {
@@ -2550,10 +2650,10 @@ document.addEventListener(
                 }
             }
         );
-    
+
         const selected =
             sections[section];
-    
+
         if (selected) {
             selected.classList.remove(
                 "hidden"
@@ -2564,7 +2664,7 @@ document.addEventListener(
         if (!value) {
             return "—";
         }
-    
+
         return new Date(value).toLocaleString(
             undefined,
             {
@@ -2577,16 +2677,16 @@ document.addEventListener(
         const response = await apiFetch(
             "/monitoring/status"
         );
-    
+
         if (!response.ok) {
             console.error(
                 "Unable to load monitoring status:",
                 response.status
             );
-    
+
             return;
         }
-    
+
         const data = await response.json();
         const worker = data.worker || {};
 
@@ -2630,29 +2730,29 @@ document.addEventListener(
                 ? "YES"
                 : "NO"
         );
-        
+
         document.getElementById(
             "monitoring-interval"
         ).textContent = (
             `${data.interval_minutes} minutes`
         );
-    
+
         const container = document.getElementById(
             "collector-status-list"
         );
-    
+
         const collectors = data.collectors || [];
-    
+
         if (!collectors.length) {
             container.innerHTML = `
                 <div class="empty-state">
                     No collectors configured.
                 </div>
             `;
-    
+
             return;
         }
-    
+
         container.innerHTML = collectors
             .map(collector => `
                 <div class="collector-card">
@@ -2662,7 +2762,7 @@ document.addEventListener(
                                 collector.platform
                             )}
                         </strong>
-    
+
                         <span>
                             ${escapeHtml(
                                 collector.name
@@ -2670,14 +2770,14 @@ document.addEventListener(
                             )}
                         </span>
                     </div>
-    
+
                     <div class="collector-meta">
                         <span class="collector-mode">
                             ${escapeHtml(
                                 collector.mode.toUpperCase()
                             )}
                         </span>
-    
+
                         <span
                             class="
                                 collector-status
@@ -3168,31 +3268,31 @@ if (reportActionForm) {
         "submit",
         async event => {
             event.preventDefault();
-    
+
             if (!selectedReportId) {
                 return;
             }
-    
+
             const message =
                 document.getElementById(
                     "report-action-message"
                 );
-    
+
             const actionType =
                 document.getElementById(
                     "report-action-type"
                 ).value;
-    
+
             const notes =
                 document.getElementById(
                     "report-action-notes"
                 ).value.trim();
-    
+
             const externalReference =
                 document.getElementById(
                     "report-action-reference"
                 ).value.trim();
-    
+
             const platform =
                 document.getElementById(
                     "report-action-platform"
@@ -3207,11 +3307,11 @@ if (reportActionForm) {
                 document.getElementById(
                     "report-action-result"
                 )?.value.trim() ?? "";
-    
+
             if (message) {
                 message.textContent = "";
             }
-    
+
             try {
                 await createReportAction(
                     selectedReportId,
@@ -3222,13 +3322,13 @@ if (reportActionForm) {
                     destination,
                     externalResult,
                 );
-    
+
                 closeReportActionModal();
-    
+
                 await openReport(
                     selectedReportId
                 );
-    
+
             } catch (error) {
                 if (message) {
                     message.textContent =
@@ -3272,7 +3372,7 @@ document.addEventListener(
             || ""
         );
 
-    
+
         document.getElementById(
             "update-action-id"
         ).value = (
@@ -3282,7 +3382,7 @@ document.addEventListener(
         const currentStatus =
         button.dataset.actionStatus
         || "pending";
-    
+
         updateActionStatusOptions(
             currentStatus
         );
@@ -3351,19 +3451,19 @@ if (updateActionBackdrop) {
 
             body: JSON.stringify({
                 status,
-            
+
                 notes:
                     notes || null,
-            
+
                 external_reference:
                     externalReference || null,
-            
+
                 platform:
                     platform || null,
-            
+
                 destination:
                     destination || null,
-            
+
                 external_result:
                     externalResult || null,
             }),
@@ -3421,12 +3521,12 @@ if (updateActionForm) {
                 document.getElementById(
                     "update-action-platform"
                 ).value.trim();
-            
+
             const destination =
                 document.getElementById(
                     "update-action-destination"
                 ).value.trim();
-            
+
             const externalResult =
                 document.getElementById(
                     "update-action-result"
@@ -3590,63 +3690,63 @@ async function loadReviewAlerts() {
             alert =>
                 alert.severity === "critical"
         ).length;
-    
+
     const highCount =
         alerts.filter(
             alert =>
                 alert.severity === "high"
         ).length;
-    
+
     const overdueCount =
         alerts.filter(
             alert =>
                 alert.type === "review_overdue"
         ).length;
-    
+
     const escalatedCount =
         alerts.filter(
             alert =>
                 alert.type
                 === "escalated_without_action"
         ).length;
-    
-    
+
+
     const criticalElement =
         document.getElementById(
             "alert-critical-count"
         );
-    
+
     const highElement =
         document.getElementById(
             "alert-high-count"
         );
-    
+
     const overdueElement =
         document.getElementById(
             "alert-overdue-count"
         );
-    
+
     const escalatedElement =
         document.getElementById(
             "alert-escalated-count"
         );
-    
-    
+
+
     if (criticalElement) {
         criticalElement.textContent =
             criticalCount;
     }
-    
+
     if (highElement) {
         highElement.textContent =
             highCount;
     }
-    
+
     if (overdueElement) {
         overdueElement.textContent =
             overdueCount;
     }
-    
+
     if (escalatedElement) {
         escalatedElement.textContent =
             escalatedCount;

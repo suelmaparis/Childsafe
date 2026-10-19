@@ -25,7 +25,7 @@
                         alt="ChildSafe"
                     >
                 </div>
-               
+
 
                 <form id="login-form">
                     <label>
@@ -72,32 +72,32 @@
                     alt="ChildSafe"
                     class="dashboard-logo"
                 >
-            
+
                 <div>
                     <div id="current-user"></div>
                 </div>
             </div>
-        
-        
+
+
             <div class="topbar-actions">
-        
+
                 <select id="period-filter">
                     <option value="7">
                         7 days
                     </option>
-        
+
                     <option value="30" selected>
                         30 days
                     </option>
-        
+
                     <option value="90">
                         90 days
                     </option>
                 </select>
-        
-        
+
+
                 <select id="dashboard-section-select">
-        
+
                     <!-- ADMIN -->
                     <option
                         value="overview"
@@ -105,21 +105,21 @@
                     >
                         Overview
                     </option>
-        
+
                     <option
                         value="monitoring"
                         data-role="admin"
                     >
                         Automated monitoring
                     </option>
-        
+
                     <option
                         value="report-trend"
                         data-role="admin"
                     >
                         Report trend
                     </option>
-        
+
                     <!-- ADMIN + REVIEWERS -->
                     <option
                         value="review-trend"
@@ -127,21 +127,21 @@
                     >
                         Human review trend
                     </option>
-        
+
                     <option
                         value="urgent-queue"
                         data-role="review"
                     >
                         Urgent review queue
                     </option>
-        
+
                     <option
                         value="recent-reports"
                         data-role="review"
                     >
                         Recent reports
                     </option>
-        
+
                     <!-- ADMIN -->
                     <option
                         value="reviewers"
@@ -149,7 +149,7 @@
                     >
                         Reviewers
                     </option>
-        
+
                     <option
                         value="audit"
                         data-role="admin"
@@ -162,12 +162,12 @@
                         >
                             Review alerts
                         </option>
-        
+
                 </select>
-        
+
             </div>
-        
-        
+
+
             <button
                 id="logout-button"
                 type="button"
@@ -175,11 +175,11 @@
             >
                 Logout
             </button>
-        
+
         </header>
 
-           
-                
+
+
             <main class="dashboard">
                     <!-- METRICS -->
             <section class="metrics-grid">
@@ -262,7 +262,7 @@
                     </strong>
                 </article>
 
-                 
+
                 <!-- ADMIN ONLY -->
                 <article class="monitoring-stat admin-only">
                     <span>Monitoring enabled</span>
@@ -279,7 +279,7 @@
                         —
                     </strong>
                 </article>
-   
+
             </section>
             <section class="panel">
                 <div class="panel-header">
@@ -290,9 +290,9 @@
                         </p>
                     </div>
                 </div>
-            
+
                 <div class="metrics-grid review-alert-metrics">
-            
+
                     <article
                         class="metric-card review-alert-card"
                         data-alert-filter="critical"
@@ -300,7 +300,7 @@
                         <span>Critical alerts</span>
                         <strong id="alert-critical-count">0</strong>
                     </article>
-            
+
                     <article
                         class="metric-card review-alert-card"
                         data-alert-filter="high"
@@ -308,7 +308,7 @@
                         <span>High alerts</span>
                         <strong id="alert-high-count">0</strong>
                     </article>
-            
+
                     <article
                         class="metric-card review-alert-card"
                         data-alert-filter="review_overdue"
@@ -316,7 +316,7 @@
                         <span>Overdue reviews</span>
                         <strong id="alert-overdue-count">0</strong>
                     </article>
-            
+
                     <article
                         class="metric-card review-alert-card"
                         data-alert-filter="escalated_without_action"
@@ -324,7 +324,7 @@
                         <span>Escalated without action</span>
                         <strong id="alert-escalated-count">0</strong>
                     </article>
-            
+
                 </div>
             </section>
                 <div id="overview-section">
@@ -332,7 +332,7 @@
                     <div class="panel-header">
                         <h2>Risk distribution</h2>
                     </div>
-                     
+
                     <div id="risk-distribution">
                         <div class="risk-row">
                             <span>Low</span>
@@ -354,129 +354,129 @@
                             <strong id="risk-critical">0</strong>
                         </div>
                     </div>
-                    
+
                 </section>
-               
+
                 </div>
                 <section id="monitoring-section" class="panel">
 
                     <div class="panel-header">
                         <h2>Automated monitoring</h2>
                     </div>
-                
-                
+
+
                     <!-- OVERVIEW PRINCIPAL -->
                     <div class="monitoring-overview">
-                
+
                         <div class="monitoring-primary-grid">
-                
+
                             <article class="monitoring-primary-card worker-card">
                                 <span>Worker status</span>
                                 <strong id="monitoring-worker-status">—</strong>
                             </article>
-                
+
                             <article class="monitoring-primary-card">
                                 <span>Last run</span>
                                 <strong id="monitoring-last-run">—</strong>
                             </article>
-                
+
                             <article class="monitoring-primary-card">
                                 <span>Status</span>
                                 <strong id="monitoring-status">—</strong>
                             </article>
-                
+
                             <article class="monitoring-primary-card">
                                 <span>Platform</span>
                                 <strong id="monitoring-platform">—</strong>
                             </article>
-                
+
                         </div>
-                
-                
+
+
                         <!-- TEMPOS DO WORKER -->
                         <div class="monitoring-time-row">
-                
+
                             <div>
                                 <span>Last heartbeat</span>
                                 <strong id="monitoring-worker-heartbeat">—</strong>
                             </div>
-                
+
                             <div>
                                 <span>Worker started</span>
                                 <strong id="monitoring-worker-started">—</strong>
                             </div>
-                
+
                         </div>
-                
-                
+
+
                         <!-- RESUMO DO ÚLTIMO RUN -->
                         <div class="monitoring-subsection">
-                
+
                             <h3>Run summary</h3>
-                
+
                             <div class="monitoring-metrics-grid">
-                
+
                                 <div>
                                     <span>Candidates</span>
                                     <strong id="monitoring-candidates">0</strong>
                                 </div>
-                
+
                                 <div>
                                     <span>Relevant</span>
                                     <strong id="monitoring-relevant">0</strong>
                                 </div>
-                
+
                                 <div>
                                     <span>Ignored</span>
                                     <strong id="monitoring-ignored">0</strong>
                                 </div>
-                
+
                                 <div>
                                     <span>Reports created</span>
                                     <strong id="monitoring-created">0</strong>
                                 </div>
-                
+
                                 <div>
                                     <span>Duplicates</span>
                                     <strong id="monitoring-duplicates">0</strong>
                                 </div>
-                
+
                                 <div>
                                     <span>Errors</span>
                                     <strong id="monitoring-errors">0</strong>
                                 </div>
-                
+
                             </div>
                         </div>
-                
+
                     </div>
-                
-                
+
+
                     <!-- COLLECTORS -->
                     <div class="collector-status-section">
-                
+
                         <h3>Collector status</h3>
-                
+
                         <div
                             id="collector-status-list"
                             class="collector-status-grid"
                         ></div>
-                
+
                     </div>
-                
-                
+
+
                     <!-- HISTÓRICO -->
                     <div class="monitoring-runs-section">
-                
+
                         <h3>Recent monitoring runs</h3>
-                
+
                         <div
                             id="monitoring-runs"
                             class="table-wrapper"
                         ></div>
-                
+
                     </div>
-                
+
                 </section>
                 <section
     id="review-alerts-section"
@@ -541,7 +541,7 @@
                     <div class="panel-header">
                         <h2>Recent reports</h2>
                     </div>
-                
+
                     <div
                         id="recent-reports"
                         class="table-wrapper"
@@ -549,19 +549,30 @@
                 </section>
             <section id="report-review-panel" class="panel hidden">
             <div class="panel-header">
-                
+
                 <div>
                     <h2>Report review</h2>
                     <p id="selected-report-id"></p>
                 </div>
-                
-                <button
-                    id="close-report-button"
-                    type="button"
-                    class="secondary-button"
-                >
-                    Close
-                </button>
+
+                <div class="report-header-actions">
+                    <button
+                        id="close-report-button"
+                        type="button"
+                        class="secondary-button"
+                    >
+                        Close
+                    </button>
+                    <button
+                        id="download-report-pdf-button"
+                        type="button"
+                        class="secondary-button hidden"
+                    >
+                        Download PDF
+                    </button>
+
+
+                </div>
             </div>
 
             <div id="report-details">
@@ -579,7 +590,7 @@
                         <span>Source</span>
                         <strong id="review-source-type">—</strong>
                     </div>
-                    
+
                     <div>
                         <span>Source channel</span>
                         <strong id="review-source-channel">—</strong>
@@ -635,7 +646,7 @@
                 class="review-field hidden"
             >
                 <span>Automated detection</span>
-            
+
                 <div class="detection-summary">
                     <div>
                         <small>Confidence</small>
@@ -643,7 +654,7 @@
                             —
                         </strong>
                     </div>
-            
+
                     <div>
                         <small>Detector</small>
                         <strong id="review-detection-source">
@@ -651,10 +662,10 @@
                         </strong>
                     </div>
                 </div>
-            
+
                 <div class="detection-signals">
                     <small>Signals</small>
-            
+
                     <div id="review-detection-signals"></div>
                     </div>
                 </div>
@@ -666,34 +677,34 @@
                 </div>
                 <div class="review-field">
                     <span>AI assessment</span>
-                
+
                     <div class="detection-summary">
                         <div>
                             <small>AI risk level</small>
                             <strong id="review-ai-level">—</strong>
                         </div>
-                
+
                         <div>
                             <small>AI risk score</small>
                             <strong id="review-ai-score">—</strong>
                         </div>
                     </div>
-                
+
                     <div class="detection-signals">
                         <small>AI reasons</small>
                         <div id="review-ai-reasons"></div>
                     </div>
                 </div>
-                
+
                 <div class="review-field">
                     <span>Risk comparison</span>
-                
+
                     <div class="detection-summary">
                         <div>
                             <small>Relationship</small>
                             <strong id="review-risk-relationship">—</strong>
                         </div>
-                
+
                         <div>
                             <small>Needs attention</small>
                             <strong id="review-risk-attention">—</strong>
@@ -801,20 +812,20 @@
                     class="table-wrapper"
                 ></div>
             </div>
-            
+
             <section class="panel report-actions-section">
 
                 <div class="panel-header report-actions-header">
-            
+
                     <div>
                         <h3>Case actions</h3>
-            
+
                         <p>
                             Actions taken after review,
                             escalation or confirmation.
                         </p>
                     </div>
-            
+
                     <button
                         id="add-report-action-button"
                         type="button"
@@ -822,11 +833,11 @@
                     >
                         Add action
                     </button>
-            
+
                 </div>
-            
+
                 <div class="panel-body">
-            
+
                     <div
                         id="report-actions-empty"
                         class="empty-state"
@@ -834,28 +845,28 @@
                         No actions have been recorded
                         for this report.
                     </div>
-            
+
                     <div
                         id="report-actions-list"
                         class="hidden"
                     ></div>
-            
+
                 </div>
-            
+
             </section>
             <section class="panel report-evidence-section">
 
                 <div class="panel-header report-evidence-header">
-            
+
                     <div>
                         <h3>Evidence</h3>
-            
+
                         <p>
                             Preserved metadata and references
                             related to this report.
                         </p>
                     </div>
-            
+
                     <button
                         id="add-report-evidence-button"
                         type="button"
@@ -863,12 +874,12 @@
                     >
                         Add evidence
                     </button>
-            
+
                 </div>
-            
-            
+
+
                 <div class="panel-body">
-            
+
                     <div
                         id="report-evidence-empty"
                         class="empty-state"
@@ -876,14 +887,14 @@
                         No evidence has been recorded
                         for this report.
                     </div>
-            
+
                     <div
                         id="report-evidence-list"
                         class="hidden"
                     ></div>
-            
+
                 </div>
-            
+
             </section>
         </section>
         <div
@@ -1071,7 +1082,7 @@
             type="button"
             class="modal-close"
             aria-label="Close"
-                            
+
             >
                             ×
         </button>
@@ -1079,14 +1090,14 @@
                 <h3 id="report-action-modal-title">
                     Add case action
                 </h3>
-              
+
                 <p>
                     Record an action taken for
                     this report.
                 </p>
             </div>
 
-            
+
 
         </div>
 
@@ -1154,7 +1165,7 @@
                 <span class="field-label">
                     Platform
                 </span>
-            
+
                 <input
                     id="update-action-platform"
                     type="text"
@@ -1162,12 +1173,12 @@
                     placeholder="Instagram, Facebook..."
                 >
             </label>
-            
+
             <label>
                 <span class="field-label">
                     Destination
                 </span>
-            
+
                 <input
                     id="update-action-destination"
                     type="text"
@@ -1191,7 +1202,7 @@
                 <span class="field-label">
                     External result
                 </span>
-            
+
                 <textarea
                     id="update-action-result"
                     rows="4"
@@ -1357,18 +1368,18 @@
                     <div class="panel-header">
                         <h2>Available reports</h2>
                     </div>
-                
+
                     <div
                         id="reviewer-available-reports"
                         class="table-wrapper"
                     ></div>
                 </section>
-                
+
                 <section class="panel reviewer-only hidden">
                     <div class="panel-header">
                         <h2>Assigned to me</h2>
                     </div>
-                
+
                     <div
                         id="reviewer-assigned-reports"
                         class="table-wrapper"
@@ -1387,7 +1398,7 @@
                         class="table-wrapper"
                     ></div>
                 </section>
-                
+
 
             </main>
         </section>

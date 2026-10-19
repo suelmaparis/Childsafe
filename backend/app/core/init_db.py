@@ -9,6 +9,7 @@ from app.models.report_ai_analysis import ReportAIAnalysis
 
 from app.models.reviewer import Reviewer
 from app.models.reviewer_audit_log import ReviewerAuditLog
+from app.models.report_export_log import ReportExportLog
 
 from app.models.monitoring_run import MonitoringRun
 from app.models.monitoring_worker_status import (

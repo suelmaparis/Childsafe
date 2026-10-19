@@ -358,19 +358,18 @@ def create_report_record(
             report.reason,
             report.description,
         )
-
     except Exception:
-    # AI is an optional secondary layer.
-    # A failure here must not prevent report creation.
+        # AI is an optional secondary layer.
+        # A failure here must not prevent report creation.
         print("AI risk assessment unavailable.")
-        # --------------------------------------------------------
-        # 3. Initial deterministic triage
-        # --------------------------------------------------------
 
-        triage = determine_review_priority(
-            assessment.level
-        )
+    # --------------------------------------------------------
+    # 3. Initial deterministic triage
+    # --------------------------------------------------------
 
+    triage = determine_review_priority(
+        assessment.level
+    )
     # --------------------------------------------------------
     # 4. Compare deterministic and AI assessments
     # --------------------------------------------------------
@@ -2671,4 +2670,88 @@ def list_report_evidence(
             ReportEvidence.created_at.asc()
         )
         .all()
+    )
+
+# ============================================================
+# EXPORTAÇÃO CONFIDENCIAL DE DENÚNCIA EM PDF
+# ============================================================
+
+@router.get("/{report_id}/export/pdf")
+def export_report_pdf(
+    report_id: int,
+    current_reviewer: Reviewer = Depends(
+        require_role("admin", "senior_reviewer")
+    ),
+    db: Session = Depends(get_db),
+):
+    from fastapi.responses import StreamingResponse
+
+    from app.models.report_export_log import ReportExportLog
+    from app.services.report_pdf import generate_report_pdf
+
+    report = db.get(Report, report_id)
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found.",
+        )
+
+    ai_analyses = (
+        db.query(ReportAIAnalysis)
+        .filter(ReportAIAnalysis.report_id == report_id)
+        .order_by(ReportAIAnalysis.created_at.asc())
+        .all()
+    )
+
+    reviews = (
+        db.query(ReportReview)
+        .filter(ReportReview.report_id == report_id)
+        .order_by(ReportReview.created_at.asc())
+        .all()
+    )
+
+    actions = (
+        db.query(ReportAction)
+        .filter(ReportAction.report_id == report_id)
+        .order_by(ReportAction.created_at.asc())
+        .all()
+    )
+
+    evidences = (
+        db.query(ReportEvidence)
+        .filter(ReportEvidence.report_id == report_id)
+        .order_by(ReportEvidence.created_at.asc())
+        .all()
+    )
+
+    pdf_buffer = generate_report_pdf(
+        report,
+        ai_analyses=ai_analyses,
+        reviews=reviews,
+        actions=actions,
+        evidences=evidences,
+    )
+
+    # Regista que a exportação foi preparada.
+    # Não confirma que o download foi concluído.
+    export_log = ReportExportLog(
+        report_id=report.id,
+        reviewer_id=current_reviewer.id,
+        export_format="pdf",
+    )
+
+    db.add(export_log)
+    db.commit()
+
+    filename = f"ChildSafe_CV-{report.id:06d}.pdf"
+
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
     )
