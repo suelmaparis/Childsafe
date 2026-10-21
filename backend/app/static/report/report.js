@@ -27,7 +27,8 @@ const translations = {
     pt: {
         pageTitle:
             "ChildSafe | Proteção Digital Infantil",
-
+        navAbout:
+            "Sobre",
         navParents:
             "Para pais",
 
@@ -55,7 +56,35 @@ const translations = {
         heroBrightFuture:
             "Futuros mais brilhantes.",
 
-
+            aboutEyebrow:
+            "Conheça a plataforma",
+        
+        aboutTitle:
+            "O que é o ChildSafe?",
+        
+        aboutIntro:
+            "O ChildSafe é uma plataforma digital independente, dedicada à proteção das crianças no ambiente online, com especial atenção à realidade de Cabo Verde.",
+        
+        aboutMissionTitle:
+            "A nossa missão",
+        
+        aboutMissionText:
+            "Promover a segurança, a privacidade e a dignidade das crianças, facilitando a comunicação responsável de situações de risco na Internet.",
+        
+        aboutHowTitle:
+            "Como funciona?",
+        
+        aboutHowText:
+            "As denúncias recebidas passam por uma avaliação inicial de risco e por revisão humana. Quando justificado, podem ser encaminhadas às instituições competentes.",
+        
+        aboutPrivacyTitle:
+            "Proteção e responsabilidade",
+        
+        aboutPrivacyText:
+            "O ChildSafe procura proteger a confidencialidade das denúncias. A inteligência artificial apoia a análise, mas não substitui a decisão humana.",
+        
+        aboutDisclaimer:
+            "O ChildSafe não substitui as autoridades nem os serviços de emergência. Em situações de perigo imediato, contacte diretamente as entidades competentes.",
         learnEyebrow:
             "Informação e prevenção",
 
@@ -282,7 +311,8 @@ const translations = {
     es: {
         pageTitle:
             "ChildSafe | Protección Digital Infantil",
-
+        navAbout:
+            "Acerca de",
         navParents:
             "Para padres",
 
@@ -310,7 +340,35 @@ const translations = {
         heroBrightFuture:
             "Futuros más brillantes.",
 
-
+            aboutEyebrow:
+            "Conozca la plataforma",
+        
+        aboutTitle:
+            "¿Qué es ChildSafe?",
+        
+        aboutIntro:
+            "ChildSafe es una plataforma digital independiente dedicada a la protección de los niños en el entorno digital, con especial atención a la realidad de Cabo Verde.",
+        
+        aboutMissionTitle:
+            "Nuestra misión",
+        
+        aboutMissionText:
+            "Promover la seguridad, la privacidad y la dignidad de los niños, facilitando la comunicación responsable de situaciones de riesgo en Internet.",
+        
+        aboutHowTitle:
+            "¿Cómo funciona?",
+        
+        aboutHowText:
+            "Las denuncias recibidas pasan por una evaluación inicial de riesgos y una revisión humana. Cuando esté justificado, pueden remitirse a las instituciones competentes.",
+        
+        aboutPrivacyTitle:
+            "Protección y responsabilidad",
+        
+        aboutPrivacyText:
+            "ChildSafe busca proteger la confidencialidad de las denuncias. La inteligencia artificial apoya el análisis, pero no sustituye la decisión humana.",
+        
+        aboutDisclaimer:
+            "ChildSafe no sustituye a las autoridades ni a los servicios de emergencia. En situaciones de peligro inmediato, contacte directamente con las entidades competentes.",
         learnEyebrow:
             "Información y prevención",
 
@@ -537,7 +595,8 @@ const translations = {
     en: {
         pageTitle:
             "ChildSafe | Digital Child Protection",
-
+        navAbout:
+            "About",
         navParents:
             "For parents",
 
@@ -565,7 +624,35 @@ const translations = {
         heroBrightFuture:
             "Brighter futures.",
 
-
+            aboutEyebrow:
+            "Discover the platform",
+        
+        aboutTitle:
+            "What is ChildSafe?",
+        
+        aboutIntro:
+            "ChildSafe is an independent digital platform dedicated to protecting children online, with particular attention to the realities of Cabo Verde.",
+        
+        aboutMissionTitle:
+            "Our mission",
+        
+        aboutMissionText:
+            "To promote children's safety, privacy and dignity by facilitating the responsible reporting of potentially harmful situations on the Internet.",
+        
+        aboutHowTitle:
+            "How does it work?",
+        
+        aboutHowText:
+            "Reports received undergo an initial risk assessment and human review. When appropriate, they may be referred to the relevant authorities.",
+        
+        aboutPrivacyTitle:
+            "Protection and responsibility",
+        
+        aboutPrivacyText:
+            "ChildSafe aims to protect the confidentiality of reports. Artificial intelligence supports the analysis but does not replace human decision-making.",
+        
+        aboutDisclaimer:
+            "ChildSafe does not replace public authorities or emergency services. In situations of immediate danger, contact the appropriate authorities directly.",
         learnEyebrow:
             "Information and prevention",
 
@@ -792,7 +879,8 @@ const translations = {
     fr: {
         pageTitle:
             "ChildSafe | Protection Numérique des Enfants",
-
+        navAbout:
+            "À propos",
         navParents:
             "Pour les parents",
 
@@ -819,8 +907,36 @@ const translations = {
 
         heroBrightFuture:
             "Des avenirs plus lumineux.",
-
-
+        
+            aboutEyebrow:
+            "Découvrez la plateforme",
+        
+        aboutTitle:
+            "Qu'est-ce que ChildSafe ?",
+        
+        aboutIntro:
+            "ChildSafe est une plateforme numérique indépendante dédiée à la protection des enfants en ligne, avec une attention particulière portée aux réalités du Cap-Vert.",
+        
+        aboutMissionTitle:
+            "Notre mission",
+        
+        aboutMissionText:
+            "Promouvoir la sécurité, la vie privée et la dignité des enfants en facilitant le signalement responsable des situations à risque sur Internet.",
+        
+        aboutHowTitle:
+            "Comment ça fonctionne ?",
+        
+        aboutHowText:
+            "Les signalements reçus font l'objet d'une évaluation initiale des risques et d'un examen humain. Lorsque cela est justifié, ils peuvent être transmis aux institutions compétentes.",
+        
+        aboutPrivacyTitle:
+            "Protection et responsabilité",
+        
+        aboutPrivacyText:
+            "ChildSafe vise à protéger la confidentialité des signalements. L'intelligence artificielle contribue à l'analyse, mais ne remplace pas la décision humaine.",
+        
+        aboutDisclaimer:
+            "ChildSafe ne remplace pas les autorités ni les services d'urgence. En cas de danger immédiat, contactez directement les services compétents.",
         learnEyebrow:
             "Information et prévention",
 
