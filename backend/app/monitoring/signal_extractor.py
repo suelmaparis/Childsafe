@@ -144,16 +144,16 @@ LOCATION_TERMS = {
     "cape verde",
     "cap-vert",
 
-    "praia",
+    "cidade da praia",
     "mindelo",
-    "sal",
+    "ilha do sal",
     "boa vista",
     "santiago",
     "são vicente",
     "santo antão",
-    "fogo",
-    "brava",
-    "maio",
+    "ilha do fogo",
+    "ilha brava",
+    "ilha do maio",
     "são nicolau",
 }
 
@@ -222,6 +222,15 @@ def extract_signals(
         TOURISM_TERMS
     )
 
+    # Reconhecer a Ilha do Sal em contextos de viagem.
+    if tourism_context and not location_detected:
+        location_detected = bool(
+            re.search(
+                r"\b(?:trip|travel|flight)\s+to\s+sal\b",
+                normalized,
+            )
+        )
+
     signal_score = sum(
         [
             contains_child,
@@ -250,4 +259,61 @@ def extract_signals(
         "tourism_context": tourism_context,
         "signal_score": signal_score,
         "signal_confidence": signal_confidence,
+    }
+
+def extract_school_signals(text: str | None) -> dict:
+    """Identifica referências textuais a contextos escolares."""
+    normalized = normalize_text(text)
+
+    def has_terms(terms: set[str]) -> bool:
+        return any(
+            re.search(
+                r"(?<!\w)" + re.escape(normalize_text(term)) + r"(?!\w)",
+                normalized,
+            )
+            for term in terms
+        )
+
+    school_terms = {
+        "escola",
+        "escolas",
+        "colégio",
+        "colegio",
+        "school",
+        "schools",
+        "école",
+        "écoles",
+        "escuela",
+        "escuelas",
+    }
+
+    uniform_terms = {
+        "uniforme escolar",
+        "uniformes escolares",
+        "school uniform",
+        "school uniforms",
+        "uniforme de escola",
+    }
+
+    schedule_terms = {
+        "horário escolar",
+        "horarios escolares",
+        "horário das aulas",
+        "school hours",
+        "school schedule",
+    }
+
+    school_uniform_mentioned = has_terms(uniform_terms)
+    school_schedule_mentioned = has_terms(schedule_terms)
+
+    school_context = (
+        has_terms(school_terms)
+        or school_uniform_mentioned
+        or school_schedule_mentioned
+    )
+
+    return {
+        "school_context": school_context,
+        "school_uniform_mentioned": school_uniform_mentioned,
+        "school_schedule_mentioned": school_schedule_mentioned,
     }

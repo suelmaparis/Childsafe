@@ -306,3 +306,45 @@ def test_collect_full_flow_with_fake_client(
     assert second.volunteer_context is False
     assert second.tourism_context is True
 
+
+
+def test_fetch_items_includes_hashtag_results(monkeypatch):
+    from app.monitoring.collectors import meta_instagram
+
+    monkeypatch.setattr(
+        meta_instagram,
+        "META_INSTAGRAM_USER_ID",
+        "17890000000000000",
+    )
+
+    class FakeClient:
+        def get_instagram_media(self, instagram_user_id, limit=25):
+            return [
+                {
+                    "id": "own-post-001",
+                    "caption": "ChildSafeCV",
+                }
+            ]
+
+        def search_instagram_hashtag(self, instagram_user_id, hashtag):
+            assert instagram_user_id == "17890000000000000"
+            assert hashtag == "CaboVerde"
+            return [
+                {
+                    "id": "hashtag-post-001",
+                    "caption": "#CaboVerde",
+                }
+            ]
+
+    collector = meta_instagram.MetaInstagramCollector(
+        client=FakeClient(),
+        hashtags=["CaboVerde"],
+    )
+
+    items = collector._fetch_items()
+
+    assert len(items) == 2
+    assert {item["id"] for item in items} == {
+        "own-post-001",
+        "hashtag-post-001",
+    }

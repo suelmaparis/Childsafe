@@ -19,6 +19,7 @@ from app.core.settings import (
 )
 from app.monitoring.signal_extractor import (
     extract_signals,
+    extract_school_signals,
 )
 
 class MetaInstagramCollector(BaseCollector):
@@ -28,20 +29,47 @@ class MetaInstagramCollector(BaseCollector):
     def __init__(
         self,
         client: MetaClient | None = None,
+        hashtags: list[str] | None = None,
     ):
         self.client = client or MetaClient()
-    def _fetch_items(
-    self,
-  ) -> list[dict]:
+        self.hashtags = [
+            tag.strip().lstrip("#")
+            for tag in (hashtags or [])
+            if tag.strip().lstrip("#")
+        ]
 
-     if not META_INSTAGRAM_USER_ID:
-        return []
+    def _fetch_items(self) -> list[dict]:
+        if not META_INSTAGRAM_USER_ID:
+            return []
 
-     return self.client.get_instagram_media(
-        instagram_user_id=(
-            META_INSTAGRAM_USER_ID
+        items = self.client.get_instagram_media(
+            instagram_user_id=META_INSTAGRAM_USER_ID
         )
-    )
+
+        seen_ids = {
+            str(item["id"])
+            for item in items
+            if item.get("id")
+        }
+
+        for hashtag in self.hashtags:
+            hashtag_items = self.client.search_instagram_hashtag(
+                instagram_user_id=META_INSTAGRAM_USER_ID,
+                hashtag=hashtag,
+            )
+
+            for item in hashtag_items:
+                item_id = str(item.get("id") or "")
+
+                if item_id and item_id in seen_ids:
+                    continue
+
+                items.append(item)
+
+                if item_id:
+                    seen_ids.add(item_id)
+
+        return items
 
     def collect(
         self,
@@ -73,8 +101,15 @@ class MetaInstagramCollector(BaseCollector):
             description
         )
 
+        school_signals = extract_school_signals(
+            description
+        )
+
 
         return MonitoringCandidate(
+            metadata={
+                "school_signals": school_signals,
+            },
             platform=self.platform,
 
             url=(

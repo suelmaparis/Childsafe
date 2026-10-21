@@ -171,6 +171,12 @@ def process_candidate(
                 "monitoring_detector_v2",
             )
         ),
+
+        school_signals=(
+            candidate.metadata.get("school_signals")
+            if candidate.metadata
+            else None
+        ),
     )
 
     return create_report_record(

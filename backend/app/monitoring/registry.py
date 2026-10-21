@@ -27,7 +27,9 @@ def get_enabled_collectors():
 
     if META_INSTAGRAM_ENABLED:
         collectors.append(
-            MetaInstagramCollector()
+            MetaInstagramCollector(
+                hashtags=["CaboVerde"]
+            )
         )
 
     if META_FACEBOOK_ENABLED:

@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.database import Base
-from app.api.reports import get_db as reports_get_db
+from app.api.reports import get_db as reports_get_db, limiter
 from app.api.auth import get_db as auth_get_db
 from app.main import app
 
@@ -53,6 +53,19 @@ app.dependency_overrides[
 app.dependency_overrides[
     auth_get_db
 ] = override_get_db
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limit_state():
+    """
+    Prevent rate-limit counters from leaking
+    between independent tests.
+    """
+    limiter.reset()
+
+    yield
+
+    limiter.reset()
 
 
 @pytest.fixture(autouse=True)

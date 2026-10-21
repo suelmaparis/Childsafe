@@ -134,6 +134,43 @@ class ReportCreate(BaseModel):
     detection_signals: list[str] | None = None
     detection_source: str | None = None
     detection_signal_score: int | None = None
+    school_signals: dict[str, bool] | None = None
+
+    @field_validator("school_signals", mode="before")
+    @classmethod
+    def validate_school_signals(cls, value):
+        if value is None:
+            return None
+
+        expected_keys = {
+            "school_context",
+            "school_uniform_mentioned",
+            "school_schedule_mentioned",
+        }
+
+        if (
+            not isinstance(value, dict)
+            or set(value) != expected_keys
+            or any(
+                type(flag) is not bool
+                for flag in value.values()
+            )
+        ):
+            raise ValueError(
+                "school_signals must contain exactly "
+                "the three supported boolean indicators."
+            )
+
+        return value
+
+class ReportSubmissionCreate(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    platform: str
+    url: HttpUrl
+    reason: str
+    description: str
+
 
 class PublicReportCreate(BaseModel):
     platform: str
@@ -210,6 +247,8 @@ class PublicReportCreate(BaseModel):
 
         return value
 class ReportReviewCreate(BaseModel):
+    model_config = {"extra": "forbid"}
+
     new_status: str
     decision: str
     notes: str
@@ -410,8 +449,18 @@ def create_report_record(
             else None
         ),
 
+        detection_signal_score=(
+            report.detection_signal_score
+        ),
+
         detection_source=(
             report.detection_source
+        ),
+
+        school_signals=(
+            json.dumps(report.school_signals)
+            if report.school_signals is not None
+            else None
         ),
 
         risk_level=assessment.level,
@@ -573,15 +622,25 @@ def create_report_record(
     return response
 
 @router.post("/")
+@limiter.limit("5/minute")
 def create_report(
-    report: ReportCreate,
+    request: Request,
+    report: ReportSubmissionCreate,
     db: Session = Depends(get_db),
-    
 ):
+    internal_report = ReportCreate(
+        platform=report.platform,
+        url=str(report.url),
+        reason=report.reason,
+        description=report.description,
+    )
+
     return create_report_record(
-        report=report,
+        report=internal_report,
         db=db,
     )
+
+
 @router.post("/public")
 @limiter.limit("5/minute")
 def create_public_report(
@@ -1578,6 +1637,12 @@ def get_report_audit(
                     report.detection_source
                 ),
             },
+
+            "school_signals": (
+                json.loads(report.school_signals)
+                if report.school_signals
+                else None
+            ),
 
             "deterministic_assessment": {
                 "level": report.risk_level,

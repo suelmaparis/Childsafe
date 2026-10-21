@@ -113,6 +113,11 @@ class MetaClient:
                 message
             ) from exc
 
+        except TimeoutError as exc:
+            raise MetaApiError(
+                "Meta API request timed out after 20 seconds."
+            ) from exc
+
         except urllib.error.URLError as exc:
             raise MetaApiError(
                 f"Unable to reach Meta API: "
@@ -166,7 +171,7 @@ class MetaClient:
                 )
             )
 
-            if not next_url:
+            if page_count >= max_pages or not next_url:
                 break
 
             data = self.get_url(
@@ -238,7 +243,7 @@ class MetaClient:
                     "id,caption,media_type,"
                     "permalink,timestamp"
                 ),
-                "limit": 25,
+                "limit": 5,
             },
             max_pages=1,
         )
