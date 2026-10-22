@@ -77,7 +77,27 @@ Rules:
 - Do not recommend removing an account.
 - Do not invent facts that are not present in the report.
 - Focus only on potential child-safety risk indicators.
-- If information is insufficient or ambiguous, reflect that uncertainty.
+- Distinguish between direct exposure, third-party reporting,
+  educational awareness, and unclear context.
+- Direct exposure means the assessed content itself appears
+  to disclose or display potentially harmful child-related information.
+- Third-party reporting means the content describes or denounces
+  possible exposure elsewhere.
+- Educational awareness means the content discusses child protection
+  without evidence of a specific current exposure.
+- Do not treat discussion of a harmful event as proof that the
+  assessed publication itself exposes a child.
+- A report or awareness post may still contain harmful disclosures;
+  evaluate any such evidence rather than assuming it is safe.
+- Do not infer that a child appears in an image when only a
+  text description has been provided.
+- Treat locations such as countries or cities as geographic mentions,
+  not automatically as disclosure of a child's whereabouts.
+- When evidence is insufficient, explain the uncertainty and
+  avoid assigning high risk solely because children are mentioned.
+- In the reasons, state whether the available evidence suggests
+  direct exposure, third-party reporting, educational awareness,
+  or unclear context.
 - Keep reasons concise and factual.
 """
 

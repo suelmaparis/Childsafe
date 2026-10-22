@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+from app.monitoring.signal_extractor import normalize_text
 
 @dataclass
 class RiskAssessment:
@@ -26,13 +26,39 @@ def assess_risk(
     score = 0
     reasons: list[str] = []
 
-    # Potential exposure of a child.
-    if "potential_child_exposure" in text:
+    # Potential child exposure is a reason for review,
+    # not automatic proof of harmful exposure.
+    # These indicators support preliminary triage.
+    # They do not establish that the assessed post
+    # directly exposed a child.
+    normalized_description = normalize_text(description)
+
+    exposure_indicators = (
+        "child appears in a public post",
+        "nome completo",
+        "morada da crianca",
+        "endereco da crianca",
+        "horario de saida",
+        "localizacao exata",
+        "school address",
+        "home address",
+        "full name",
+        "where the child regularly spends time",
+    )
+
+    potential_exposure = any(
+        indicator in normalized_description
+        for indicator in exposure_indicators
+    )
+
+    if (
+        reason == "potential_child_exposure"
+        and potential_exposure
+    ):
         score += 20
         reasons.append(
-            "Potential exposure of a minor."
+            "Potential disclosure of child-related information."
         )
-
     # Vulnerability indicators.
     vulnerability_terms = [
         "vulnerable",

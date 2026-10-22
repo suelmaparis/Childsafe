@@ -175,7 +175,8 @@ def test_created_report_can_be_retrieved(
     assert report["report_id"] == created["report_id"]
     assert report["platform"] == "Instagram"
     assert report["review_status"] == "pending"
-    assert report["risk_score"] == 20
+    assert report["risk_score"] == 0
+    assert report["risk_level"] == "low"
     
     def test_root_endpoint(client):
         response = client.get("/")
@@ -1811,7 +1812,7 @@ def test_admin_metrics_count_reports_correctly(
     assert data["pending"] == 2
 
     assert (
-        data["risk_distribution"]["medium"]
+        data["risk_distribution"]["low"]
         == 2
     )
 
@@ -1952,7 +1953,7 @@ def test_admin_metrics_days_filters_old_reports(
 
     assert data["total_reports"] == 1
     assert data["pending"] == 1
-    assert data["risk_distribution"]["medium"] == 1
+    assert data["risk_distribution"]["low"] == 1
 
 
 def test_admin_metrics_without_days_includes_all_reports(
