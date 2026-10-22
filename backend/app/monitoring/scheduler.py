@@ -91,8 +91,13 @@ def run_scheduled_monitoring():
             update_worker_heartbeat("running")
             collectors = get_enabled_collectors()
 
-            all_succeeded = True
+            if not collectors:
+                logger.warning(
+                    "Monitoring skipped: no collectors enabled."
+                )
+                return False
 
+            all_succeeded = True
             for collector in collectors:
                 try:
                     run_collector(collector)
@@ -135,10 +140,13 @@ def monitoring_scheduler_loop(stop_event: threading.Event):
     while not stop_event.wait(60):
         try:
             update_worker_heartbeat("running")
-
             if time.monotonic() >= next_run:
-                run_scheduled_monitoring()
-                next_run = time.monotonic() + interval_seconds
+                succeeded = run_scheduled_monitoring()
+
+                if succeeded:
+                    next_run = time.monotonic() + interval_seconds
+                else:
+                    next_run = time.monotonic() + 600
 
         except Exception:
             logger.exception(
