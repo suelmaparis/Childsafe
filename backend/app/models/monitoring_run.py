@@ -73,12 +73,3 @@ class MonitoringRun(Base):
         DateTime(timezone=True),
         nullable=True,
     )
-candidates_relevant: Mapped[int] = mapped_column(
-    Integer,
-    default=0,
-)
-
-candidates_ignored: Mapped[int] = mapped_column(
-    Integer,
-    default=0,
-)

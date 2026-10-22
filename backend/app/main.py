@@ -1,3 +1,7 @@
+import threading
+from contextlib import asynccontextmanager
+
+from app.monitoring.scheduler import monitoring_scheduler_loop
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -26,6 +30,24 @@ from app.core.init_db import init_db
 from slowapi.errors import RateLimitExceeded
 
 init_db()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    stop_event = threading.Event()
+
+    scheduler_thread = threading.Thread(
+        target=monitoring_scheduler_loop,
+        args=(stop_event,),
+        daemon=True,
+        name="childsafe-monitoring-scheduler",
+    )
+
+    scheduler_thread.start()
+
+    try:
+        yield
+    finally:
+        stop_event.set()
+        scheduler_thread.join(timeout=5)
 
 
 app = FastAPI(
@@ -35,7 +57,9 @@ app = FastAPI(
         "and online safety platform."
     ),
     version="0.1.0",
+    lifespan=lifespan,
 )
+
 
 
 app.include_router(
