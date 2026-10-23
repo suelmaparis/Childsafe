@@ -1,6 +1,7 @@
 from app.api.reports import ReportCreate, create_report_record
 from app.models.report import Report
 from app.services.ai_risk_assessment import AIRiskAssessment
+from app.geo.location_extractor import extract_locations
 
 
 def test_geo_location_is_saved_as_unverified(
@@ -53,3 +54,23 @@ def test_geo_location_is_saved_as_unverified(
     assert saved_report.geo_latitude is None
     assert saved_report.geo_longitude is None
     assert saved_report.geo_coordinate_type is None
+
+    from app.geo.location_extractor import extract_locations
+
+
+def test_geographic_locations_follow_text_order():
+    """As localidades devem respeitar a ordem em que aparecem no texto."""
+
+    result = extract_locations(
+        "Teste fictício: uma publicação menciona Mindelo, Cabo Verde."
+    )
+
+    assert result["locations"] == [
+        "mindelo",
+        "cabo verde",
+    ]
+
+    assert result["location_detected"] is True
+    assert result["verification_status"] == "pending"
+    assert result["latitude"] is None
+    assert result["longitude"] is None

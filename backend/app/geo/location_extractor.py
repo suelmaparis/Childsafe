@@ -12,18 +12,28 @@ def extract_locations(text: str | None) -> dict:
 
     matches = []
 
-    for location in sorted(LOCATION_TERMS):
-        normalized_location = normalize_text(location)
+    found_locations = []
 
-        pattern = (
-            r"(?<!\w)"
-            + re.escape(normalized_location)
-            + r"(?!\w)"
-        )
+    for location in LOCATION_TERMS:
+            normalized_location = normalize_text(location)
 
-        if re.search(pattern, normalized):
-            matches.append(location)
+            pattern = (
+                r"(?<!\w)"
+                + re.escape(normalized_location)
+                + r"(?!\w)"
+            )
 
+            match = re.search(pattern, normalized)
+
+            if match:
+                found_locations.append(
+                    (match.start(), location)
+                )
+
+    matches = [
+            location
+            for _, location in sorted(found_locations)
+        ]
     return {
         "locations": matches,
         "location_detected": bool(matches),
