@@ -176,6 +176,16 @@ class ReportSubmissionCreate(BaseModel):
     reason: str
     description: str
 
+    # ChildSafeCV Geo
+    incident_location: str | None = Field(
+        default=None,
+        max_length=200,
+    )
+
+    reporter_location: str | None = Field(
+        default=None,
+        max_length=200,
+    )
 
 class PublicReportCreate(BaseModel):
     platform: str
@@ -686,6 +696,10 @@ def create_report(
         url=str(report.url),
         reason=report.reason,
         description=report.description,
+
+        # ChildSafeCV Geo
+        incident_location=report.incident_location,
+        reporter_location=report.reporter_location,
     )
 
     return create_report_record(
@@ -799,6 +813,13 @@ def list_reports(
             "risk_score": report.risk_score,
             "review_status": (
                 report.review_status
+            ),
+            # ChildSafeCV Geo
+            "incident_location": report.incident_location,
+            "geo_location_text": report.geo_location_text,
+            "geo_source": report.geo_source,
+            "geo_verification_status": (
+                report.geo_verification_status
             ),
             "created_at": report.created_at,
         }
@@ -1660,13 +1681,26 @@ def get_report_audit(
                     if report.assigned_reviewer is not None
                     else None
                 ),
-
                 "status": report.status,
 
                 "created_at": (
                     report.created_at
                 ),
-                
+
+                # ChildSafeCV Geo — Geographic information
+                "incident_location": (
+                    report.incident_location
+                ),
+                "geo_location_text": (
+                    report.geo_location_text
+                ),
+                "geo_source": (
+                    report.geo_source
+                ),
+                "geo_verification_status": (
+                    report.geo_verification_status
+                ),
+
             },
 
             "detection": {
@@ -2604,6 +2638,13 @@ def get_report(
         ),
         "created_at": (
             report.created_at
+        ),
+        # ChildSafeCV Geo — Geographic information
+        "incident_location": report.incident_location,
+        "geo_location_text": report.geo_location_text,
+        "geo_source": report.geo_source,
+        "geo_verification_status": (
+            report.geo_verification_status
         ),
     }
 @router.patch("/{report_id}/assign")
