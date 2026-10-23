@@ -157,3 +157,41 @@ class Report(Base):
     is_immediate_danger: Mapped[bool | None] = mapped_column(
         nullable=True,
     )
+    # ChildSafeCV Geo — Coordenadas geográficas
+    geo_latitude: Mapped[float | None] = mapped_column(
+        nullable=True,
+    )
+
+    geo_longitude: Mapped[float | None] = mapped_column(
+        nullable=True,
+    )
+
+    # Localização escrita por extenso
+    geo_location_text: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    # Origem da informação geográfica
+    geo_source: Mapped[str | None] = mapped_column(
+        String(150),
+        nullable=True,
+    )
+
+    # Referência da fonte
+    geo_source_url: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    # Tipo de coordenadas: GPS original, instituição, etc.
+    geo_coordinate_type: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
+    # Estado da verificação humana
+    geo_verification_status: Mapped[str | None] = mapped_column(
+        String(30),
+        nullable=True,
+    )

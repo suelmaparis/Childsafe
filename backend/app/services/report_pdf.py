@@ -166,7 +166,61 @@ def generate_report_pdf(report, ai_analyses=None, reviews=None, actions=None, ev
         "Descrição original da denúncia",
         report.description,
     )
+        # Localização geográfica do incidente
+    story.append(
+        Paragraph(
+            "LOCALIZAÇÃO GEOGRÁFICA DO INCIDENTE",
+            styles["title"],
+        )
+    )
 
+    add_field(
+        "Localização indicada na denúncia",
+        getattr(report, "incident_location", None),
+    )
+
+    add_field(
+        "Localização fornecida pelo denunciante",
+        getattr(report, "reporter_location", None),
+    )
+
+    add_field(
+        "Latitude",
+        getattr(report, "geo_latitude", None),
+    )
+
+    add_field(
+        "Longitude",
+        getattr(report, "geo_longitude", None),
+    )
+
+    add_field(
+        "Localização por extenso",
+        getattr(report, "geo_location_text", None),
+    )
+
+    add_field(
+        "Origem da informação geográfica",
+        getattr(report, "geo_source", None),
+    )
+
+    add_field(
+        "Estado de verificação geográfica",
+        getattr(report, "geo_verification_status", None),
+    )
+        # Aviso de segurança geográfica
+    story.append(
+        Paragraph(
+            "AVISO: As referências geográficas identificadas "
+            "automaticamente são indícios preliminares. "
+            "A menção de uma cidade, ilha ou instituição "
+            "não confirma que o incidente tenha ocorrido "
+            "nesse local. As coordenadas, quando disponíveis, "
+            "devem ser interpretadas de acordo com a sua "
+            "origem e sujeitas a verificação humana.",
+            styles["body"],
+        )
+    )
 
     # Histórico de avaliações automáticas
     story.append(

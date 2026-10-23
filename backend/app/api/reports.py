@@ -60,6 +60,8 @@ from app.schemas.report_evidence import (
     ReportEvidenceResponse,
 )
 from datetime import datetime, timezone
+from app.geo.location_resolver import resolve_location
+
 ALLOWED_EVIDENCE_TYPES = {
     "url_snapshot",
     "platform_reference",
@@ -135,6 +137,9 @@ class ReportCreate(BaseModel):
     detection_source: str | None = None
     detection_signal_score: int | None = None
     school_signals: dict[str, bool] | None = None
+    # ChildSafeCV Geo — Informações geográficas recebidas
+    incident_location: str | None = None
+    reporter_location: str | None = None
 
     @field_validator("school_signals", mode="before")
     @classmethod
@@ -422,7 +427,22 @@ def create_report_record(
             ai_level=ai_assessment.level,
             ai_score=ai_assessment.score,
         )
+    # --------------------------------------------------------
+    # ChildSafeCV Geo — Identificação geográfica preliminar
+    # --------------------------------------------------------
 
+    geo_analysis = resolve_location(
+        report.incident_location or report.description
+    )
+    # Uma referência geográfica não confirma o local do incidente.
+    # Guardamos apenas a primeira referência como indício textual.
+    geo_matches = geo_analysis.get("locations", [])
+
+    geo_location_text = (
+        geo_matches[0]["name"]
+        if geo_matches
+        else None
+    )
     # --------------------------------------------------------
     # 5. Create report
     # --------------------------------------------------------
@@ -462,6 +482,28 @@ def create_report_record(
             if report.school_signals is not None
             else None
         ),
+               # ChildSafeCV Geo — Localizações declaradas
+        incident_location=report.incident_location,
+        reporter_location=report.reporter_location,
+
+        # Referência geográfica identificada automaticamente
+        geo_location_text=geo_location_text,
+        geo_source=(
+            "publication_text"
+            if geo_location_text
+            else None
+        ),
+        geo_verification_status=(
+            "pending"
+            if geo_location_text
+            else None
+        ),
+
+        # Não atribuir coordenadas sem confirmação
+        geo_latitude=None,
+        geo_longitude=None,
+        geo_source_url=None,
+        geo_coordinate_type=None,
 
         risk_level=assessment.level,
         risk_score=assessment.score,
