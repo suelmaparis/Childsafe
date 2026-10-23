@@ -35,7 +35,16 @@ def test_geo_location_is_saved_as_unverified(
         report=report,
         db=db_session,
     )
+    # ChildSafeCV Geo — Dados do relatório automático
+    generated_report = created["report"]
 
+    assert generated_report["incident_location"] is None
+    assert generated_report["geo_location_text"] == "mindelo"
+    assert generated_report["geo_source"] == "publication_text"
+    assert generated_report["geo_verification_status"] == "pending"
+
+    # A localização de quem denuncia não deve ser exposta.
+    assert "reporter_location" not in generated_report
     report_id = int(
         created["report_id"].replace("CV-", "")
     )
@@ -74,3 +83,44 @@ def test_geographic_locations_follow_text_order():
     assert result["verification_status"] == "pending"
     assert result["latitude"] is None
     assert result["longitude"] is None
+def test_declared_incident_location_in_generated_report(
+    db_session,
+    monkeypatch,
+):
+    """A localização declarada deve ter a origem correta."""
+
+    def fake_ai_assessment(reason, description):
+        return AIRiskAssessment(
+            level="low",
+            score=10,
+            reasons=["Synthetic test."],
+        )
+
+    monkeypatch.setattr(
+        "app.api.reports.assess_risk_with_ai",
+        fake_ai_assessment,
+    )
+
+    report = ReportCreate(
+        platform="Instagram",
+        url="https://example.com/geo-declared-test",
+        reason="potential_child_exposure",
+        description="Descrição fictícia sem referência geográfica.",
+        incident_location="Mindelo",
+        reporter_location="Localização privada de teste",
+    )
+
+    created = create_report_record(
+        report=report,
+        db=db_session,
+    )
+
+    generated_report = created["report"]
+
+    assert generated_report["incident_location"] == "Mindelo"
+    assert generated_report["geo_location_text"] == "mindelo"
+    assert generated_report["geo_source"] == "reporter_declared"
+    assert generated_report["geo_verification_status"] == "pending"
+
+    # Proteger a localização de quem apresentou a denúncia.
+    assert "reporter_location" not in generated_report

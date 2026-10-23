@@ -489,7 +489,11 @@ def create_report_record(
         # Referência geográfica identificada automaticamente
         geo_location_text=geo_location_text,
         geo_source=(
-            "publication_text"
+            (
+                "reporter_declared"
+                if report.incident_location
+                else "publication_text"
+            )
             if geo_location_text
             else None
         ),
@@ -607,6 +611,13 @@ def create_report_record(
 
             "created_at": (
                 new_report.created_at
+            ),
+            # ChildSafeCV Geo — Geographic information
+            "incident_location": new_report.incident_location,
+            "geo_location_text": new_report.geo_location_text,
+            "geo_source": new_report.geo_source,
+            "geo_verification_status": (
+                new_report.geo_verification_status
             ),
         },
     }
