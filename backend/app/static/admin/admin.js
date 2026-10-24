@@ -1529,6 +1529,33 @@ document.getElementById(
         data.report?.source_reference
         || "—"
     );
+    // ChildSafeCV Geo — Localização no relatório automático
+const geoReport = data.report || {};
+
+const geoFields = {
+    "review-incident-location": geoReport.incident_location,
+    "review-reporter-location": geoReport.reporter_location,
+    "review-geo-latitude": geoReport.geo_latitude,
+    "review-geo-longitude": geoReport.geo_longitude,
+    "review-geo-location-text": geoReport.geo_location_text,
+    "review-geo-source": geoReport.geo_source,
+    "review-geo-verification-status":
+        geoReport.geo_verification_status,
+};
+
+Object.entries(geoFields).forEach(([elementId, value]) => {
+    const element = document.getElementById(elementId);
+
+    if (element) {
+        element.textContent = (
+            value !== null
+            && value !== undefined
+            && value !== ""
+        )
+            ? String(value)
+            : "Não fornecido";
+    }
+});
     const detectionSection = document.getElementById(
         "automated-detection-section"
     );
