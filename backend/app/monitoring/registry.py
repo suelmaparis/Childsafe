@@ -28,7 +28,13 @@ def get_enabled_collectors():
     if META_INSTAGRAM_ENABLED:
         collectors.append(
             MetaInstagramCollector(
-                hashtags=["CaboVerde"]
+                hashtags=[
+                    "Cabo Verde",
+                    "Africa",
+                    "Europe",
+                    "America",
+                    "Asia",
+                ]
             )
         )
 
