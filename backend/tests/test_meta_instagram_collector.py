@@ -348,3 +348,40 @@ def test_fetch_items_includes_hashtag_results(monkeypatch):
         "own-post-001",
         "hashtag-post-001",
     }
+def test_fetch_items_continues_when_hashtag_fails(monkeypatch):
+    from app.monitoring.collectors import meta_instagram
+    from app.integrations.meta.client import MetaApiError
+
+    monkeypatch.setattr(
+        meta_instagram,
+        "META_INSTAGRAM_USER_ID",
+        "17890000000000000",
+    )
+
+    class FakeClient:
+        def get_instagram_media(self, instagram_user_id, limit=25):
+            return [{"id": "own-post-001", "caption": "ChildSafeCV"}]
+
+        def search_instagram_hashtag(self, instagram_user_id, hashtag):
+            if hashtag == "Africa":
+                raise MetaApiError("The requested resource does not exist")
+
+            return [
+                {
+                    "id": f"hashtag-{hashtag}",
+                    "caption": f"#{hashtag}",
+                }
+            ]
+
+    collector = meta_instagram.MetaInstagramCollector(
+        client=FakeClient(),
+        hashtags=["CaboVerde", "Africa", "Europe"],
+    )
+
+    items = collector._fetch_items()
+
+    assert {item["id"] for item in items} == {
+        "own-post-001",
+        "hashtag-CaboVerde",
+        "hashtag-Europe",
+    }

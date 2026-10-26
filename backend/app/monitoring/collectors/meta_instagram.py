@@ -1,3 +1,6 @@
+import logging
+
+from app.integrations.meta.client import MetaApiError
 from app.core.settings import (
     META_INSTAGRAM_ENABLED,
 )
@@ -21,6 +24,7 @@ from app.monitoring.signal_extractor import (
     extract_signals,
     extract_school_signals,
 )
+logger = logging.getLogger(__name__)
 
 class MetaInstagramCollector(BaseCollector):
     platform = "Instagram"
@@ -53,10 +57,18 @@ class MetaInstagramCollector(BaseCollector):
         }
 
         for hashtag in self.hashtags:
-            hashtag_items = self.client.search_instagram_hashtag(
-                instagram_user_id=META_INSTAGRAM_USER_ID,
-                hashtag=hashtag,
-            )
+            try:
+                hashtag_items = self.client.search_instagram_hashtag(
+                    instagram_user_id=META_INSTAGRAM_USER_ID,
+                    hashtag=hashtag,
+                )
+            except MetaApiError as exc:
+                logger.warning(
+                    "Instagram hashtag #%s failed: %s",
+                    hashtag,
+                    exc,
+                )
+                continue
 
             for item in hashtag_items:
                 item_id = str(item.get("id") or "")
