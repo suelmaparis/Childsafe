@@ -1,5 +1,10 @@
 import json
 
+from app.services.public_report_deduplication import (
+    normalize_public_report_url,
+    public_report_reference,
+)
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
 from sqlalchemy import func
 from fastapi import (
@@ -303,7 +308,35 @@ def ensure_report_access(
 # ============================================================
 # HELPERS
 # ============================================================
+def is_public_report_duplicate_error(exc: HTTPException) -> bool:
+    """
+    Identify a unique-index violation for public reports.
+    """
+    original_error = exc.__cause__
 
+    if not isinstance(original_error, IntegrityError):
+        return False
+
+    database_error = original_error.orig
+
+    # PostgreSQL: unique_violation
+    if getattr(database_error, "sqlstate", None) == "23505":
+        constraint = getattr(
+            getattr(database_error, "diag", None),
+            "constraint_name",
+            None,
+        )
+
+        return constraint == "uq_reports_public_submission"
+
+    # SQLite: identify the affected unique column.
+    if getattr(database_error, "sqlite_errorname", None) == "SQLITE_CONSTRAINT_UNIQUE":
+        return (
+            "reports.source_reference"
+            in str(database_error)
+        )
+
+    return False
 
 def normalize_score(
     score: int,
@@ -707,7 +740,6 @@ def create_report(
         db=db,
     )
 
-
 @router.post("/public")
 @limiter.limit("5/minute")
 def create_public_report(
@@ -715,28 +747,109 @@ def create_public_report(
     report: PublicReportCreate,
     db: Session = Depends(get_db),
 ):
+    report_url = str(report.url)
+
+    reference = public_report_reference(
+        report.platform,
+        report_url,
+    )
+
+    # 1. Look for reports created with the new reference.
+    existing_report = (
+        db.query(Report)
+        .filter(
+            Report.source_type == "public_report",
+            Report.source_channel == "public_web_form",
+            Report.source_reference == reference,
+        )
+        .order_by(Report.id.asc())
+        .first()
+    )
+
+    # 2. Also check older public reports without a reference.
+    if existing_report is None:
+        normalized_url = normalize_public_report_url(
+            report_url
+        )
+
+        old_reports = (
+            db.query(Report)
+            .filter(
+                Report.source_type == "public_report",
+                Report.source_channel == "public_web_form",
+                Report.source_reference.is_(None),
+            )
+            .order_by(Report.id.asc())
+            .all()
+        )
+
+        for old_report in old_reports:
+            if (
+                old_report.platform.strip().lower()
+                == report.platform.strip().lower()
+                and normalize_public_report_url(
+                    old_report.url
+                ) == normalized_url
+            ):
+                existing_report = old_report
+                break
+
+    # 3. Return the existing case without creating a duplicate.
+    if existing_report is not None:
+        return {
+            "report_id": f"CV-{existing_report.id:06d}",
+            "status": existing_report.status,
+            "message": "Report submitted successfully.",
+        }
+
+    # 4. Create a new public report.
     internal_report = ReportCreate(
         platform=report.platform,
-        url=str(report.url),
+        url=report_url,
         reason=report.reason,
         description=report.description,
         source_type="public_report",
         source_channel="public_web_form",
-        source_reference=None,
+        source_reference=reference,
     )
+    try:
+        result = create_report_record(
+            report=internal_report,
+            db=db,
+        )
 
-    result = create_report_record(
-    report=internal_report,
-    db=db,
-      )
-    
+    except HTTPException as exc:
+        db.rollback()
+
+        # Recover only from a public-report duplicate.
+        if not is_public_report_duplicate_error(exc):
+            raise
+
+        existing_report = (
+                db.query(Report)
+                .filter(
+                    Report.source_type == "public_report",
+                    Report.source_channel == "public_web_form",
+                    Report.source_reference == reference,
+                )
+                .order_by(Report.id.asc())
+                .first()
+            )
+
+            # If no matching report exists, preserve the error.
+        if existing_report is None:
+                raise
+
+        return {
+                "report_id": f"CV-{existing_report.id:06d}",
+                "status": existing_report.status,
+                "message": "Report submitted successfully.",
+            }
 
     return {
         "report_id": result["report_id"],
         "status": result["status"],
-        "message": (
-            "Report submitted successfully."
-        ),
+        "message": "Report submitted successfully.",
     }
 # ============================================================
 # LIST REPORTS
