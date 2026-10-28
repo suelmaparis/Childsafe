@@ -24,7 +24,9 @@ from app.api.reports import (
 from app.api.monitoring import (
     router as monitoring_router,
 )
-
+from app.api.media import (
+    router as media_router,
+)
 from app.core.init_db import init_db
 
 from slowapi.errors import RateLimitExceeded
@@ -76,7 +78,9 @@ app.include_router(
 app.include_router(
     monitoring_router
 )
-
+app.include_router(
+    media_router
+)
 
 app.state.limiter = limiter
 
