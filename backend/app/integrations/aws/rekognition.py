@@ -5,9 +5,7 @@ SENSITIVE_LABELS = {
     "Explicit Nudity",
     "Nudity",
     "Suggestive",
-    "Non-Explicit Nudity",
 }
-
 
 def parse_rekognition_results(
     faces_response: dict[str, Any],

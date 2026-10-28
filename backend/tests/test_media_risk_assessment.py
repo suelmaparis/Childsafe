@@ -159,18 +159,41 @@ def test_analyze_image_with_mock_rekognition():
         "minor_likelihood": 0.7,
         "sensitive_score": 0.85,
     }
-
+    fake_client.detect_moderation_labels.assert_called_once_with(
+        Image={"Bytes": b"simulated-image"},
+        MinConfidence=50,
+    )
     fake_client.detect_faces.assert_called_once_with(
         Image={"Bytes": b"simulated-image"},
         Attributes=["ALL"],
     )
 
-    fake_client.detect_moderation_labels.assert_called_once_with(
-        Image={"Bytes": b"simulated-image"},
-        MinConfidence=50,
+def test_rekognition_swimwear_does_not_trigger_sensitive_score():
+    signals = parse_rekognition_results(
+        faces_response={"FaceDetails": []},
+        moderation_response={
+            "ModerationLabels": [
+                {
+                    "Name": "Swimwear or Underwear",
+                    "ParentName": "",
+                    "Confidence": 93.45,
+                },
+                {
+                    "Name": "Non-Explicit Nudity",
+                    "ParentName": "Non-Explicit Nudity of Intimate parts and Kissing",
+                    "Confidence": 92.32,
+                },
+                {
+                    "Name": "Partially Exposed Female Breast",
+                    "ParentName": "Non-Explicit Nudity",
+                    "Confidence": 92.32,
+                },
+            ]
+        },
     )
 
-
+    assert signals["minor_likelihood"] == 0.0
+    assert signals["sensitive_score"] == 0.0
 def test_analyze_image_rejects_empty_bytes():
     fake_client = Mock()
 
@@ -181,6 +204,7 @@ def test_analyze_image_rejects_empty_bytes():
         )
 
     fake_client.detect_faces.assert_not_called()
+    fake_client.detect_moderation_labels.assert_not_called()
 
 
 def test_analyze_image_rejects_oversized_image():
@@ -193,3 +217,5 @@ def test_analyze_image_rejects_oversized_image():
         )
 
     fake_client.detect_faces.assert_not_called()
+    fake_client.detect_moderation_labels.assert_not_called()
+    
