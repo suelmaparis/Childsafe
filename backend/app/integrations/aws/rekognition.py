@@ -1,5 +1,5 @@
 from typing import Any
-
+from app.services.image_validation import validate_image
 
 SENSITIVE_LABELS = {
     "Explicit Nudity",
@@ -83,14 +83,9 @@ def analyze_image_with_rekognition(
         raise RuntimeError(
             "Media analysis is disabled."
         )
-    if not isinstance(image_bytes, bytes) or not image_bytes:
-        raise ValueError("Image must contain valid bytes.")
-
-    # AWS Rekognition DetectFaces and DetectModerationLabels
-    # support image bytes up to 5 MB.
-    if len(image_bytes) > 5 * 1024 * 1024:
-        raise ValueError("Image exceeds the 5 MB limit.")
-
+      # Validate the image before sending it to AWS.
+    validate_image(image_bytes)
+    
     if client is None:
         import boto3
 

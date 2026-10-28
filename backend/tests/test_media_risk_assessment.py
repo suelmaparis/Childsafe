@@ -11,11 +11,28 @@ from app.integrations.aws.rekognition import (
     analyze_image_with_rekognition,
 )
 
-
+from io import BytesIO
+from PIL import Image
 # ============================================================
 # IMAGE RISK ASSESSMENT TESTS
 # ============================================================
+def create_test_image_bytes() -> bytes:
+    """
+    Create a valid synthetic PNG image for testing.
 
+    Contains no people or personal information.
+    """
+
+    image = Image.new(
+        "RGB",
+        (256, 256),
+        color="blue",
+    )
+
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+
+    return buffer.getvalue()
 def test_image_with_strong_signals():
     result = assess_image_signals(0.9, 0.8)
 
@@ -157,8 +174,10 @@ def test_analyze_image_with_mock_rekognition(monkeypatch):
         ]
     }
 
+    image_bytes = create_test_image_bytes()
+
     signals = analyze_image_with_rekognition(
-        image_bytes=b"simulated-image",
+        image_bytes=image_bytes,
         client=fake_client,
     )
 
@@ -167,11 +186,12 @@ def test_analyze_image_with_mock_rekognition(monkeypatch):
         "sensitive_score": 0.85,
     }
     fake_client.detect_moderation_labels.assert_called_once_with(
-        Image={"Bytes": b"simulated-image"},
+        Image={"Bytes": image_bytes},
         MinConfidence=50,
     )
+
     fake_client.detect_faces.assert_called_once_with(
-        Image={"Bytes": b"simulated-image"},
+        Image={"Bytes": image_bytes},
         Attributes=["ALL"],
     )
 
@@ -272,7 +292,7 @@ def test_assess_image_with_rekognition_integration(monkeypatch):
     }
 
     result = assess_image_with_rekognition(
-        image_bytes=b"simulated-image",
+       image_bytes=create_test_image_bytes(),
         client=fake_client,
     )
 
@@ -309,7 +329,30 @@ def test_rekognition_is_blocked_when_media_analysis_disabled(
         match="Media analysis is disabled",
     ):
         assess_image_with_rekognition(
-            image_bytes=b"simulated-image",
+            image_bytes=create_test_image_bytes(),
+            client=fake_client,
+        )
+
+    fake_client.detect_faces.assert_not_called()
+    fake_client.detect_moderation_labels.assert_not_called()
+
+def test_invalid_image_never_reaches_rekognition(monkeypatch):
+    from app.core import settings
+
+    monkeypatch.setattr(
+        settings,
+        "MEDIA_ANALYSIS_ENABLED",
+        True,
+    )
+
+    fake_client = Mock()
+
+    with pytest.raises(
+        ValueError,
+        match="Invalid or unsafe image file",
+    ):
+        analyze_image_with_rekognition(
+            image_bytes=b"this-is-not-a-real-image",
             client=fake_client,
         )
 
