@@ -77,7 +77,12 @@ def analyze_image_with_rekognition(
     Returns preliminary visual indicators.
     Does not store the image locally.
     """
+    from app.core import settings
 
+    if not settings.MEDIA_ANALYSIS_ENABLED:
+        raise RuntimeError(
+            "Media analysis is disabled."
+        )
     if not isinstance(image_bytes, bytes) or not image_bytes:
         raise ValueError("Image must contain valid bytes.")
 

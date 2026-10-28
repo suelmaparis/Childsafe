@@ -68,3 +68,11 @@ META_INSTAGRAM_USER_ID = os.getenv(
 META_FACEBOOK_PAGE_ID = os.getenv(
     "META_FACEBOOK_PAGE_ID"
 )
+# ChildSafeCV - Media analysis security settings
+
+MEDIA_ANALYSIS_ENABLED = env_bool(
+    "MEDIA_ANALYSIS_ENABLED",
+    False,
+)
+
+MEDIA_MAX_IMAGE_BYTES = 5 * 1024 * 1024

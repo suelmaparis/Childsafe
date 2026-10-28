@@ -131,9 +131,16 @@ def test_rekognition_limits_confidence_to_one():
 # AWS REKOGNITION MOCK TESTS
 # ============================================================
 
-def test_analyze_image_with_mock_rekognition():
-    fake_client = Mock()
+def test_analyze_image_with_mock_rekognition(monkeypatch):
+    from app.core import settings
 
+    monkeypatch.setattr(
+        settings,
+        "MEDIA_ANALYSIS_ENABLED",
+        True,
+    )
+
+    fake_client = Mock()
     fake_client.detect_faces.return_value = {
         "FaceDetails": [
             {"AgeRange": {"Low": 10, "High": 15}}
@@ -194,7 +201,15 @@ def test_rekognition_swimwear_does_not_trigger_sensitive_score():
 
     assert signals["minor_likelihood"] == 0.0
     assert signals["sensitive_score"] == 0.0
-def test_analyze_image_rejects_empty_bytes():
+def test_analyze_image_rejects_empty_bytes(monkeypatch):
+    from app.core import settings
+
+    monkeypatch.setattr(
+        settings,
+        "MEDIA_ANALYSIS_ENABLED",
+        True,
+    )
+
     fake_client = Mock()
 
     with pytest.raises(ValueError):
@@ -206,8 +221,15 @@ def test_analyze_image_rejects_empty_bytes():
     fake_client.detect_faces.assert_not_called()
     fake_client.detect_moderation_labels.assert_not_called()
 
+def test_analyze_image_rejects_oversized_image(monkeypatch):
+    from app.core import settings
 
-def test_analyze_image_rejects_oversized_image():
+    monkeypatch.setattr(
+        settings,
+        "MEDIA_ANALYSIS_ENABLED",
+        True,
+    )
+
     fake_client = Mock()
 
     with pytest.raises(ValueError):
@@ -218,10 +240,15 @@ def test_analyze_image_rejects_oversized_image():
 
     fake_client.detect_faces.assert_not_called()
     fake_client.detect_moderation_labels.assert_not_called()
-
-def test_assess_image_with_rekognition_integration():
+def test_assess_image_with_rekognition_integration(monkeypatch):
     from unittest.mock import MagicMock
+    from app.core import settings
 
+    monkeypatch.setattr(
+        settings,
+        "MEDIA_ANALYSIS_ENABLED",
+        True,
+    )
     from app.services.media_risk_assessment import (
         assess_image_with_rekognition,
     )
@@ -258,3 +285,33 @@ def test_assess_image_with_rekognition_integration():
 
     fake_client.detect_faces.assert_called_once()
     fake_client.detect_moderation_labels.assert_called_once()  
+
+def test_rekognition_is_blocked_when_media_analysis_disabled(
+    monkeypatch,
+):
+    from unittest.mock import MagicMock
+
+    from app.core import settings
+    from app.services.media_risk_assessment import (
+        assess_image_with_rekognition,
+    )
+
+    monkeypatch.setattr(
+        settings,
+        "MEDIA_ANALYSIS_ENABLED",
+        False,
+    )
+
+    fake_client = MagicMock()
+
+    with pytest.raises(
+        RuntimeError,
+        match="Media analysis is disabled",
+    ):
+        assess_image_with_rekognition(
+            image_bytes=b"simulated-image",
+            client=fake_client,
+        )
+
+    fake_client.detect_faces.assert_not_called()
+    fake_client.detect_moderation_labels.assert_not_called()
