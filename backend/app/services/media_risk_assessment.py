@@ -88,3 +88,27 @@ def assess_image_signals(
             "sensitive_score": sensitive_score,
         },
     )
+def assess_image_with_rekognition(
+    image_bytes: bytes,
+    client=None,
+) -> MediaRiskAssessment:
+    """
+    Analyze an image with AWS Rekognition and convert
+    its signals into a preliminary risk assessment.
+
+    Results are indicators for human review only.
+    """
+
+    from app.integrations.aws.rekognition import (
+        analyze_image_with_rekognition,
+    )
+
+    signals = analyze_image_with_rekognition(
+        image_bytes=image_bytes,
+        client=client,
+    )
+
+    return assess_image_signals(
+        minor_likelihood=signals["minor_likelihood"],
+        sensitive_score=signals["sensitive_score"],
+    )

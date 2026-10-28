@@ -218,4 +218,43 @@ def test_analyze_image_rejects_oversized_image():
 
     fake_client.detect_faces.assert_not_called()
     fake_client.detect_moderation_labels.assert_not_called()
-    
+
+def test_assess_image_with_rekognition_integration():
+    from unittest.mock import MagicMock
+
+    from app.services.media_risk_assessment import (
+        assess_image_with_rekognition,
+    )
+
+    fake_client = MagicMock()
+
+    fake_client.detect_faces.return_value = {
+        "FaceDetails": [
+            {"AgeRange": {"Low": 10, "High": 15}}
+        ]
+    }
+
+    fake_client.detect_moderation_labels.return_value = {
+        "ModerationLabels": [
+            {
+                "Name": "Suggestive",
+                "ParentName": "",
+                "Confidence": 80.0,
+            }
+        ]
+    }
+
+    result = assess_image_with_rekognition(
+        image_bytes=b"simulated-image",
+        client=fake_client,
+    )
+
+    assert result.media_type == "image"
+    assert result.score == 39
+    assert result.level == "medium"
+
+    assert result.details["minor_likelihood"] == 0.7
+    assert result.details["sensitive_score"] == 0.8
+
+    fake_client.detect_faces.assert_called_once()
+    fake_client.detect_moderation_labels.assert_called_once()  
