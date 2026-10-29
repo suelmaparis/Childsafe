@@ -385,3 +385,24 @@ def test_fetch_items_continues_when_hashtag_fails(monkeypatch):
         "hashtag-CaboVerde",
         "hashtag-Europe",
     }
+def test_instagram_candidate_preserves_media_metadata():
+    collector = MetaInstagramCollector()
+
+    item = {
+        "id": "meta-image-test-001",
+        "permalink": "https://www.instagram.com/p/test-image/",
+        "caption": "Volunteer activity with children in Praia.",
+        "media_type": "IMAGE",
+        "media_url": "https://example.com/test-image.jpg",
+    }
+
+    candidate = collector._to_candidate(item)
+
+    assert candidate.metadata["media_type"] == "IMAGE"
+
+    assert (
+        candidate.metadata["media_url"]
+        == "https://example.com/test-image.jpg"
+    )
+
+    assert candidate.source_reference == "meta-image-test-001"

@@ -121,6 +121,8 @@ class MetaInstagramCollector(BaseCollector):
         return MonitoringCandidate(
             metadata={
                 "school_signals": school_signals,
+                "media_type": item.get("media_type"),
+                "media_url": item.get("media_url"),
             },
             platform=self.platform,
 

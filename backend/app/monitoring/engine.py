@@ -1,3 +1,11 @@
+import logging
+
+from app.core import settings
+from app.services.monitored_media_analysis import (
+    analyze_monitored_image,
+)
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 
 from app.api.reports import (
@@ -31,7 +39,44 @@ def process_candidate(
     detection = detect_candidate(
         candidate
     )
+        # Automatic image analysis using AWS Rekognition
+    if settings.MEDIA_ANALYSIS_ENABLED:
+        metadata = candidate.metadata or {}
 
+        media_url = metadata.get("media_url")
+        media_type = metadata.get("media_type")
+
+        if media_url and media_type == "IMAGE":
+            try:
+                assessment = analyze_monitored_image(
+                    media_url
+                )
+
+                # Preserve the visual assessment for review.
+                metadata["visual_assessment"] = {
+                    "score": assessment.score,
+                    "level": assessment.level,
+                    "reasons": assessment.reasons,
+                    "details": assessment.details,
+                }
+
+                candidate.metadata = metadata
+
+                # Flag high-risk visual findings for review.
+                if assessment.level in {"high", "critical"}:
+                    detection["relevant"] = True
+                    detection["reason"] = (
+                        "potential_child_exposure"
+                    )
+                    detection["signals"] = [
+                        *detection.get("signals", []),
+                        "visual_risk_requires_review",
+                    ]
+
+            except Exception:
+                logger.exception(
+                    "Automatic image analysis failed."
+                )
     if not detection.get(
         "relevant",
         False,
