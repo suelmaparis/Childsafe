@@ -59,11 +59,25 @@ def process_candidate(
                     "reasons": assessment.reasons,
                     "details": assessment.details,
                 }
+                # Adicionar indicadores visuais ao mesmo relatório.
+                visual_signals = [
+                    f"visual:{reason}"
+                    for reason in assessment.reasons
+                ]
 
+                detection["signals"] = list(dict.fromkeys([
+                    *detection.get("signals", []),
+                    *visual_signals,
+                ]))
+
+                # Identificar as duas fontes de análise.
+                detection["source"] = (
+                    "monitoring_detector_v2+aws_rekognition"
+                )
                 candidate.metadata = metadata
 
                 # Flag high-risk visual findings for review.
-                if assessment.level in {"high", "critical"}:
+                if assessment.score >= 20:
                     detection["relevant"] = True
                     detection["reason"] = (
                         "potential_child_exposure"
@@ -221,6 +235,12 @@ def process_candidate(
             candidate.metadata.get("school_signals")
             if candidate.metadata
             else None
+        ),
+        
+        visual_assessment=(
+        candidate.metadata.get("visual_assessment")
+        if candidate.metadata
+        else None
         ),
     )
 

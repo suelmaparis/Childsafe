@@ -142,6 +142,46 @@ class ReportCreate(BaseModel):
     detection_source: str | None = None
     detection_signal_score: int | None = None
     school_signals: dict[str, bool] | None = None
+    visual_assessment: dict | None = None
+    @field_validator("visual_assessment")
+    @classmethod
+    def validate_visual_assessment(cls, value):
+        if value is None:
+            return None
+
+        if not isinstance(value, dict):
+            raise ValueError(
+                "Visual assessment must be a dictionary."
+            )
+
+        score = value.get("score")
+        level = value.get("level")
+        reasons = value.get("reasons")
+        details = value.get("details")
+
+        if type(score) is not int or not 0 <= score <= 100:
+            raise ValueError("Invalid visual risk score.")
+
+        expected_level = (
+            "critical" if score >= 70
+            else "high" if score >= 40
+            else "medium" if score >= 20
+            else "low"
+        )
+
+        if level != expected_level:
+            raise ValueError("Invalid visual risk level.")
+
+        if (
+            not isinstance(reasons, list)
+            or not all(isinstance(r, str) for r in reasons)
+        ):
+            raise ValueError("Invalid visual risk reasons.")
+
+        if not isinstance(details, dict):
+            raise ValueError("Invalid visual risk details.")
+
+        return value
     # ChildSafeCV Geo — Informações geográficas recebidas
     incident_location: str | None = None
     reporter_location: str | None = None
@@ -433,7 +473,28 @@ def create_report_record(
         report.reason,
         report.description,
     )
+        # Combinar a avaliação textual com a visual.
+    # Uma imagem de baixo risco nunca reduz o risco textual.
+    if report.visual_assessment is not None:
+        visual = report.visual_assessment
 
+        visual_score = visual.get("score")
+
+        if (
+            type(visual_score) is int
+            and 0 <= visual_score <= 100
+            and visual_score > assessment.score
+        ):
+            assessment.score = visual_score
+
+            if visual_score >= 70:
+                assessment.level = "critical"
+            elif visual_score >= 40:
+                assessment.level = "high"
+            elif visual_score >= 20:
+                assessment.level = "medium"
+            else:
+                assessment.level = "low"
     # --------------------------------------------------------
     # 2. Secondary AI assessment
     # --------------------------------------------------------
