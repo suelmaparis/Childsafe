@@ -274,7 +274,15 @@ class PinnedMediaNetworkBackend:
 
         import httpcore
 
-        pinned_ip = sorted(self.allowed_ips)[0]
+        ipv4_addresses = sorted(
+            ip for ip in self.allowed_ips
+            if ipaddress.ip_address(ip).version == 4
+        )
+
+        if not ipv4_addresses:
+            raise ValueError("No authorized IPv4 address available.")
+
+        pinned_ip = ipv4_addresses[0]
 
         backend = httpcore.SyncBackend()
 
