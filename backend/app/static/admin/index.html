@@ -64,6 +64,17 @@
             id="dashboard-view"
             class="view hidden"
         >
+        <aside class="admin-sidebar" id="admin-sidebar">
+
+            <nav
+                class="sidebar-navigation"
+                id="sidebar-navigation"
+                aria-label="Dashboard navigation"
+            ></nav>
+
+            <div class="sidebar-footer"></div>
+
+        </aside>
         <header class="topbar">
 
             <div class="dashboard-brand">
@@ -73,13 +84,24 @@
                     class="dashboard-logo"
                 >
 
-                <div>
-                    <div id="current-user"></div>
+                <div class="topbar-welcome">
+                    <strong>Bem-vinda, Admin</strong>
+                    <span>Centro de Monitorização e Proteção Infantil Digital</span>
                 </div>
             </div>
 
 
             <div class="topbar-actions">
+
+                <div class="topbar-datetime">
+                    <span id="topbar-date"></span>
+                    <strong id="topbar-time"></strong>
+                </div>
+
+                <div class="topbar-profile">
+                    <span class="topbar-avatar" aria-hidden="true">●</span>
+                    <div id="current-user"></div>
+                </div>
 
                 <select id="period-filter">
                     <option value="7">
@@ -255,12 +277,18 @@
 
 
                 <!-- ADMIN ONLY -->
-                <article class="metric-card admin-only">
-                    <span>Confirmation rate</span>
-                    <strong id="metric-confirmation-rate">
-                        0%
-                    </strong>
-                </article>
+               <!-- CONFIRMATION RATE — DONUT CHART -->
+            <article class="metric-card confirmation-card admin-only">
+
+                <span>Confirmation rate</span>
+
+                <div class="confirmation-donut" id="confirmation-donut">
+                    <div class="confirmation-donut-inner">
+                        <strong id="metric-confirmation-rate">0%</strong>
+                    </div>
+                </div>
+
+            </article>
 
 
                 <!-- ADMIN ONLY -->
@@ -1447,5 +1475,8 @@
     </div>
 
     <script src="/static/admin/admin.js"></script>
+    <script src="/static/admin/sidebar.js"></script>
+    <script src="/static/admin/tables.js"></script>
+
 </body>
 </html>
