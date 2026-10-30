@@ -1987,7 +1987,7 @@ async function loadReviewQueue() {
 
                 <td>
                     ${escapeHtml(
-                        row.created_at
+                        formatDateTime(row.created_at)
                     )}
                 </td>
             </tr>
@@ -2397,7 +2397,7 @@ function renderRecentReportsTable(reports) {
 
                         <td>
                             ${escapeHtml(
-                                report.created_at || "—"
+                                formatDateTime(report.created_at)
                             )}
                         </td>
                     </tr>
@@ -2692,13 +2692,25 @@ document.addEventListener(
             return "—";
         }
 
-        return new Date(value).toLocaleString(
-            undefined,
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+            return "—";
+        }
+
+        const formatted = date.toLocaleString(
+            "en-US",
             {
-                dateStyle: "medium",
-                timeStyle: "short",
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
             }
         );
+
+        return formatted.replace(", ", " · ");
     }
     async function loadMonitoringStatus() {
         const response = await apiFetch(
@@ -3061,7 +3073,7 @@ function renderReviewerReportTable(
 
                         <td>
                             ${escapeHtml(
-                                report.created_at || "—"
+                                formatDateTime(report.created_at)
                             )}
                         </td>
                     </tr>
