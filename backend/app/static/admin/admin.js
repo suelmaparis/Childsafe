@@ -2131,6 +2131,7 @@ async function loadDashboard() {
         loadReviewers(),
         loadAuditLog(),
         loadMonitoringRuns(),
+        loadMonitoringStatus(),
         loadReviewAlerts(),
     ]);
 }
@@ -2795,8 +2796,31 @@ document.addEventListener(
         container.innerHTML = collectors
             .map(collector => `
                 <div class="collector-card">
-                    <div>
-                        <strong>
+                    <div class="collector-identity">
+                        <span class="collector-brand-icon" aria-hidden="true">
+                            ${
+                                collector.platform.toLowerCase() === "instagram"
+                                ? `<svg viewBox="0 0 24 24" fill="none">
+                                    <rect x="3" y="3" width="18" height="18" rx="5"
+                                        stroke="currentColor" stroke-width="2"/>
+                                    <circle cx="12" cy="12" r="4"
+                                        stroke="currentColor" stroke-width="2"/>
+                                    <circle cx="17.5" cy="6.5" r="1.2"
+                                        fill="currentColor"/>
+                                   </svg>`
+                                : collector.platform.toLowerCase() === "facebook"
+                                ? `<svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z"/>
+                                   </svg>`
+                                : `<svg viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="9"/>
+                                    <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>
+                                   </svg>`
+                            }
+                        </span>
+                        <div class="collector-identity-text">
+                            <strong>
                             ${escapeHtml(
                                 collector.platform
                             )}

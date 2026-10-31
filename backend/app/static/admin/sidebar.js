@@ -340,3 +340,33 @@ organizeOverview();
         setupTopbarClock();
     }
 })();
+
+/* ChildSafeCV — Monitoring status color */
+(function () {
+    function setupMonitoringStatusColor() {
+        const element = document.getElementById("monitoring-enabled");
+        if (!element) return;
+
+        function updateColor() {
+            const value = element.textContent.trim().toUpperCase();
+
+            element.classList.toggle("monitoring-yes", value === "YES");
+            element.classList.toggle("monitoring-no", value === "NO");
+        }
+
+        const observer = new MutationObserver(updateColor);
+        observer.observe(element, {
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
+
+        updateColor();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", setupMonitoringStatusColor);
+    } else {
+        setupMonitoringStatusColor();
+    }
+})();

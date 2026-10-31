@@ -2997,3 +2997,606 @@ td {
         justify-content: space-between;
     }
 }
+
+/* ChildSafeCV — Automated Monitoring Redesign */
+
+#monitoring-section {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    overflow: visible;
+}
+
+#monitoring-section .monitoring-new-header {
+    background: #ffffff;
+    border: 1px solid #e0e8f2;
+    border-radius: 14px 14px 0 0;
+    padding: 22px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+#monitoring-section .monitoring-new-header h2 {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f2344;
+}
+
+#monitoring-section .monitoring-new-header p {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+#monitoring-section .monitoring-header-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #eafaf0;
+    border-radius: 30px;
+    padding: 12px 20px;
+}
+
+#monitoring-section .monitoring-status-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #16a34a;
+}
+
+#monitoring-section .monitoring-header-status > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+#monitoring-section .monitoring-header-status strong {
+    color: #15803d;
+    font-size: 14px;
+}
+
+#monitoring-section .monitoring-header-status small {
+    color: #166534;
+    font-size: 11px;
+}
+
+#monitoring-section .monitoring-overview,
+#monitoring-section .collector-status-section,
+#monitoring-section .monitoring-runs-section {
+    background: #ffffff;
+    border: 1px solid #e0e8f2;
+    border-radius: 14px;
+    padding: 20px;
+    margin-top: 14px;
+}
+
+#monitoring-section .monitoring-primary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+#monitoring-section .monitoring-primary-card {
+    background: #f6f9fd;
+    border: 1px solid #e0e8f2;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+#monitoring-section .monitoring-primary-card span {
+    color: #64748b;
+    font-size: 12px;
+}
+
+#monitoring-section .monitoring-primary-card strong {
+    color: #10213e;
+    font-size: 22px;
+}
+
+#monitoring-section .monitoring-metrics-grid > div {
+    background: #f6f9fd;
+    border: 1px solid #e0e8f2;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+#monitoring-section .collector-card {
+    background: #f8fafc;
+    border: 1px solid #e0e8f2;
+    border-radius: 12px;
+    padding: 18px;
+}
+
+@media (max-width: 900px) {
+    #monitoring-section .monitoring-primary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #monitoring-section .monitoring-new-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* Automated monitoring — illustrated cards */
+
+#monitoring-section .monitor-card-icon {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: #e5efff;
+    color: #2563eb;
+    margin-bottom: 12px;
+}
+
+#monitoring-section .monitor-card-icon svg {
+    width: 21px;
+    height: 21px;
+}
+
+#monitoring-section .monitoring-primary-card,
+#monitoring-section .monitoring-metrics-grid > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+#monitoring-section .monitoring-primary-card {
+    background: #f8faff;
+    border: 1px solid #e1e9f5;
+    border-radius: 14px;
+    padding: 20px;
+}
+
+#monitoring-section .monitoring-primary-card strong {
+    margin-top: 8px;
+}
+
+#monitoring-section .monitoring-metrics-grid > div {
+    background: #f8faff;
+    border: 1px solid #e1e9f5;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+#monitoring-section .monitoring-metrics-grid > div:nth-child(2) .monitor-card-icon {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+#monitoring-section .monitoring-metrics-grid > div:nth-child(3) .monitor-card-icon {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+#monitoring-section .monitoring-metrics-grid > div:nth-child(4) .monitor-card-icon {
+    background: #e0f2fe;
+    color: #0284c7;
+}
+
+#monitoring-section .monitoring-metrics-grid > div:nth-child(5) .monitor-card-icon {
+    background: #f3e8ff;
+    color: #9333ea;
+}
+
+#monitoring-section .monitoring-metrics-grid > div:nth-child(6) .monitor-card-icon {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* ChildSafeCV — Monitoring mockup refinements */
+
+#monitoring-section .monitoring-overview {
+    padding: 18px 20px 20px;
+}
+
+#monitoring-section .monitoring-primary-grid {
+    gap: 12px;
+}
+
+#monitoring-section .monitoring-primary-card {
+    min-height: 116px;
+    padding: 15px 18px;
+    border-radius: 12px;
+    box-shadow: none;
+}
+
+#monitoring-section .monitoring-primary-card:first-child {
+    background: #effbf3;
+    border-color: #d9f3e2;
+}
+
+#monitoring-section .monitoring-primary-card:first-child .monitor-card-icon {
+    background: #d9f8e4;
+    color: #16a34a;
+}
+
+#monitoring-section .monitoring-primary-card:nth-child(2) {
+    background: #f8faff;
+}
+
+#monitoring-section .monitoring-primary-card:nth-child(3) {
+    background: #f8faff;
+}
+
+#monitoring-section .monitoring-primary-card > span:not(.monitor-card-icon) {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+}
+
+#monitoring-section .monitoring-primary-card strong {
+    font-size: 21px;
+    line-height: 1.2;
+}
+
+#monitoring-section .monitoring-metrics-grid {
+    gap: 10px;
+}
+
+#monitoring-section .monitoring-metrics-grid > div {
+    border-radius: 11px;
+    min-width: 0;
+    padding: 14px;
+}
+
+#monitoring-section .monitoring-metrics-grid > div:nth-child(2) {
+    background: #effbf3;
+    border-color: #dcf5e5;
+}
+
+#monitoring-section .monitoring-metrics-grid > div:nth-child(5) {
+    background: #fff9ed;
+    border-color: #f9ecd0;
+}
+
+#monitoring-section .monitoring-metrics-grid > div:nth-child(6) {
+    background: #fff3f3;
+    border-color: #fee2e2;
+}
+
+#monitoring-section .monitoring-metrics-grid .monitor-card-icon {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 9px;
+}
+
+#monitoring-section .monitoring-metrics-grid strong {
+    font-size: 19px;
+}
+
+#monitoring-section .collector-status-grid {
+    gap: 12px;
+}
+
+#monitoring-section .collector-card {
+    border-radius: 12px;
+    padding: 17px;
+    background: #f8faff;
+    border: 1px solid #e1e9f5;
+}
+
+#monitoring-section .collector-card:hover {
+    border-color: #b7cdf2;
+    box-shadow: 0 3px 12px rgba(25, 57, 110, .06);
+}
+
+/* Collector brand icons */
+
+#monitoring-section .collector-identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+#monitoring-section .collector-identity-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+#monitoring-section .collector-brand-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
+    color: white;
+}
+
+#monitoring-section .collector-brand-icon svg {
+    width: 23px;
+    height: 23px;
+}
+
+#monitoring-section .collector-card:has(.collector-brand-icon svg[fill="currentColor"])
+.collector-brand-icon {
+    background: #1877f2;
+}
+
+/* Monitoring — heartbeat and worker started cards */
+
+#monitoring-section .monitoring-time-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+    padding: 0;
+    border: 0;
+}
+
+#monitoring-section .monitoring-time-row > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9px;
+    min-width: 0;
+    padding: 18px 20px;
+    background: #f8faff;
+    border: 1px solid #e1e9f5;
+    border-radius: 12px;
+}
+
+#monitoring-section .monitoring-time-row > div:first-child {
+    background: #f0f7ff;
+}
+
+#monitoring-section .monitoring-time-row > div > span {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+}
+
+#monitoring-section .monitoring-time-row > div > strong {
+    font-size: 17px;
+    font-weight: 800;
+    color: #142b4e;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+    #monitoring-section .monitoring-time-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Monitoring — five cards in one row */
+
+@media (min-width: 1200px) {
+    #monitoring-section .monitoring-overview {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    #monitoring-section .monitoring-primary-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    #monitoring-section .monitoring-time-row {
+        display: contents;
+    }
+
+    #monitoring-section .monitoring-time-row > div {
+        min-width: 0;
+    }
+}
+
+
+/* Monitoring — five aligned cards */
+
+#monitoring-section .monitoring-primary-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+}
+
+#monitoring-section .monitoring-primary-card {
+    min-width: 0;
+    min-height: 135px;
+    padding: 14px;
+}
+
+#monitoring-section .monitoring-time-card {
+    background: #f8faff;
+    border: 1px solid #e1e9f5;
+}
+
+#monitoring-section .monitoring-time-card strong {
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 1100px) {
+    #monitoring-section .monitoring-primary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    #monitoring-section .monitoring-primary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Monitoring indicators in topbar */
+
+.topbar-monitoring {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 15px;
+    border-left: 1px solid #e1e8f2;
+    white-space: nowrap;
+}
+
+.topbar-monitoring > span {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 400;
+}
+
+.topbar-monitoring > strong {
+    font-size: 12px;
+    font-weight: 800;
+    color: #17345c;
+}
+
+.topbar-monitoring > strong.monitoring-yes {
+    color: #15803d;
+}
+
+.topbar-monitoring > strong.monitoring-no {
+    color: #dc2626;
+}
+
+/* ChildSafeCV — Report modal header alignment */
+
+#report-action-modal .modal-header,
+#report-evidence-modal .modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    position: relative;
+}
+
+#report-action-modal .modal-header > div,
+#report-evidence-modal .modal-header > div {
+    flex: 1;
+    min-width: 0;
+}
+
+#report-action-modal .modal-close,
+#report-evidence-modal .modal-close {
+    order: 2;
+    position: static;
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 9px;
+    background: #111827;
+    color: white;
+    font-size: 23px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#report-action-modal .modal-close:hover,
+#report-evidence-modal .modal-close:hover {
+    background: #253b5c;
+}
+
+/* Monitoring worker status — dynamic colors */
+.monitoring-header-status:has(.worker-status-running) .monitoring-status-dot {
+    background: #16a34a;
+}
+
+.monitoring-header-status:has(.worker-status-stopped) .monitoring-status-dot {
+    background: #dc2626;
+}
+
+.monitoring-header-status:has(.worker-status-stale) .monitoring-status-dot {
+    background: #f59e0b;
+}
+
+.monitoring-header-status:has(.worker-status-unknown) .monitoring-status-dot {
+    background: #9ca3af;
+}
+
+.monitoring-header-status .worker-status-running {
+    color: #16a34a;
+}
+
+.monitoring-header-status .worker-status-stopped {
+    color: #dc2626;
+}
+
+.monitoring-header-status .worker-status-stale {
+    color: #d97706;
+}
+
+.monitoring-header-status .worker-status-unknown {
+    color: #6b7280;
+}
+
+/* Worker status — override original green styling */
+
+#monitoring-section .monitoring-header-status:has(.worker-status-running) {
+    background: #eafaf0;
+}
+#monitoring-section .monitoring-header-status:has(.worker-status-running) .monitoring-status-dot {
+    background: #16a34a;
+}
+#monitoring-section .monitoring-header-status:has(.worker-status-running) small {
+    color: #166534;
+}
+
+#monitoring-section .monitoring-header-status:has(.worker-status-stopped) {
+    background: #fef2f2;
+}
+#monitoring-section .monitoring-header-status:has(.worker-status-stopped) .monitoring-status-dot {
+    background: #dc2626;
+}
+#monitoring-section .monitoring-header-status:has(.worker-status-stopped) small {
+    color: #b91c1c;
+}
+
+#monitoring-section .monitoring-header-status:has(.worker-status-stale) {
+    background: #fffbeb;
+}
+#monitoring-section .monitoring-header-status:has(.worker-status-stale) .monitoring-status-dot {
+    background: #f59e0b;
+}
+#monitoring-section .monitoring-header-status:has(.worker-status-stale) small {
+    color: #b45309;
+}
+
+#monitoring-section .monitoring-header-status:has(.worker-status-unknown) {
+    background: #f1f5f9;
+}
+#monitoring-section .monitoring-header-status:has(.worker-status-unknown) .monitoring-status-dot {
+    background: #94a3b8;
+}
+#monitoring-section .monitoring-header-status:has(.worker-status-unknown) small {
+    color: #64748b;
+}
+
+/* Worker status title follows the actual worker state */
+#monitoring-section .monitoring-header-status:has(.worker-status-running) strong {
+    color: #15803d;
+}
+
+#monitoring-section .monitoring-header-status:has(.worker-status-stopped) strong {
+    color: #b91c1c;
+}
+
+#monitoring-section .monitoring-header-status:has(.worker-status-stale) strong {
+    color: #b45309;
+}
+
+#monitoring-section .monitoring-header-status:has(.worker-status-unknown) strong {
+    color: #64748b;
+}
