@@ -1435,6 +1435,34 @@ async function openReport(reportId) {
         data.deterministic_assessment?.level || "—"
     );
 
+    // Report Review — summary cards
+    document.getElementById(
+        "report-summary-risk-level"
+    ).textContent = (
+        data.deterministic_assessment?.level
+        || "unknown"
+    ).replaceAll("_", " ").toUpperCase();
+
+    document.getElementById(
+        "report-summary-risk-score"
+    ).textContent = (
+        data.deterministic_assessment?.score
+        ?? "—"
+    );
+
+    const summaryConfidence = (
+        data.detection?.confidence
+    );
+
+    document.getElementById(
+        "report-summary-confidence"
+    ).textContent = (
+        summaryConfidence !== null
+        && summaryConfidence !== undefined
+        ? `${Math.round(summaryConfidence * 100)}%`
+        : "—"
+    );
+
     const riskLevel = (
         data.deterministic_assessment?.level
         || "unknown"

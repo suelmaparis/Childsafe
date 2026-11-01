@@ -8,429 +8,347 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import (
-    Image,
-    Paragraph,
-    SimpleDocTemplate,
-    Spacer,
-    HRFlowable,
+    HRFlowable, Image, KeepTogether, Paragraph, SimpleDocTemplate,
+    Spacer, Table, TableStyle,
 )
 
+from app.services.risk_comparison import compare_risk_assessments
 
-LOGO_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "static"
-    / "brand"
-    / "childsafe-logo.png"
-)
+LOGO_PATH = Path(__file__).resolve().parents[1] / 'static' / 'brand' / 'childsafe-logo.png'
+BLUE = colors.HexColor('#2563EB')
+DARK = colors.HexColor('#17324A')
+MUTED = colors.HexColor('#65758A')
+BORDER = colors.HexColor('#DFE7EF')
+PALE = colors.HexColor('#F5F8FB')
+YELLOW = colors.HexColor('#FFF7E5')
+
+
+def _text(value, fallback='Não fornecido'):
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return fallback
+    return str(value)
+
+
+def _date(value):
+    return value.strftime('%d/%m/%Y %H:%M') if value else 'Não fornecido'
+
+
+def _parsed_reasons(raw):
+    try:
+        parsed = json.loads(raw or '[]')
+    except (ValueError, TypeError):
+        parsed = raw
+    if isinstance(parsed, list):
+        return [str(item) for item in parsed] or ['Não fornecidos']
+    return [str(parsed)] if parsed else ['Não fornecidos']
 
 
 def generate_report_pdf(report, ai_analyses=None, reviews=None, actions=None, evidences=None):
     buffer = BytesIO()
-
     document = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        rightMargin=45,
-        leftMargin=45,
-        topMargin=45,
-        bottomMargin=55,
-        title=f"ChildSafe - Denúncia CV-{report.id:06d}",
-        author="ChildSafe",
+        buffer, pagesize=A4, rightMargin=38, leftMargin=38,
+        topMargin=44, bottomMargin=55,
+        title=f'ChildSafe - Denúncia CV-{report.id:06d}', author='ChildSafe',
     )
-
+    width = A4[0] - 76
     styles = {
-        "title": ParagraphStyle(
-            "ChildSafeTitle",
-            fontName="Helvetica-Bold",
-            fontSize=15,
-            leading=19,
-            spaceAfter=8,
-        ),
-        "heading": ParagraphStyle(
-            "ChildSafeHeading",
-            fontName="Helvetica-Bold",
-            fontSize=10,
-            leading=14,
-            spaceBefore=12,
-            spaceAfter=5,
-        ),
-        "body": ParagraphStyle(
-            "ChildSafeBody",
-            fontName="Helvetica",
-            fontSize=9,
-            leading=14,
-            spaceAfter=8,
-            splitLongWords=True,
-        ),
+        'title': ParagraphStyle('CS_Title', fontName='Helvetica-Bold', fontSize=16,
+                                leading=21, textColor=DARK, spaceAfter=5),
+        'section': ParagraphStyle('CS_Section', fontName='Helvetica-Bold', fontSize=11,
+                                  leading=15, textColor=DARK, spaceBefore=10, spaceAfter=8),
+        'label': ParagraphStyle('CS_Label', fontName='Helvetica-Bold', fontSize=7.5,
+                                leading=10, textColor=MUTED),
+        'value': ParagraphStyle('CS_Value', fontName='Helvetica', fontSize=9,
+                                leading=13, textColor=DARK, splitLongWords=True),
+        'metric': ParagraphStyle('CS_Metric', fontName='Helvetica-Bold', fontSize=15,
+                                 leading=19, textColor=DARK, splitLongWords=True),
+        'body': ParagraphStyle('CS_Body', fontName='Helvetica', fontSize=8.5,
+                               leading=12.5, textColor=DARK, splitLongWords=True),
+        'description': ParagraphStyle('CS_Description', fontName='Helvetica', fontSize=8.5,
+                                      leading=13, textColor=DARK, borderColor=BORDER,
+                                      borderWidth=0.7, borderPadding=10,
+                                      spaceBefore=4, spaceAfter=10, splitLongWords=True),
+        'small': ParagraphStyle('CS_Small', fontName='Helvetica', fontSize=7.5,
+                                leading=11, textColor=MUTED, splitLongWords=True),
     }
 
+    def para(value, style='body'):
+        safe = escape(_text(value)).replace('\n', '<br/>')
+        return Paragraph(safe, styles[style])
+
+    def url_para(value):
+        raw = _text(value)
+        parsed = urlparse(raw)
+        if parsed.scheme in ('http', 'https') and parsed.netloc:
+            safe = escape(raw, {'"': '&quot;'})
+            return Paragraph(f'<link href="{safe}" color="#185D93">{escape(raw)}</link>',
+                             styles['body'])
+        return para(raw)
+
+    def card(title, fields, background=colors.white):
+        contents = [para(title.upper(), 'label'), Spacer(1, 7)]
+        for label, value in fields:
+            contents.extend([para(label, 'label'),
+                             url_para(value) if label.lower().endswith('url') else para(value, 'value'),
+                             Spacer(1, 6)])
+        t = Table([[contents]], colWidths=[width])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), background),
+            ('BOX', (0, 0), (-1, -1), 0.7, BORDER),
+            ('LEFTPADDING', (0, 0), (-1, -1), 12),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+            ('TOPPADDING', (0, 0), (-1, -1), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ]))
+        return t
+
+    def metric(label, value, background=PALE):
+        t = Table([[[para(label.upper(), 'label'), Spacer(1, 7),
+                     para(value, 'metric')]]], colWidths=[width])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), background),
+            ('BOX', (0, 0), (-1, -1), 0.7, BORDER),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 11),
+        ]))
+        return t
+
+    def row_cards(cards, widths):
+        # Every nested card must fit its own column. Without this, ReportLab
+        # measures the inner tables at the full page width and clips the right column.
+        if len(cards) != len(widths):
+            raise ValueError('Card count and column widths must match')
+        for inner, outer_width in zip(cards, widths):
+            inner_width = outer_width - 8
+            inner._argW = [inner_width]
+            inner._colWidths = [inner_width]
+        t = Table([cards], colWidths=widths, hAlign='LEFT')
+        t.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 3),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        return t
+
+    def section(title):
+        story.append(para(title, 'section'))
+
+    def details(title, fields):
+        section(title)
+        for label, value in fields:
+            story.append(KeepTogether([para(label, 'label'), para(value, 'body'), Spacer(1, 6)]))
+
     story = []
+    if LOGO_PATH.is_file():
+        try:
+            from reportlab.lib.utils import ImageReader
+            iw, ih = ImageReader(str(LOGO_PATH)).getSize()
+            logo_w = 132
+            story.append(Image(str(LOGO_PATH), width=logo_w, height=logo_w * ih / iw,
+                               hAlign='LEFT'))
+            story.append(Spacer(1, 9))
+        except Exception:
+            pass
+    story.extend([para('REPORT REVIEW', 'title'),
+                  para(f'CV-{report.id:06d}  |  { _date(getattr(report, "created_at", None)) } UTC', 'small'),
+                  Spacer(1, 9), HRFlowable(width='100%', thickness=1, color=BORDER),
+                  Spacer(1, 12)])
 
-    # Logótipo oficial, mantendo as proporções
-    story.append(
-        Image(
-            str(LOGO_PATH),
-            width=150,
-            height=50,
-            hAlign="LEFT",
-        )
-    )
+    confidence = getattr(report, 'detection_confidence', None)
+    if confidence is None:
+        confidence_text = 'Não fornecido'
+    else:
+        try:
+            n = float(confidence)
+            confidence_text = f'{n * 100:.0f}%' if 0 <= n <= 1 else f'{n:.0f}%'
+        except (ValueError, TypeError):
+            confidence_text = str(confidence)
 
+    story.append(row_cards([
+        metric('Risk Level', _text(getattr(report, 'risk_level', None)).upper(),
+               colors.HexColor('#FFF5DC')),
+        metric('Risk Score', _text(getattr(report, 'risk_score', None)),
+               colors.HexColor('#E8F2FF')),
+        metric('Confidence', confidence_text, colors.HexColor('#F2E9FC')),
+    ], [width / 3] * 3))
     story.append(Spacer(1, 12))
 
-    story.append(
-        Paragraph(
-            "CHILDSAFE — RELATÓRIO DE DENÚNCIA",
-            styles["title"],
-        )
-    )
+    reviewer = getattr(report, 'assigned_reviewer', None)
+    reviewer_name = None
+    if reviewer is not None:
+        reviewer_name = (getattr(reviewer, 'username', None)
+                         or getattr(reviewer, 'name', None)
+                         or getattr(reviewer, 'email', None)
+                         or f'ID {getattr(reviewer, "id", "?")}')
+    if not reviewer_name and getattr(report, 'assigned_reviewer_id', None):
+        reviewer_name = f'ID {report.assigned_reviewer_id}'
 
-    story.append(
-        HRFlowable(
-            width="100%",
-            thickness=1,
-            color=colors.HexColor("#D9E2E8"),
-        )
-    )
+    cards = [
+        card('Report Information', [
+            ('Reference', f'CV-{report.id:06d}'),
+            ('Platform', getattr(report, 'platform', None)),
+            ('Status', getattr(report, 'status', None)),
+            ('Created (UTC)', _date(getattr(report, 'created_at', None))),
+            ('Source channel', getattr(report, 'source_channel', None)),
+            ('Source reference', getattr(report, 'source_reference', None)),
+        ]),
+        card('Geographic Information', [
+            ('Incident location', getattr(report, 'incident_location', None)),
+            ('Reporter location', getattr(report, 'reporter_location', None)),
+            ('Latitude', getattr(report, 'geo_latitude', None)),
+            ('Longitude', getattr(report, 'geo_longitude', None)),
+            ('Full location', getattr(report, 'geo_location_text', None)),
+            ('Geo source', getattr(report, 'geo_source', None)),
+            ('Verification status', getattr(report, 'geo_verification_status', None)),
+        ]),
+        card('Automated Detection', [
+            ('Detection source', getattr(report, 'detection_source', None)),
+            ('Confidence', confidence_text),
+            ('Signals', getattr(report, 'detection_signals', None)),
+            ('School signals', getattr(report, 'school_signals', None)),
+        ]),
+        card('Review Assignment', [
+            ('Assigned reviewer', reviewer_name),
+            ('Review status', getattr(report, 'review_status', None)),
+        ]),
+    ]
+    for a, b in ((0, 2), (2, 4)):
+        story.append(row_cards(cards[a:b], [width / 2, width / 2]))
+        story.append(Spacer(1, 6))
 
-    story.append(Spacer(1, 15))
+    story.append(row_cards([
+        metric('Signal Score', _text(getattr(report, 'detection_signal_score', None))),
+        card('Reason', [('Reason', getattr(report, 'reason', None))]),
+        card('Report URL', [('Report URL', getattr(report, 'url', None))]),
+    ], [width / 3] * 3))
+    section('Description')
+    story.append(para(getattr(report, 'description', None), 'description'))
 
-    def add_field(label, value):
-        text = (
-            str(value)
-            if value is not None and str(value).strip()
-            else "Não fornecido"
-        )
+    section('Geographic verification notice')
+    story.append(para('AVISO: As referências geográficas identificadas automaticamente são indícios preliminares. '
+                      'A menção de uma cidade, ilha ou instituição não confirma que o incidente tenha ocorrido '
+                      'nesse local. As coordenadas devem ser interpretadas de acordo com a sua origem e '
+                      'sujeitas a verificação humana.'))
 
-        story.append(
-            Paragraph(
-                escape(label),
-                styles["heading"],
-            )
-        )
+    section('AI Assessment')
+    warning = Table([[para('AI risk scores may reflect a situation reported by a third party, not necessarily '
+                           'direct exposure caused by the publication being reviewed. AI assessments are '
+                           'preliminary and require human verification.', 'body')]], colWidths=[width])
+    warning.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), YELLOW),
+        ('LEFTPADDING', (0, 0), (-1, -1), 12),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+        ('TOPPADDING', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+    ]))
+    story.extend([warning, Spacer(1, 10)])
 
-        story.append(
-            Paragraph(
-                escape(text).replace("\n", "<br/>"),
-                styles["body"],
-            )
-        )
-
-    add_field("Referência", f"CV-{report.id:06d}")
-
-    date_text = (
-        report.created_at.strftime("%d/%m/%Y %H:%M")
-        if report.created_at
-        else None
-    )
-
-    add_field("Data da denúncia (UTC)", date_text)
-    add_field("Estado", report.status)
-    add_field("Estado da revisão", report.review_status)
-    add_field("Plataforma", report.platform)
-    add_field("Motivo", report.reason)
-
-    # URL original da publicação denunciada
-    url = str(report.url or "").strip()
-    parsed = urlparse(url)
-
-    story.append(
-        Paragraph(
-            "Link da publicação denunciada",
-            styles["heading"],
-        )
-    )
-
-    if (
-        parsed.scheme in {"http", "https"}
-        and parsed.netloc
-    ):
-        safe_url = escape(url, {'"': "&quot;"})
-
-        story.append(
-            Paragraph(
-                f'<link href="{safe_url}" color="blue">'
-                f'{escape(url)}</link>',
-                styles["body"],
-            )
-        )
-    else:
-        story.append(
-            Paragraph(
-                escape(url or "Não fornecido"),
-                styles["body"],
-            )
-        )
-
-    add_field(
-        "Descrição original da denúncia",
-        report.description,
-    )
-        # Localização geográfica do incidente
-    story.append(
-        Paragraph(
-            "LOCALIZAÇÃO GEOGRÁFICA DO INCIDENTE",
-            styles["title"],
-        )
-    )
-
-    add_field(
-        "Localização indicada na denúncia",
-        getattr(report, "incident_location", None),
-    )
-
-    add_field(
-        "Localização fornecida pelo denunciante",
-        getattr(report, "reporter_location", None),
-    )
-
-    add_field(
-        "Latitude",
-        getattr(report, "geo_latitude", None),
-    )
-
-    add_field(
-        "Longitude",
-        getattr(report, "geo_longitude", None),
-    )
-
-    add_field(
-        "Localização por extenso",
-        getattr(report, "geo_location_text", None),
-    )
-
-    add_field(
-        "Origem da informação geográfica",
-        getattr(report, "geo_source", None),
-    )
-
-    add_field(
-        "Estado de verificação geográfica",
-        getattr(report, "geo_verification_status", None),
-    )
-        # Aviso de segurança geográfica
-    story.append(
-        Paragraph(
-            "AVISO: As referências geográficas identificadas "
-            "automaticamente são indícios preliminares. "
-            "A menção de uma cidade, ilha ou instituição "
-            "não confirma que o incidente tenha ocorrido "
-            "nesse local. As coordenadas, quando disponíveis, "
-            "devem ser interpretadas de acordo com a sua "
-            "origem e sujeitas a verificação humana.",
-            styles["body"],
-        )
-    )
-
-    # Histórico de avaliações automáticas
-    story.append(
-        Paragraph(
-            "AVALIAÇÕES AUTOMÁTICAS DE RISCO",
-            styles["title"],
-        )
-    )
-
-    story.append(
-        Paragraph(
-            "Estas avaliações foram produzidas automaticamente. "
-            "São indicadores preliminares de risco, não constituem "
-            "prova de abuso e não substituem a análise humana.",
-            styles["body"],
-        )
-    )
-
-    analyses = ai_analyses or []
-
+    analyses = list(ai_analyses or [])
     if not analyses:
-        add_field(
-            "Histórico da IA",
-            "Não existem avaliações automáticas registadas.",
-        )
-
-    for analysis in analyses:
-        add_field("Modelo utilizado", analysis.model)
-        add_field("Nível de risco", analysis.level)
-        add_field("Pontuação", analysis.score)
-
-        analysis_date = (
-            analysis.created_at.strftime("%d/%m/%Y %H:%M")
-            if analysis.created_at
-            else None
-        )
-        add_field("Data da análise (UTC)", analysis_date)
-
+        story.append(para('Não existem avaliações automáticas registadas.'))
+    for index, analysis in enumerate(analyses):
+        if index:
+            story.append(Spacer(1, 12))
+        comparison = None
         try:
-            reasons = json.loads(analysis.reasons or "[]")
-        except (json.JSONDecodeError, TypeError):
-            reasons = analysis.reasons
-
-        if isinstance(reasons, list):
-            reasons_text = "\\n".join(str(item) for item in reasons)
-        else:
-            reasons_text = str(reasons or "Não fornecidos")
-
-        add_field("Motivos identificados pela IA", reasons_text)
-
-        story.append(Spacer(1, 10))
-
-
-    # Histórico das revisões humanas
-    story.append(
-        Paragraph(
-            "HISTÓRICO DE REVISÃO HUMANA",
-            styles["title"],
-        )
-    )
-
-    review_history = reviews or []
-
-    if not review_history:
-        add_field(
-            "Revisões",
-            "Não existem revisões humanas registadas.",
-        )
-
-    for review in review_history:
-        add_field("Revisor", review.reviewer)
-        add_field("Decisão", review.decision)
-        add_field("Estado anterior", review.previous_status)
-        add_field("Novo estado", review.new_status)
-        add_field("Observações", review.notes)
-
-        review_date = (
-            review.created_at.strftime("%d/%m/%Y %H:%M")
-            if review.created_at
-            else None
-        )
-
-        add_field("Data da revisão (UTC)", review_date)
-        story.append(Spacer(1, 10))
-
-
-    # Histórico das ações registadas
-    story.append(
-        Paragraph(
-            "HISTÓRICO DE AÇÕES",
-            styles["title"],
-        )
-    )
-
-    action_history = actions or []
-
-    if not action_history:
-        add_field(
-            "Ações",
-            "Não existem ações registadas.",
-        )
-
-    for action in action_history:
-        add_field("Tipo de ação", action.action_type)
-        add_field("Estado da ação", action.status)
-        add_field("Observações", action.notes)
-        add_field("Destino", action.destination)
-        add_field("Plataforma", action.platform)
-        add_field("Referência externa", action.external_reference)
-        add_field("Resultado externo registado", action.external_result)
-
-        for label, date_value in [
-            ("Data de criação (UTC)", action.created_at),
-            ("Data de envio registada (UTC)", action.submitted_at),
-            ("Data de resposta registada (UTC)", action.responded_at),
-        ]:
-            formatted_date = (
-                date_value.strftime("%d/%m/%Y %H:%M")
-                if date_value
-                else None
+            comparison = compare_risk_assessments(
+                str(report.risk_level).lower(), int(report.risk_score),
+                str(analysis.level).lower(), int(analysis.score),
             )
-            add_field(label, formatted_date)
+        except (ValueError, TypeError, AttributeError):
+            pass
+        story.append(row_cards([
+            metric('AI Risk Level', _text(getattr(analysis, 'level', None)).upper()),
+            metric('AI Risk Score', _text(getattr(analysis, 'score', None))),
+            metric('Relationship', comparison.relationship.replace('_', ' ') if comparison else 'Não disponível'),
+            metric('Needs Attention', ('Yes' if comparison.needs_attention else 'No') if comparison else 'Não disponível'),
+        ], [width / 4] * 4))
+        story.append(Spacer(1, 6))
+        story.append(para(f'Model: {_text(getattr(analysis, "model", None))}  |  '
+                          f'Date (UTC): {_date(getattr(analysis, "created_at", None))}', 'small'))
+        story.append(Spacer(1, 6))
+        story.append(para('AI REASONS', 'label'))
+        for reason in _parsed_reasons(getattr(analysis, 'reasons', None)):
+            t = Table([[para(reason)]], colWidths=[width])
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, -1), PALE),
+                ('BOX', (0, 0), (-1, -1), 0.5, BORDER),
+                ('LEFTPADDING', (0, 0), (-1, -1), 10),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+                ('TOPPADDING', (0, 0), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ]))
+            story.extend([t, Spacer(1, 5)])
 
-        story.append(Spacer(1, 10))
+    section('Human Review History')
+    if not reviews:
+        story.append(para('Não existem revisões humanas registadas.'))
+    for idx, review in enumerate(reviews or [], 1):
+        story.append(card(f'Review {idx}', [
+            ('Reviewer', getattr(review, 'reviewer', None)),
+            ('Decision', getattr(review, 'decision', None)),
+            ('Previous status', getattr(review, 'previous_status', None)),
+            ('New status', getattr(review, 'new_status', None)),
+            ('Notes', getattr(review, 'notes', None)),
+            ('Review date (UTC)', _date(getattr(review, 'created_at', None))),
+        ]))
+        story.append(Spacer(1, 8))
 
+    section('Case Action History')
+    if not actions:
+        story.append(para('Não existem ações registadas.'))
+    for idx, action in enumerate(actions or [], 1):
+        story.append(card(f'Action {idx}', [
+            ('Action type', getattr(action, 'action_type', None)),
+            ('Status', getattr(action, 'status', None)),
+            ('Notes', getattr(action, 'notes', None)),
+            ('Destination', getattr(action, 'destination', None)),
+            ('Platform', getattr(action, 'platform', None)),
+            ('External reference', getattr(action, 'external_reference', None)),
+            ('External result', getattr(action, 'external_result', None)),
+            ('Created (UTC)', _date(getattr(action, 'created_at', None))),
+            ('Submitted (UTC)', _date(getattr(action, 'submitted_at', None))),
+            ('Responded (UTC)', _date(getattr(action, 'responded_at', None))),
+        ]))
+        story.append(Spacer(1, 8))
 
-    # Referências das evidências associadas
-    story.append(
-        Paragraph(
-            "EVIDÊNCIAS ASSOCIADAS À DENÚNCIA",
-            styles["title"],
-        )
-    )
+    section('Evidence Metadata')
+    story.append(para('Esta secção apresenta apenas os metadados das evidências registadas. '
+                      'Não inclui fotografias, vídeos ou ficheiros originais.', 'small'))
+    if not evidences:
+        story.append(para('Não existem evidências associadas registadas.'))
+    for idx, evidence in enumerate(evidences or [], 1):
+        story.append(card(f'Evidence {idx}', [
+            ('Evidence ID', getattr(evidence, 'id', None)),
+            ('Evidence type', getattr(evidence, 'evidence_type', None)),
+            ('Platform', getattr(evidence, 'platform', None)),
+            ('Source URL', getattr(evidence, 'source_url', None)),
+            ('External reference', getattr(evidence, 'external_reference', None)),
+            ('Content hash', getattr(evidence, 'content_hash', None)),
+            ('Notes', getattr(evidence, 'notes', None)),
+            ('Captured (UTC)', _date(getattr(evidence, 'captured_at', None))),
+        ]))
+        story.append(Spacer(1, 8))
 
-    story.append(
-        Paragraph(
-            "Esta secção apresenta apenas os metadados "
-            "das evidências registadas. Não inclui "
-            "fotografias, vídeos ou ficheiros originais.",
-            styles["body"],
-        )
-    )
-
-    evidence_history = evidences or []
-
-    if not evidence_history:
-        add_field(
-            "Evidências",
-            "Não existem evidências associadas registadas.",
-        )
-
-    for evidence in evidence_history:
-        add_field("Identificador da evidência", evidence.id)
-        add_field("Tipo de evidência", evidence.evidence_type)
-        add_field("Plataforma", evidence.platform)
-        add_field("URL de origem", evidence.source_url)
-        add_field("Referência externa", evidence.external_reference)
-        add_field("Hash de integridade registado", evidence.content_hash)
-        add_field("Observações", evidence.notes)
-
-        captured_date = (
-            evidence.captured_at.strftime("%d/%m/%Y %H:%M")
-            if evidence.captured_at
-            else None
-        )
-
-        add_field("Data de recolha (UTC)", captured_date)
-
-        story.append(Spacer(1, 10))
-
-    # Cabeçalho e rodapé em todas as páginas
     def decorate_page(pdf, doc):
-        width, height = A4
-
+        page_w, page_h = A4
         pdf.saveState()
-
-        pdf.setFont("Helvetica-Bold", 9)
-        pdf.setFillColor(colors.HexColor("#A00000"))
-
-        pdf.drawRightString(
-            width - 45,
-            height - 25,
-            "CONFIDENCIAL",
-        )
-
-        pdf.setStrokeColor(colors.HexColor("#D9E2E8"))
-        pdf.line(45, 45, width - 45, 45)
-
-        pdf.setFillColor(colors.black)
-        pdf.setFont("Helvetica", 8)
-
-        pdf.drawString(
-            45,
-            30,
-            "ChildSafe - Proteção de Crianças",
-        )
-
-        pdf.drawRightString(
-            width - 45,
-            30,
-            f"Página {doc.page}",
-        )
-
+        pdf.setFont('Helvetica-Bold', 9)
+        pdf.setFillColor(colors.HexColor('#A00000'))
+        pdf.drawRightString(page_w - 38, page_h - 26, 'CONFIDENCIAL')
+        pdf.setStrokeColor(BORDER)
+        pdf.line(38, 45, page_w - 38, 45)
+        pdf.setFillColor(DARK)
+        pdf.setFont('Helvetica', 8)
+        pdf.drawString(38, 30, 'ChildSafe - Proteção de Crianças')
+        pdf.drawRightString(page_w - 38, 30, f'Página {doc.page}')
         pdf.restoreState()
 
-    document.build(
-        story,
-        onFirstPage=decorate_page,
-        onLaterPages=decorate_page,
-    )
-
+    document.build(story, onFirstPage=decorate_page, onLaterPages=decorate_page)
     buffer.seek(0)
     return buffer

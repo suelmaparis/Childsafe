@@ -10,7 +10,7 @@
 
     <link
         rel="stylesheet"
-        href="/static/admin/admin.css"
+        href="/static/admin/admin.css?v=report-redesign-5"
     >
 </head>
 
@@ -593,21 +593,24 @@
                     ></div>
                 </section>
             <section id="report-review-panel" class="panel hidden">
-            <div class="panel-header">
-
-                <div>
-                    <h2>Report review</h2>
-                    <p id="selected-report-id"></p>
+            <div class="panel-header report-review-header">
+                <div class="report-header-identity">
+                    <div class="report-header-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="1.8"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="5" y="4" width="14" height="17" rx="2"/>
+                            <path d="M9 4.5V3h6v1.5"/>
+                            <path d="M9 10h6M9 14h6M9 18h4"/>
+                        </svg>
+                    </div>
+                    <div class="report-header-title">
+                        <h2>Report Review</h2>
+                        <p id="selected-report-id"></p>
+                    </div>
                 </div>
 
                 <div class="report-header-actions">
-                    <button
-                        id="close-report-button"
-                        type="button"
-                        class="secondary-button"
-                    >
-                        Close
-                    </button>
                     <button
                         id="download-report-pdf-button"
                         type="button"
@@ -615,112 +618,107 @@
                     >
                         Download PDF
                     </button>
-
-
-                </div>
-            </div>
-
-            <div id="report-details">
-                <div class="review-details-grid">
-
-                    <div>
-                        <span>Platform</span>
-                        <strong id="review-platform">—</strong>
-                    </div>
-                    <div>
-                        <span>Source reference</span>
-                        <strong id="review-source-reference">—</strong>
-                    </div>
-                    <div>
-                        <span>Source</span>
-                        <strong id="review-source-type">—</strong>
-                    </div>
-
-                    <div>
-                        <span>Source channel</span>
-                        <strong id="review-source-channel">—</strong>
-                    </div>
-                    <div>
-                        <span>Incident location</span>
-                        <strong id="review-incident-location">—</strong>
-                    </div>
-
-                    <div>
-                        <span>Reporter-provided location</span>
-                        <strong id="review-reporter-location">—</strong>
-                    </div>
-
-                    <div>
-                        <span>Latitude</span>
-                        <strong id="review-geo-latitude">—</strong>
-                    </div>
-
-                    <div>
-                        <span>Longitude</span>
-                        <strong id="review-geo-longitude">—</strong>
-                    </div>
-
-                    <div>
-                        <span>Geographic location</span>
-                        <strong id="review-geo-location-text">—</strong>
-                    </div>
-
-                    <div>
-                        <span>Geographic source</span>
-                        <strong id="review-geo-source">—</strong>
-                    </div>
-
-                    <div>
-                        <span>Geographic verification</span>
-                        <strong id="review-geo-verification-status">—</strong>
-                    </div>
-                    <div>
-                        <span>Risk level</span>
-                        <strong id="review-risk-level">—</strong>
-                    </div>
-
-                    <div>
-                        <span>Risk score</span>
-                        <strong id="review-risk-score">—</strong>
-                    </div>
-
-                    <div>
-                        <span>Current status</span>
-                        <strong id="review-current-status">—</strong>
-                    </div>
-                    <div>
-                        <small>Assignment</small>
-                        <strong id="review-assignment">
-                            —
-                        </strong>
-                    </div>
-                    <div
-                    id="admin-assignment-controls"
-                    class="hidden"
-                >
-                    <small>Assign reviewer</small>
-
-                    <select id="assignment-reviewer-select">
-                        <option value="">
-                            Select reviewer
-                        </option>
-                    </select>
-
                     <button
-                        id="assign-reviewer-button"
+                        id="close-report-button"
                         type="button"
                         class="secondary-button"
                     >
-                        Assign
+                        Close
                     </button>
+                </div>
+            </div>
 
-                    <p
-                        id="assignment-message"
-                        class="form-message"
-                    ></p>
+
+            <div class="report-risk-summary">
+                <div class="report-risk-card report-risk-level-card">
+                    <span>Risk level</span>
+                    <strong id="report-summary-risk-level">—</strong>
                 </div>
+
+                <div class="report-risk-card report-risk-score-card">
+                    <span>Risk score</span>
+                    <strong id="report-summary-risk-score">—</strong>
                 </div>
-                <div
+
+                <div class="report-risk-card report-risk-confidence-card">
+                    <span>Confidence</span>
+                    <strong id="report-summary-confidence">—</strong>
+                </div>
+            </div>
+
+<div id="report-details">
+
+<div class="report-section-layout">
+    <div class="report-column report-column-left">
+<section class="report-info-card">
+<h3>Report Information</h3>
+<div class="review-details-grid">
+<div>
+                        <span>Platform</span>
+                        <strong id="review-platform">—</strong>
+                    </div>
+<div>
+                        <span>Source reference</span>
+                        <strong id="review-source-reference">—</strong>
+                    </div>
+<div>
+                        <span>Source</span>
+                        <strong id="review-source-type">—</strong>
+                    </div>
+<div>
+                        <span>Source channel</span>
+                        <strong id="review-source-channel">—</strong>
+                    </div>
+<div>
+                        <span>Risk level</span>
+                        <strong id="review-risk-level">—</strong>
+                    </div>
+<div>
+                        <span>Risk score</span>
+                        <strong id="review-risk-score">—</strong>
+                    </div>
+<div>
+                        <span>Current status</span>
+                        <strong id="review-current-status">—</strong>
+                    </div>
+</div>
+</section>
+<section class="report-geographic-card">
+<h3>Geographic Information</h3>
+<div class="review-details-grid">
+<div>
+                        <span>Incident location</span>
+                        <strong id="review-incident-location">—</strong>
+                    </div>
+<div>
+                        <span>Reporter-provided location</span>
+                        <strong id="review-reporter-location">—</strong>
+                    </div>
+<div>
+                        <span>Latitude</span>
+                        <strong id="review-geo-latitude">—</strong>
+                    </div>
+<div>
+                        <span>Longitude</span>
+                        <strong id="review-geo-longitude">—</strong>
+                    </div>
+<div>
+                        <span>Geographic location</span>
+                        <strong id="review-geo-location-text">—</strong>
+                    </div>
+<div>
+                        <span>Geographic source</span>
+                        <strong id="review-geo-source">—</strong>
+                    </div>
+<div>
+                        <span>Geographic verification</span>
+                        <strong id="review-geo-verification-status">—</strong>
+                    </div>
+</div>
+</section>
+    </div>
+    <div class="report-column report-column-right">
+<div
                 id="automated-detection-section"
                 class="review-field hidden"
             >
@@ -748,66 +746,58 @@
                     <div id="review-detection-signals"></div>
                     </div>
                 </div>
-                <div class="detail-item">
+<section class="report-assignment-card">
+<h3>Review Assignment</h3>
+<div class="review-details-grid">
+<div>
+                        <small>Assignment</small>
+                        <strong id="review-assignment">
+                            —
+                        </strong>
+                    </div>
+<div
+                    id="admin-assignment-controls"
+                    class="hidden"
+                >
+                    <small>Assign reviewer</small>
+
+                    <select id="assignment-reviewer-select">
+                        <option value="">
+                            Select reviewer
+                        </option>
+                    </select>
+
+                    <button
+                        id="assign-reviewer-button"
+                        type="button"
+                        class="secondary-button"
+                    >
+                        Assign
+                    </button>
+
+                    <p
+                        id="assignment-message"
+                        class="form-message"
+                    ></p>
+                </div>
+</div>
+</section>
+    </div>
+</div>
+
+
+                <div class="report-metadata-row">
+                    <div class="detail-item">
                     <span>Signal score</span>
                     <strong id="report-detection-signal-score">
                         —
                     </strong>
                 </div>
-                <div class="review-field">
-                    <span>AI assessment</span>
-                    <p class="review-assessment-note">
-                        AI risk scores may reflect a situation reported
-                        by a third party, not necessarily direct exposure
-                        caused by the publication being reviewed.
-                        AI assessments are preliminary and require
-                        human verification.
-                    </p>
-
-                    <div class="detection-summary">
-                        <div>
-                            <small>AI risk level</small>
-                            <strong id="review-ai-level">—</strong>
-                        </div>
-
-                        <div>
-                            <small>AI risk score</small>
-                            <strong id="review-ai-score">—</strong>
-                        </div>
-                    </div>
-
-                    <div class="detection-signals">
-                        <small>AI reasons</small>
-                        <div id="review-ai-reasons"></div>
-                    </div>
-                </div>
-
-                <div class="review-field">
-                    <span>Risk comparison</span>
-
-                    <div class="detection-summary">
-                        <div>
-                            <small>Relationship</small>
-                            <strong id="review-risk-relationship">—</strong>
-                        </div>
-
-                        <div>
-                            <small>Needs attention</small>
-                            <strong id="review-risk-attention">—</strong>
-                        </div>
-                    </div>
-                </div>
-                <div class="review-field">
+                    <div class="review-field">
                     <span>Reason</span>
                     <p id="review-reason">—</p>
                 </div>
-
-                <div class="review-field">
-                    <span>Description</span>
-                    <p id="review-description">—</p>
-                </div>
-
-                <div class="review-field">
+                    <div class="review-field">
                     <span>Report URL</span>
                     <a
                         id="review-url"
@@ -818,6 +808,48 @@
                         Open reported content
                     </a>
                 </div>
+                </div>
+
+                <div class="review-field">
+                    <span>Description</span>
+                    <p id="review-description">—</p>
+                </div>
+
+
+                <div class="review-field ai-assessment-card">
+                    <span>AI Assessment</span>
+                    <p class="review-assessment-note">
+                        AI risk scores may reflect a situation reported
+                        by a third party, not necessarily direct exposure
+                        caused by the publication being reviewed.
+                        AI assessments are preliminary and require
+                        human verification.
+                    </p>
+
+                    <div class="ai-assessment-metrics">
+                        <div>
+                            <small>AI risk level</small>
+                            <strong id="review-ai-level">—</strong>
+                        </div>
+                        <div>
+                            <small>AI risk score</small>
+                            <strong id="review-ai-score">—</strong>
+                        </div>
+                        <div>
+                            <small>Relationship</small>
+                            <strong id="review-risk-relationship">—</strong>
+                        </div>
+                        <div>
+                            <small>Needs attention</small>
+                            <strong id="review-risk-attention">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="detection-signals">
+                        <small>AI reasons</small>
+                        <div id="review-ai-reasons"></div>
+                </div>
+
             </div>
 
             <div class="review-form-section">
