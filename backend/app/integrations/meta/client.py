@@ -2,12 +2,12 @@ import json
 import urllib.error
 import urllib.parse
 import urllib.request
-
+import logging
 from app.core.settings import (
     META_ACCESS_TOKEN,
 )
 
-
+logger = logging.getLogger(__name__)
 class MetaApiError(Exception):
     pass
 
@@ -231,8 +231,8 @@ class MetaClient:
 
         hashtags = hashtag_data.get("data", [])
         if not hashtags:
+            logger.warning("Instagram hashtag not found: #%s", hashtag)
             return []
-
         hashtag_id = hashtags[0]["id"]
 
         return self.get_all_pages(
@@ -243,7 +243,7 @@ class MetaClient:
                     "id,caption,media_type,"
                     "permalink,timestamp"
                 ),
-                "limit": 5,
+                "limit": 50,
             },
-            max_pages=1,
+            max_pages=2,
         )

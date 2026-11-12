@@ -42,12 +42,16 @@ def run_collector(collector):
         )
 
         reports_created = 0
+        errors_count = 0
         duplicates_skipped = 0
         candidates_relevant = 0
         candidates_ignored = 0
 
         for result in results:
             print()
+            if result.get("status") == "error":
+                errors_count += 1
+                continue
 
             if result.get("status") == "ignored":
                 candidates_ignored += 1
@@ -154,7 +158,7 @@ def run_collector(collector):
         monitoring_run.duplicates_skipped = (
             duplicates_skipped
         )
-
+        monitoring_run.errors_count = errors_count
         monitoring_run.status = "completed"
 
         monitoring_run.finished_at = (

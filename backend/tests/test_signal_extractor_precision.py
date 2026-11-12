@@ -1,5 +1,5 @@
 from app.monitoring.signal_extractor import extract_signals
-
+from app.monitoring.signal_extractor import extract_school_signals
 
 def test_sal_de_cozinha_nao_e_localizacao():
     result = extract_signals(
@@ -57,11 +57,12 @@ def test_publicacao_de_sensibilizacao_nao_gera_alerta():
         tourism_context=signals["tourism_context"],
         signal_score=signals["signal_score"],
         signal_confidence=signals["signal_confidence"],
+        metadata={"school_signals": extract_school_signals(description)},
     )
 
     result = detect_candidate(candidate)
 
-    assert result["relevant"] is True
+    assert result["relevant"] is False
 
 def test_denuncia_com_linguagem_de_sensibilizacao_continua_relevante():
     description = (
@@ -86,6 +87,7 @@ def test_denuncia_com_linguagem_de_sensibilizacao_continua_relevante():
         tourism_context=signals["tourism_context"],
         signal_score=signals["signal_score"],
         signal_confidence=signals["signal_confidence"],
+        metadata={"school_signals": extract_school_signals(description)},
     )
 
     result = detect_candidate(candidate)
@@ -115,6 +117,7 @@ def test_denuncia_com_outras_palavras_nao_e_ignorada():
         tourism_context=signals["tourism_context"],
         signal_score=signals["signal_score"],
         signal_confidence=signals["signal_confidence"],
+        metadata={"school_signals": extract_school_signals(description)},
     )
 
     result = detect_candidate(candidate)

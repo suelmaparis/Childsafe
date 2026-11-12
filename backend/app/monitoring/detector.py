@@ -1,81 +1,47 @@
+from app.core import settings
 from app.monitoring.candidate import MonitoringCandidate
 
+WEIGHTS = {
+    "volunteer_context": 2,
+    "school_uniform": 3,
+    "school_schedule": 3,
+    "school_context": 1,
+    "location_detected": 1,
+    "tourism_context": 1,
+}
+STRONG = {"volunteer_context", "school_uniform", "school_schedule"}
+MIN_SCORE = 3
 
 
-def detect_candidate(
-    candidate: MonitoringCandidate,
-) -> dict:
-    signals = []
+def detect_candidate(candidate: MonitoringCandidate) -> dict:
+    school = (candidate.metadata or {}).get("school_signals") or {}
 
-    if candidate.contains_child:
-        signals.append("child_detected")
-
-    if candidate.location_detected:
-        signals.append("location_detected")
-
-    if candidate.volunteer_context:
-        signals.append("volunteer_context")
-
-    if candidate.tourism_context:
-        signals.append("tourism_context")
-
-    derived_signal_score = len(signals)
-
-    candidate_signal_score = getattr(
-        candidate,
-        "signal_score",
-        0,
-    )
-
-    candidate_signal_confidence = getattr(
-        candidate,
-        "signal_confidence",
-        0.0,
-    )
-
-    if (
-        derived_signal_score > 0
-        and candidate_signal_score == 0
-    ):
-        signal_score = derived_signal_score
-    else:
-        signal_score = candidate_signal_score
-
-    confidence_map = {
-        0: 0.0,
-        1: 0.25,
-        2: 0.55,
-        3: 0.8,
-        4: 0.95,
+    active = {
+        "volunteer_context": candidate.volunteer_context,
+        "school_uniform": school.get("school_uniform_mentioned"),
+        "school_schedule": school.get("school_schedule_mentioned"),
+        "school_context": school.get("school_context"),
+        "location_detected": candidate.location_detected,
+        "tourism_context": candidate.tourism_context,
     }
+    signals = [name for name, on in active.items() if on]
+    score = sum(WEIGHTS[name] for name in signals)
 
-    if (
-        signal_score > 0
-        and candidate_signal_confidence == 0.0
-    ):
-        signal_confidence = confidence_map.get(
-            signal_score,
-            0.0,
-        )
-    else:
-        signal_confidence = candidate_signal_confidence
-
-
+    require_location = getattr(settings, "MONITORING_REQUIRE_LOCATION", True)
+    location_ok = bool(candidate.location_detected) or not require_location
 
     relevant = (
-        candidate.contains_child
-        and signal_confidence >= 0.55
+        bool(candidate.contains_child)
+        and location_ok
+        and score >= MIN_SCORE
+        and bool(STRONG & set(signals))
     )
 
     return {
         "relevant": relevant,
-        "reason": (
-            "potential_child_exposure"
-            if relevant
-            else None
-        ),
-        "confidence": signal_confidence,
-        "signal_score": signal_score,
-        "signals": signals,
-        "source": "monitoring_detector_v2",
+        "reason": "potential_child_exposure" if relevant else None,
+        "confidence": min(score / 6, 1.0),
+        "signal_score": score,
+        "signals": (["child_detected"] if candidate.contains_child else []) + signals,
+        "source": "monitoring_detector_v3",
     }

@@ -77,7 +77,7 @@ def process_candidate(
                 candidate.metadata = metadata
 
                 # Flag high-risk visual findings for review.
-                if assessment.score >= 20:
+                if assessment.score >= 20 and candidate.location_detected:
                     detection["relevant"] = True
                     detection["reason"] = (
                         "potential_child_exposure"
@@ -250,20 +250,13 @@ def process_candidate(
     )
 
 
-def process_candidates(
-    candidates: list[MonitoringCandidate],
-    db: Session,
-) -> list[dict]:
+def process_candidates(candidates, db):
     results = []
-
     for candidate in candidates:
-        result = process_candidate(
-            candidate=candidate,
-            db=db,
-        )
-
-        results.append(
-            result
-        )
-
+        try:
+            results.append(process_candidate(candidate=candidate, db=db))
+        except Exception:
+            db.rollback()
+            logger.exception("Candidate failed: %s", candidate.source_reference)
+            results.append({"status": "error"})
     return results

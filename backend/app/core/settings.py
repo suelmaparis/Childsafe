@@ -76,3 +76,11 @@ MEDIA_ANALYSIS_ENABLED = env_bool(
 )
 
 MEDIA_MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+# ChildSafeCV - Monitoring scope
+# True = só cria reports quando o texto menciona Cabo Verde.
+MONITORING_REQUIRE_LOCATION = env_bool(
+    "MONITORING_REQUIRE_LOCATION",
+    True,
+)
+

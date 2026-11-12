@@ -40,5 +40,5 @@ def test_school_signals_are_saved_in_report(db_session):
     assert school["school_uniform_mentioned"] is True
     assert school["school_schedule_mentioned"] is True
 
-    assert report.detection_signal_score == 2
+    assert report.detection_signal_score == 8
     assert report.source_type == "automated_monitoring"

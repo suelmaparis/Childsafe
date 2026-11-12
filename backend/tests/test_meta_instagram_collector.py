@@ -8,10 +8,7 @@ def test_meta_item_to_candidate():
 
     item = {
         "id": "meta-test-001",
-        "permalink": (
-            "https://www.instagram.com/"
-            "p/test001/"
-        ),
+        "permalink": "https://www.instagram.com/p/test001/",
         "caption": (
             "Volunteer activity with local children "
             "in Praia, Cabo Verde."
@@ -21,26 +18,18 @@ def test_meta_item_to_candidate():
     candidate = collector._to_candidate(item)
 
     assert candidate.platform == "Instagram"
-
-    assert (
-        candidate.source_reference
-        == "meta-test-001"
-    )
+    assert candidate.source_reference == "meta-test-001"
 
     assert candidate.contains_child is True
     assert candidate.location_detected is True
     assert candidate.volunteer_context is True
     assert candidate.tourism_context is False
     assert candidate.signal_score == 3
-    assert candidate.signal_confidence == 0.8       
+    assert candidate.signal_confidence == 0.8
 
 
-def test_collect_returns_empty_when_disabled(
-    monkeypatch,
-):
-    from app.monitoring.collectors import (
-        meta_instagram,
-    )
+def test_collect_returns_empty_when_disabled(monkeypatch):
+    from app.monitoring.collectors import meta_instagram
 
     monkeypatch.setattr(
         meta_instagram,
@@ -48,19 +37,13 @@ def test_collect_returns_empty_when_disabled(
         False,
     )
 
-    collector = (
-        meta_instagram.MetaInstagramCollector()
-    )
+    collector = meta_instagram.MetaInstagramCollector()
 
     assert collector.collect() == []
 
 
-def test_collect_returns_empty_without_token(
-    monkeypatch,
-):
-    from app.monitoring.collectors import (
-        meta_instagram,
-    )
+def test_collect_returns_empty_without_token(monkeypatch):
+    from app.monitoring.collectors import meta_instagram
 
     monkeypatch.setattr(
         meta_instagram,
@@ -72,21 +55,15 @@ def test_collect_returns_empty_without_token(
         def is_configured(self):
             return False
 
-    collector = (
-        meta_instagram.MetaInstagramCollector(
-            client=FakeClient(),
-        )
+    collector = meta_instagram.MetaInstagramCollector(
+        client=FakeClient(),
     )
 
     assert collector.collect() == []
 
 
-def test_collect_converts_items_from_client(
-    monkeypatch,
-):
-    from app.monitoring.collectors import (
-        meta_instagram,
-    )
+def test_collect_converts_items_from_client(monkeypatch):
+    from app.monitoring.collectors import meta_instagram
 
     monkeypatch.setattr(
         meta_instagram,
@@ -98,23 +75,15 @@ def test_collect_converts_items_from_client(
         def is_configured(self):
             return True
 
-    collector = (
-        meta_instagram.MetaInstagramCollector(
-            client=FakeClient(),
-        )
+    collector = meta_instagram.MetaInstagramCollector(
+        client=FakeClient(),
     )
 
     collector._fetch_items = lambda: [
         {
             "id": "meta-test-010",
-            "permalink": (
-                "https://www.instagram.com/"
-                "p/test010/"
-            ),
-            "caption": (
-                "Volunteer activity "
-                "with local children."
-            ),
+            "permalink": "https://www.instagram.com/p/test010/",
+            "caption": "Volunteer activity with local children.",
         }
     ]
 
@@ -124,21 +93,13 @@ def test_collect_converts_items_from_client(
 
     candidate = candidates[0]
 
-    assert (
-        candidate.source_reference
-        == "meta-test-010"
-    )
-
+    assert candidate.source_reference == "meta-test-010"
     assert candidate.contains_child is True
     assert candidate.volunteer_context is True
 
 
-def test_fetch_items_uses_meta_client(
-    monkeypatch,
-):
-    from app.monitoring.collectors import (
-        meta_instagram,
-    )
+def test_fetch_items_uses_meta_client(monkeypatch):
+    from app.monitoring.collectors import meta_instagram
 
     monkeypatch.setattr(
         meta_instagram,
@@ -150,49 +111,29 @@ def test_fetch_items_uses_meta_client(
         def is_configured(self):
             return True
 
-        def get_instagram_media(
-            self,
-            instagram_user_id,
-            limit=25,
-        ):
-            assert (
-                instagram_user_id
-                == "17890000000000000"
-            )
-
+        def search_instagram_hashtag(self, instagram_user_id, hashtag):
+            assert instagram_user_id == "17890000000000000"
             return [
                 {
                     "id": "meta-test-020",
-                    "permalink": (
-                        "https://www.instagram.com/"
-                        "p/test020/"
-                    ),
+                    "permalink": "https://www.instagram.com/p/test020/",
                     "caption": "Test post",
                 }
             ]
 
-    collector = (
-        meta_instagram.MetaInstagramCollector(
-            client=FakeClient(),
-        )
+    collector = meta_instagram.MetaInstagramCollector(
+        client=FakeClient(),
+        hashtags=["caboverde"],
     )
 
     items = collector._fetch_items()
 
     assert len(items) == 1
-
-    assert (
-        items[0]["id"]
-        == "meta-test-020"
-    )
+    assert items[0]["id"] == "meta-test-020"
 
 
-def test_fetch_items_returns_empty_without_user_id(
-    monkeypatch,
-):
-    from app.monitoring.collectors import (
-        meta_instagram,
-    )
+def test_fetch_items_returns_empty_without_user_id(monkeypatch):
+    from app.monitoring.collectors import meta_instagram
 
     monkeypatch.setattr(
         meta_instagram,
@@ -204,21 +145,15 @@ def test_fetch_items_returns_empty_without_user_id(
         def is_configured(self):
             return True
 
-    collector = (
-        meta_instagram.MetaInstagramCollector(
-            client=FakeClient(),
-        )
+    collector = meta_instagram.MetaInstagramCollector(
+        client=FakeClient(),
     )
 
     assert collector._fetch_items() == []
 
 
-def test_collect_full_flow_with_fake_client(
-    monkeypatch,
-):
-    from app.monitoring.collectors import (
-        meta_instagram,
-    )
+def test_collect_full_flow_with_fake_client(monkeypatch):
+    from app.monitoring.collectors import meta_instagram
 
     monkeypatch.setattr(
         meta_instagram,
@@ -236,23 +171,12 @@ def test_collect_full_flow_with_fake_client(
         def is_configured(self):
             return True
 
-        def get_instagram_media(
-            self,
-            instagram_user_id,
-            limit=25,
-        ):
-            assert (
-                instagram_user_id
-                == "17890000000000000"
-            )
-
+        def search_instagram_hashtag(self, instagram_user_id, hashtag):
+            assert instagram_user_id == "17890000000000000"
             return [
                 {
                     "id": "meta-flow-001",
-                    "permalink": (
-                        "https://www.instagram.com/"
-                        "p/flow001/"
-                    ),
+                    "permalink": "https://www.instagram.com/p/flow001/",
                     "caption": (
                         "Volunteer activity with local children "
                         "in Praia, Cabo Verde."
@@ -260,10 +184,7 @@ def test_collect_full_flow_with_fake_client(
                 },
                 {
                     "id": "meta-flow-002",
-                    "permalink": (
-                        "https://www.instagram.com/"
-                        "p/flow002/"
-                    ),
+                    "permalink": "https://www.instagram.com/p/flow002/",
                     "caption": (
                         "Tourist trip with local children "
                         "in Sal, Cabo Verde."
@@ -271,10 +192,9 @@ def test_collect_full_flow_with_fake_client(
                 },
             ]
 
-    collector = (
-        meta_instagram.MetaInstagramCollector(
-            client=FakeClient(),
-        )
+    collector = meta_instagram.MetaInstagramCollector(
+        client=FakeClient(),
+        hashtags=["caboverde"],
     )
 
     candidates = collector.collect()
@@ -284,28 +204,19 @@ def test_collect_full_flow_with_fake_client(
     first = candidates[0]
     second = candidates[1]
 
-    assert (
-        first.source_reference
-        == "meta-flow-001"
-    )
-
+    assert first.source_reference == "meta-flow-001"
     assert first.platform == "Instagram"
     assert first.contains_child is True
     assert first.location_detected is True
     assert first.volunteer_context is True
     assert first.tourism_context is False
 
-    assert (
-        second.source_reference
-        == "meta-flow-002"
-    )
-
+    assert second.source_reference == "meta-flow-002"
     assert second.platform == "Instagram"
     assert second.contains_child is True
     assert second.location_detected is True
     assert second.volunteer_context is False
     assert second.tourism_context is True
-
 
 
 def test_fetch_items_includes_hashtag_results(monkeypatch):
@@ -318,14 +229,6 @@ def test_fetch_items_includes_hashtag_results(monkeypatch):
     )
 
     class FakeClient:
-        def get_instagram_media(self, instagram_user_id, limit=25):
-            return [
-                {
-                    "id": "own-post-001",
-                    "caption": "ChildSafeCV",
-                }
-            ]
-
         def search_instagram_hashtag(self, instagram_user_id, hashtag):
             assert instagram_user_id == "17890000000000000"
             assert hashtag == "CaboVerde"
@@ -343,11 +246,10 @@ def test_fetch_items_includes_hashtag_results(monkeypatch):
 
     items = collector._fetch_items()
 
-    assert len(items) == 2
-    assert {item["id"] for item in items} == {
-        "own-post-001",
-        "hashtag-post-001",
-    }
+    assert len(items) == 1
+    assert {item["id"] for item in items} == {"hashtag-post-001"}
+
+
 def test_fetch_items_continues_when_hashtag_fails(monkeypatch):
     from app.monitoring.collectors import meta_instagram
     from app.integrations.meta.client import MetaApiError
@@ -359,9 +261,6 @@ def test_fetch_items_continues_when_hashtag_fails(monkeypatch):
     )
 
     class FakeClient:
-        def get_instagram_media(self, instagram_user_id, limit=25):
-            return [{"id": "own-post-001", "caption": "ChildSafeCV"}]
-
         def search_instagram_hashtag(self, instagram_user_id, hashtag):
             if hashtag == "Africa":
                 raise MetaApiError("The requested resource does not exist")
@@ -381,10 +280,11 @@ def test_fetch_items_continues_when_hashtag_fails(monkeypatch):
     items = collector._fetch_items()
 
     assert {item["id"] for item in items} == {
-        "own-post-001",
         "hashtag-CaboVerde",
         "hashtag-Europe",
     }
+
+
 def test_instagram_candidate_preserves_media_metadata():
     collector = MetaInstagramCollector()
 

@@ -13,8 +13,8 @@ CHILD_TERMS = {
     "girl",
     "girls",
     "schoolchildren",
-    "student",
-    "students",
+    
+
 
     # Portuguese
     "criança",
@@ -25,8 +25,7 @@ CHILD_TERMS = {
     "meninas",
     "aluno",
     "alunos",
-    "aluna",
-    "alunas",
+   
 
     # French
     "enfant",
@@ -35,8 +34,7 @@ CHILD_TERMS = {
     "garçons",
     "fille",
     "filles",
-    "élève",
-    "élèves",
+  
 
     # Spanish
     "niño",
@@ -45,8 +43,7 @@ CHILD_TERMS = {
     "niñas",
     "menor",
     "menores",
-    "estudiante",
-    "estudiantes",
+  
 }
 
 
@@ -56,7 +53,7 @@ VOLUNTEER_TERMS = {
     "volunteers",
     "volunteering",
     "charity",
-    "mission",
+  
     "community project",
     "donation",
 
@@ -78,8 +75,7 @@ VOLUNTEER_TERMS = {
     "charité",
     "mission humanitaire",
     "projet communautaire",
-    "don",
-    "dons",
+   
 
     # Spanish
     "voluntario",
@@ -147,14 +143,20 @@ LOCATION_TERMS = {
     "cidade da praia",
     "mindelo",
     "ilha do sal",
-    "boa vista",
-    "santiago",
+    "ilha de boa vista",
+    "ilha de santiago",
     "são vicente",
     "santo antão",
     "ilha do fogo",
     "ilha brava",
     "ilha do maio",
     "são nicolau",
+    "espargos",
+    "sal rei",
+    "tarrafal",
+    "assomada",
+    "sao filipe",
+
 }
 
 
@@ -301,6 +303,9 @@ def extract_school_signals(text: str | None) -> dict:
         "horário das aulas",
         "school hours",
         "school schedule",
+        "horário de saída",
+        "hora de saída",
+        "saída da escola",
     }
 
     school_uniform_mentioned = has_terms(uniform_terms)

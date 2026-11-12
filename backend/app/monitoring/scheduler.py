@@ -37,7 +37,7 @@ def release_monitoring_lock(connection):
     )
 
 
-def monitoring_ran_recently(connection) -> bool:
+def monitoring_ran_recently(connection, channel: str) -> bool:
     interval_seconds = max(
         60,
         MONITORING_INTERVAL_MINUTES * 60,
@@ -60,7 +60,7 @@ def monitoring_ran_recently(connection) -> bool:
             """
         ),
         {
-            "channel": "meta_instagram_collector",
+            "channel": channel,
             "cutoff": cutoff,
         },
     )
@@ -84,10 +84,6 @@ def run_scheduled_monitoring():
             return False
 
         try:
-            if monitoring_ran_recently(connection):
-
-                logger.info("Monitoring ran recently. Skipping.")
-                return False
             update_worker_heartbeat("running")
             collectors = get_enabled_collectors()
 
@@ -99,6 +95,13 @@ def run_scheduled_monitoring():
 
             all_succeeded = True
             for collector in collectors:
+                if monitoring_ran_recently(connection, collector.channel):
+                    logger.info(
+                        "Skipping %s: ran recently.",
+                        collector.channel,
+                    )
+                    continue
+
                 try:
                     run_collector(collector)
                 except Exception:

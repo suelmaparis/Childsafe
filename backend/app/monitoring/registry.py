@@ -29,12 +29,9 @@ def get_enabled_collectors():
         collectors.append(
             MetaInstagramCollector(
                 hashtags=[
-                    "Cabo Verde",
-                    "Africa",
-                    "Europe",
-                    "America",
-                    "Asia",
-                ]
+                "caboverde", "capeverde", "mindelo", "cidadedapraia",
+                "ilhadosal", "saovicente", "santoantao", "tarrafal",
+               ],
             )
         )
 

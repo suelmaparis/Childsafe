@@ -15,10 +15,10 @@ def test_automated_report_persists_signal_score(db_session):
         source_reference="TEST-SIGNAL-SCORE-001",
         contains_child=True,
         location_detected=True,
-        volunteer_context=False,
+        volunteer_context=True,
         tourism_context=False,
-        signal_score=2,
-        signal_confidence=0.55,
+        signal_score=3,
+        signal_confidence=0.50,
     )
 
     result = process_candidate(
@@ -41,10 +41,11 @@ def test_automated_report_persists_signal_score(db_session):
     )
 
     assert report.source_type == "automated_monitoring"
-    assert report.detection_signal_score == 2
-    assert report.detection_confidence == 0.55
+    assert report.detection_signal_score == 3
+    assert report.detection_confidence == 0.5
 
     assert set(json.loads(report.detection_signals)) == {
         "child_detected",
+        "volunteer_context",
         "location_detected",
     }

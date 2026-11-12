@@ -46,15 +46,8 @@ class MetaInstagramCollector(BaseCollector):
         if not META_INSTAGRAM_USER_ID:
             return []
 
-        items = self.client.get_instagram_media(
-            instagram_user_id=META_INSTAGRAM_USER_ID
-        )
-
-        seen_ids = {
-            str(item["id"])
-            for item in items
-            if item.get("id")
-        }
+        items: list[dict] = []
+        seen_ids: set[str] = set()
 
         for hashtag in self.hashtags:
             try:
@@ -63,26 +56,17 @@ class MetaInstagramCollector(BaseCollector):
                     hashtag=hashtag,
                 )
             except MetaApiError as exc:
-                logger.warning(
-                    "Instagram hashtag #%s failed: %s",
-                    hashtag,
-                    exc,
-                )
+                logger.warning("Instagram hashtag #%s failed: %s", hashtag, exc)
                 continue
 
             for item in hashtag_items:
                 item_id = str(item.get("id") or "")
-
-                if item_id and item_id in seen_ids:
+                if not item_id or item_id in seen_ids:
                     continue
-
+                seen_ids.add(item_id)
                 items.append(item)
 
-                if item_id:
-                    seen_ids.add(item_id)
-
         return items
-
     def collect(
         self,
     ) -> list[MonitoringCandidate]:
