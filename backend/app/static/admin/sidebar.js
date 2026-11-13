@@ -318,7 +318,7 @@ organizeOverview();
         function updateClock() {
             const now = new Date();
 
-            dateElement.textContent = now.toLocaleDateString("pt-PT", {
+            dateElement.textContent = now.toLocaleDateString("en-US", {
                 day: "numeric",
                 month: "long",
                 year: "numeric"

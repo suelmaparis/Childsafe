@@ -1581,7 +1581,7 @@ Object.entries(geoFields).forEach(([elementId, value]) => {
             && value !== ""
         )
             ? String(value)
-            : "Não fornecido";
+            : "Not provided";
     }
 });
     const detectionSection = document.getElementById(
