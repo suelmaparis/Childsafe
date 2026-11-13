@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class MetaApiError(Exception):
     pass
 
-
+_HASHTAG_ID_CACHE: dict[str, str] = {}
 class MetaClient:
 
     def __init__(
@@ -221,19 +221,25 @@ class MetaClient:
         instagram_user_id: str,
         hashtag: str,
     ) -> list[dict]:
-        hashtag_data = self.get(
-            "ig_hashtag_search",
-            params={
-                "user_id": instagram_user_id,
-                "q": hashtag.lstrip("#"),
-            },
-        )
+        key = hashtag.lstrip("#").lower()
+        hashtag_id = _HASHTAG_ID_CACHE.get(key)
 
-        hashtags = hashtag_data.get("data", [])
-        if not hashtags:
-            logger.warning("Instagram hashtag not found: #%s", hashtag)
-            return []
-        hashtag_id = hashtags[0]["id"]
+        if not hashtag_id:
+            hashtag_data = self.get(
+                "ig_hashtag_search",
+                params={
+                    "user_id": instagram_user_id,
+                    "q": hashtag.lstrip("#"),
+                },
+            )
+
+            hashtags = hashtag_data.get("data", [])
+            if not hashtags:
+                logger.warning("Instagram hashtag not found: #%s", hashtag)
+                return []
+
+            hashtag_id = hashtags[0]["id"]
+            _HASHTAG_ID_CACHE[key] = hashtag_id
 
         return self.get_all_pages(
             f"{hashtag_id}/recent_media",
@@ -243,7 +249,7 @@ class MetaClient:
                     "id,caption,media_type,"
                     "permalink,timestamp"
                 ),
-                "limit": 50,
+                "limit": 20,
             },
-            max_pages=2,
+            max_pages=1,
         )

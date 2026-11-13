@@ -1,7 +1,8 @@
 from app.integrations.meta.client import (
     MetaClient,
 )
-
+from app.integrations.meta import client as meta_client
+meta_client._HASHTAG_ID_CACHE.clear()
 
 def test_get_instagram_media_uses_expected_endpoint(
     monkeypatch,
@@ -236,7 +237,7 @@ def test_search_instagram_hashtag(monkeypatch):
     assert captured["search_params"]["q"] == "CaboVerde"
     assert captured["media_path"] == "hashtag-test-001/recent_media"
     assert captured["media_params"]["user_id"] == "17841478120220644"
-    assert captured["max_pages"] == 2
+    assert captured["max_pages"] == 1
     assert len(posts) == 1
     assert posts[0]["id"] == "post-test-001"
 

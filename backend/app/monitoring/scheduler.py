@@ -122,7 +122,7 @@ def monitoring_scheduler_loop(stop_event: threading.Event):
         MONITORING_ENABLED
         and os.getenv(
             "CHILDSAFE_WEB_SCHEDULER_ENABLED",
-            "false",
+            "true",
         ).lower() == "true"
     ):
         logger.info("Web monitoring scheduler is disabled.")

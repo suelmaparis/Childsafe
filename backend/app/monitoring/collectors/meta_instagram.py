@@ -57,6 +57,9 @@ class MetaInstagramCollector(BaseCollector):
                 )
             except MetaApiError as exc:
                 logger.warning("Instagram hashtag #%s failed: %s", hashtag, exc)
+                if "request limit" in str(exc).lower():
+                    logger.error("Meta rate limit reached. Stopping this cycle.")
+                    break
                 continue
 
             for item in hashtag_items:
