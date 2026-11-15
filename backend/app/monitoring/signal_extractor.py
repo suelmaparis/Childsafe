@@ -43,6 +43,12 @@ CHILD_TERMS = {
     "niñas",
     "menor",
     "menores",
+
+    "orphan", "orphans", "orphanage", "orphanages",
+    "orfao", "orfaos", "orfanato", "orfanatos",
+    "orphelin", "orphelins", "orphelinat", "orphelinats",
+    "huerfano", "huerfanos",
+    "toddler", "toddlers", "pupils", "kindergarten", "creche",
   
 }
 

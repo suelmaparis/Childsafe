@@ -33,3 +33,7 @@ def test_other_african_country_volunteer_passes():
 def test_outside_africa_ignored():
     text = "Volunteering at a school in Lima, Peru. The kids loved it."
     assert detect_candidate(make(text))["relevant"] is False
+
+def test_orphanage_volunteering_in_africa_passes():
+    text = "Volunteering at an orphanage in Accra, Ghana."
+    assert detect_candidate(make(text))["relevant"] is True
