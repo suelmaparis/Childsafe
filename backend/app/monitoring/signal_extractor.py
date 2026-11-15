@@ -156,6 +156,29 @@ LOCATION_TERMS = {
     "tarrafal",
     "assomada",
     "sao filipe",
+    "africa", "afrique",
+    "algeria", "argelia", "algerie", "angola", "benin", "benim",
+    "botswana", "botsuana", "burkina faso", "burundi",
+    "cameroon", "camaroes", "cameroun",
+    "central african republic", "republica centro-africana", "centrafrique",
+    "congo", "ivory coast", "costa do marfim", "cote d'ivoire",
+    "djibouti", "egypt", "egito", "egypte",
+    "equatorial guinea", "guine equatorial", "eritrea", "eswatini",
+    "ethiopia", "etiopia", "ethiopie", "gabon", "gabao", "gambia", "ghana",
+    "guinea-bissau", "guine-bissau", "guine conakry",
+    "kenya", "quenia", "lesotho", "liberia", "libya", "libia",
+    "madagascar", "malawi", "mali", "mauritania", "mauritius", "mauricias",
+    "morocco", "marrocos", "maroc", "mozambique", "mocambique",
+    "namibia", "nigeria", "rwanda", "ruanda",
+    "sao tome e principe", "senegal", "seychelles", "sierra leone",
+    "somalia", "south africa", "africa do sul", "afrique du sud",
+    "south sudan", "sudao do sul", "sudan", "sudao",
+    "tanzania", "tchad", "togo", "tunisia", "tunisie", "uganda",
+    "zambia", "zimbabwe", "zimbabue",
+    # África: cidades e destinos frequentes
+    "nairobi", "kampala", "kigali", "accra", "dakar", "addis ababa",
+    "zanzibar", "maputo", "luanda", "lusaka", "harare", "bissau",
+
 
 }
 

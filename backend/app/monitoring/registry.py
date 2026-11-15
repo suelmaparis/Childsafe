@@ -28,11 +28,15 @@ def get_enabled_collectors():
     if META_INSTAGRAM_ENABLED:
         collectors.append(
             MetaInstagramCollector(
-                hashtags=[
-                "caboverde", "capeverde", "mindelo", "cidadedapraia",
-                "ilhadosal", "saovicente", "santoantao", "tarrafal",
-               ],
-            )
+               hashtags=[
+                    "caboverde", "capeverde", "mindelo", "cidadedapraia",
+                    "ilhadosal", "saovicente", "santoantao", "tarrafal",
+                    "volunteerafrica", "volunteerinafrica", "voluntourism",
+                    "teachinginafrica", "africanchildren", "africakids",
+                    "kenya", "tanzania", "uganda", "ghana",
+                    "senegal", "mozambique", "angola", "gambia",
+                ],
+                            )
         )
 
     if META_FACEBOOK_ENABLED:

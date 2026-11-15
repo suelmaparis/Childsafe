@@ -324,7 +324,7 @@ organizeOverview();
                 year: "numeric"
             });
 
-            timeElement.textContent = now.toLocaleTimeString("pt-PT", {
+            timeElement.textContent = now.toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit"
             });

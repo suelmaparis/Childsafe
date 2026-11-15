@@ -24,3 +24,12 @@ def test_ganvie_ignored():
 def test_cabo_verde_volunteer_school_passes():
     text = "Volunteering at a school in Mindelo, Cabo Verde. The kids loved it."
     assert detect_candidate(make(text))["relevant"] is True
+
+def test_other_african_country_volunteer_passes():
+    text = "Volunteering at a school in Nairobi, Kenya. The kids loved it."
+    assert detect_candidate(make(text))["relevant"] is True
+
+
+def test_outside_africa_ignored():
+    text = "Volunteering at a school in Lima, Peru. The kids loved it."
+    assert detect_candidate(make(text))["relevant"] is False

@@ -1,5 +1,5 @@
 import logging
-
+import random
 from app.integrations.meta.client import MetaApiError
 from app.core.settings import (
     META_INSTAGRAM_ENABLED,
@@ -49,7 +49,7 @@ class MetaInstagramCollector(BaseCollector):
         items: list[dict] = []
         seen_ids: set[str] = set()
 
-        for hashtag in self.hashtags:
+        for hashtag in random.sample(self.hashtags, len(self.hashtags)):
             try:
                 hashtag_items = self.client.search_instagram_hashtag(
                     instagram_user_id=META_INSTAGRAM_USER_ID,
