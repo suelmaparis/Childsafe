@@ -25,6 +25,7 @@ from app.monitoring.signal_extractor import (
     extract_school_signals,
 )
 logger = logging.getLogger(__name__)
+MAX_HASHTAGS_PER_CYCLE = 10
 
 class MetaInstagramCollector(BaseCollector):
     platform = "Instagram"
@@ -49,7 +50,12 @@ class MetaInstagramCollector(BaseCollector):
         items: list[dict] = []
         seen_ids: set[str] = set()
 
-        for hashtag in random.sample(self.hashtags, len(self.hashtags)):
+        selected = random.sample(
+            self.hashtags,
+            min(len(self.hashtags), MAX_HASHTAGS_PER_CYCLE),
+        )
+
+        for hashtag in selected:
             try:
                 hashtag_items = self.client.search_instagram_hashtag(
                     instagram_user_id=META_INSTAGRAM_USER_ID,
