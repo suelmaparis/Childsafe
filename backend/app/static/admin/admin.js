@@ -2334,7 +2334,7 @@ const toggleHtml = `
             id="show-dismissed-toggle"
             ${showDismissedReports ? "checked" : ""}
         >
-        Mostrar dispensados
+        Show dismissed
     </label>
 `;
 
