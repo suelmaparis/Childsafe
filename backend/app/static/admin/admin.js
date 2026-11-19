@@ -2303,15 +2303,44 @@ async function loadMonitoringRuns() {
         monitoringRows,
     );
 }
+let showDismissedReports = false;
+
+document.addEventListener("change", event => {
+    if (event.target.id !== "show-dismissed-toggle") {
+        return;
+    }
+
+    showDismissedReports = event.target.checked;
+    renderRecentReportsTable(cachedReports);
+});
+
 function renderRecentReportsTable(reports) {
     const container = document.getElementById(
         "recent-reports"
     );
 
-    const rows = reports.slice(0, 100);
+    const visibleReports = showDismissedReports
+    ? reports
+    : reports.filter(
+        report => String(report.review_status || "").toLowerCase() !== "dismissed"
+    );
+
+const rows = visibleReports.slice(0, 100);
+
+const toggleHtml = `
+    <label class="dismissed-toggle">
+        <input
+            type="checkbox"
+            id="show-dismissed-toggle"
+            ${showDismissedReports ? "checked" : ""}
+        >
+        Mostrar dispensados
+    </label>
+`;
 
     if (!rows.length) {
         container.innerHTML = `
+            ${toggleHtml}
             <div class="empty-state">
                 No reports found.
             </div>
@@ -2320,8 +2349,8 @@ function renderRecentReportsTable(reports) {
         return;
     }
 
-
     container.innerHTML = `
+    ${toggleHtml}
     <table>
         <thead>
             <tr>
