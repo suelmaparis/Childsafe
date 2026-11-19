@@ -4589,3 +4589,11 @@ td {
         grid-template-columns: 1fr;
     }
 }
+.dismissed-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0;
+    font-size: 14px;
+    cursor: pointer;
+}
